@@ -75,6 +75,11 @@ class _AppearanceSettingScreenState
     super.initState();
   }
 
+  @override
+  void onLocaleChanged(Locale newLocale) {
+    super.onLocaleChanged(newLocale);
+  }
+
   scrollToSetAutoBackupPassword() {
     if (_setAutoBackupPasswordKey.currentContext != null) {
       Scrollable.ensureVisible(
@@ -244,6 +249,15 @@ class _AppearanceSettingScreenState
               showEye = !showEye;
               appProvider.showEye = showEye;
             });
+          },
+        ),
+        InlineSelectionItem<SelectionItemModel<IssuerAndAccountShowOption>>(
+          title: appLocalizations.issuerAndAccountShowOption,
+          selections: IssuerAndAccountShowOption.options,
+          hint: appLocalizations.selectIssuerAndAccountShowOption,
+          selected: appProvider.issuerAndAccountShowOption.selectionItemModel,
+          onChanged: (item) {
+            appProvider.issuerAndAccountShowOption = item!.value;
           },
         ),
       ],

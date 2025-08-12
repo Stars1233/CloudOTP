@@ -91,6 +91,58 @@ enum AutoLockTime {
   }
 }
 
+enum IssuerAndAccountShowOption implements DropdownMixin {
+  both,
+  issuer,
+  account;
+
+  bool get isOnlyIssuer => this == IssuerAndAccountShowOption.issuer;
+
+  bool get isOnlyShowAccount => this == IssuerAndAccountShowOption.account;
+
+  bool get showIssuer =>
+      this == IssuerAndAccountShowOption.both ||
+      this == IssuerAndAccountShowOption.issuer;
+
+  bool get showAccount =>
+      this == IssuerAndAccountShowOption.both ||
+      this == IssuerAndAccountShowOption.account;
+
+  bool get showBoth => this == IssuerAndAccountShowOption.both;
+
+  String get label {
+    switch (this) {
+      case IssuerAndAccountShowOption.issuer:
+        return appLocalizations.onlyShowIssuer;
+      case IssuerAndAccountShowOption.account:
+        return appLocalizations.onlyShowAccount;
+      case IssuerAndAccountShowOption.both:
+        return appLocalizations.showIssuerAndAccount;
+    }
+  }
+
+  static List<SelectionItemModel<IssuerAndAccountShowOption>> get options {
+    return IssuerAndAccountShowOption.values
+        .map(
+            (e) => SelectionItemModel<IssuerAndAccountShowOption>(e.display, e))
+        .toList();
+  }
+
+  SelectionItemModel<IssuerAndAccountShowOption> get selectionItemModel {
+    return SelectionItemModel<IssuerAndAccountShowOption>(display, this);
+  }
+
+  static IssuerAndAccountShowOption fromInt(int value) {
+    return IssuerAndAccountShowOption.values[value.clamp(0, values.length - 1)];
+  }
+
+  @override
+  String get display => label;
+
+  @override
+  String get selection => display;
+}
+
 class AutoLockOption implements DropdownMixin {
   final String label;
   final AutoLockTime autoLockTime;
@@ -145,6 +197,23 @@ class AppProvider with ChangeNotifier {
 
   FocusNode shortcutFocusNode = FocusNode();
   FocusNode searchFocusNode = FocusNode();
+
+  IssuerAndAccountShowOption _issuerAndAccountShowOption =
+      IssuerAndAccountShowOption.fromInt(ChewieHiveUtil.getInt(
+          CloudOTPHiveUtil.issuerAndAccountShowOptionKey,
+          defaultValue: 0));
+
+  IssuerAndAccountShowOption get issuerAndAccountShowOption =>
+      _issuerAndAccountShowOption;
+
+  set issuerAndAccountShowOption(IssuerAndAccountShowOption value) {
+    if (value != _issuerAndAccountShowOption) {
+      _issuerAndAccountShowOption = value;
+      ChewieHiveUtil.put(
+          CloudOTPHiveUtil.issuerAndAccountShowOptionKey, value.index);
+      notifyListeners();
+    }
+  }
 
   final List<AutoBackupLog> _autoBackupLogs = [];
 

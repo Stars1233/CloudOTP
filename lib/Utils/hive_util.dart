@@ -48,6 +48,7 @@ class CloudOTPHiveUtil {
   static const String autoHideCodeKey = "autoHideCode";
   static const String defaultHideCodeKey = "defaultHideCode";
   static const String showEyeKey = "showEye";
+  static const String issuerAndAccountShowOptionKey = "issuerAndAccountShowOption";
 
   //Appearance
   static const String showCloudBackupButtonKey = "showCloudBackupButton";

@@ -245,14 +245,24 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       contextMenu: _buildContextMenuButtons(),
       child: Selector<AppProvider, bool>(
         selector: (context, provider) => provider.dragToReorder,
-        builder: (context, dragToReorder, child) => GestureDetector(
-          onLongPress: dragToReorder && !ResponsiveUtil.isDesktop()
-              ? () {
-                  showContextMenu();
-                  HapticFeedback.lightImpact();
-                }
-              : null,
-          child: PressableAnimation(child: _buildBody()),
+        builder: (context, dragToReorder, child) =>
+            Selector<AppProvider, IssuerAndAccountShowOption>(
+          selector: (context, provider) => provider.issuerAndAccountShowOption,
+          builder: (context, issuerAndAccountShowOption, child) {
+            return GestureDetector(
+              onLongPress: dragToReorder && !ResponsiveUtil.isDesktop()
+                  ? () {
+                showContextMenu();
+                HapticFeedback.lightImpact();
+              }
+                  : null,
+              child: PressableAnimation(
+                child: _buildBody(
+                  issuerAndAccountShowOption: issuerAndAccountShowOption,
+                ),
+              ),
+            );
+          }
         ),
       ),
     );
@@ -351,12 +361,18 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
-  _buildBody() {
+  _buildBody({
+    required IssuerAndAccountShowOption issuerAndAccountShowOption,
+  }) {
     switch (widget.layoutType) {
       case LayoutType.Simple:
-        return _buildSimpleLayout();
+        return _buildSimpleLayout(
+          issuerAndAccountShowOption: issuerAndAccountShowOption,
+        );
       case LayoutType.Compact:
-        return _buildCompactLayout();
+        return _buildCompactLayout(
+          issuerAndAccountShowOption: issuerAndAccountShowOption,
+        );
       // case LayoutType.Tile:
       //   return _buildSlidable(
       //     startExtentRatio: 0.23,
@@ -366,13 +382,17 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       case LayoutType.List:
         return _buildSlidable(
           simple: true,
-          child: _buildListLayout(),
+          child: _buildListLayout(
+            issuerAndAccountShowOption: issuerAndAccountShowOption,
+          ),
         );
       case LayoutType.Spotlight:
         return _buildSlidable(
           startExtentRatio: 0.21,
           endExtentRatio: 0.8,
-          child: _buildSpotlightLayout(),
+          child: _buildSpotlightLayout(
+            issuerAndAccountShowOption: issuerAndAccountShowOption,
+          ),
         );
     }
   }
@@ -528,7 +548,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                   icon: Icon(
                     LucideIcons.eye,
                     size: 20,
-                    color: color ?? ChewieTheme.labelMedium?.color,
+                    color: color ?? ChewieTheme.labelMedium.color,
                   ),
                 )
               : emptyWidget,
@@ -561,7 +581,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 icon: Icon(
                   Icons.refresh_rounded,
                   size: 20,
-                  color: color ?? ChewieTheme.labelMedium?.color,
+                  color: color ?? ChewieTheme.labelMedium.color,
                 ),
               )
             : emptyWidget,
@@ -712,7 +732,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     }
   }
 
-  _buildSimpleLayout() {
+  _buildSimpleLayout({
+    required IssuerAndAccountShowOption issuerAndAccountShowOption,
+  }) {
     return ClickableWrapper(
       child: Material(
         color: widget.token.pinned
@@ -741,7 +763,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            widget.token.issuer,
+                            issuerAndAccountShowOption.isOnlyShowAccount
+                                ? widget.token.account
+                                : widget.token.issuer,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context)
@@ -780,7 +804,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
-  _buildCompactLayout() {
+  _buildCompactLayout({
+    required IssuerAndAccountShowOption issuerAndAccountShowOption,
+  }) {
     return ClickableWrapper(
       child: Material(
         color: widget.token.pinned
@@ -809,21 +835,33 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                widget.token.issuer,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.apply(fontWeightDelta: 2),
-                              ),
-                              Text(
-                                widget.token.account,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: ChewieTheme.bodySmall,
-                              ),
+                              if (issuerAndAccountShowOption.showIssuer)
+                                Text(
+                                  widget.token.issuer,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.apply(fontWeightDelta: 2),
+                                ),
+                              if (issuerAndAccountShowOption.showBoth)
+                                Text(
+                                  widget.token.account,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: ChewieTheme.bodySmall,
+                                ),
+                              if (issuerAndAccountShowOption.isOnlyShowAccount)
+                                Text(
+                                  widget.token.account,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.apply(fontWeightDelta: 2),
+                                ),
                             ],
                           ),
                         ),
@@ -845,7 +883,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                             padding: const EdgeInsets.all(4),
                             icon: Icon(
                               LucideIcons.ellipsisVertical,
-                              color: ChewieTheme.labelSmall?.color,
+                              color: ChewieTheme.labelSmall.color,
                               size: 20,
                             ),
                             onTap: showContextMenu,
@@ -868,7 +906,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
-  _buildSpotlightLayout() {
+  _buildSpotlightLayout({
+    required IssuerAndAccountShowOption issuerAndAccountShowOption,
+  }) {
     return ClickableWrapper(
       child: Material(
         color: widget.token.pinned
@@ -902,21 +942,34 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          widget.token.issuer,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.apply(fontWeightDelta: 2),
-                        ),
-                        if (widget.token.account.isNotEmpty)
+                        if (issuerAndAccountShowOption.showIssuer)
+                          Text(
+                            widget.token.issuer,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.apply(fontWeightDelta: 2),
+                          ),
+                        if (widget.token.account.isNotEmpty &&
+                            issuerAndAccountShowOption.showBoth)
                           Text(
                             widget.token.account,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: ChewieTheme.bodySmall,
+                          ),
+                        if (widget.token.account.isNotEmpty &&
+                            issuerAndAccountShowOption.isOnlyShowAccount)
+                          Text(
+                            widget.token.account,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.apply(fontWeightDelta: 2),
                           ),
                         Container(
                           constraints: const BoxConstraints(
@@ -945,7 +998,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
-  _buildListLayout() {
+  _buildListLayout({
+    required IssuerAndAccountShowOption issuerAndAccountShowOption,
+  }) {
     return ClickableWrapper(
       child: Material(
         color: widget.token.pinned
@@ -967,7 +1022,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    widget.token.issuer,
+                    issuerAndAccountShowOption.isOnlyShowAccount
+                        ? widget.token.account
+                        : widget.token.issuer,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context)
