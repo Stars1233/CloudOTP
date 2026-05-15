@@ -589,8 +589,28 @@
   "clipboardNoImage": "クリップボードに画像がありません",
   "importSuccess": "インポート成功",
   "copySuccess": "クリップボードにコピーしました",
-  "importResultTip": "解析成功トークン数: {parseSuccess}、インポート成功トークン数: {importSuccess}",
-  "importCategoryResultTip": "カテゴリの合計数: {parseSuccess}、インポート成功カテゴリ数: {importSuccess}",
+  "importTokenResult": "解析 {parseSuccess} 個のトークン、インポート {importSuccess} 個",
+  "@importTokenResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importTokenResultWithError": "解析 {parseSuccess} 個のトークン（失敗 {parseFailed} 個）、インポート {importSuccess} 個",
+  "@importTokenResultWithError": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "parseFailed": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importCategoryResult": "解析 {parseSuccess} 個のカテゴリ、インポート {importSuccess} 個",
+  "@importCategoryResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
   "importFailed": "インポート失敗",
   "searchIconName": "アイコン名を検索",
   "setIconForToken": "トークンのアイコンを選択",
@@ -704,8 +724,75 @@
   "cloudBackupSettings": "クラウドバックアップ",
   "databaseEncryptionSettings": "データベース暗号化",
   "gestureLockSettings": "ジェスチャーロック",
+  "hideGestureTrail": "ジェスチャー軌跡を隠す",
+  "hideGestureTrailTip": "ロック解除時にパターンを非表示にする",
   "autoLockSettings": "自動ロック",
   "projectRepoAbout": "プロジェクトリポジトリ",
   "appAbout": "APP",
-  "contactAbout": "お問い合わせ"
+  "contactAbout": "お問い合わせ",
+  "menuFile": "ファイル",
+  "menuEdit": "編集",
+  "menuView": "表示",
+  "menuWindow": "ウインドウ",
+  "menuHelp": "ヘルプ",
+  "quit": "終了",
+  "minimize": "最小化",
+  "zoom": "拡大/縮小",
+  "notificationPermissionDenied": "通知の権限が拒否されています。デスクトップ通知を受信するには、システム設定で有効にしてください。",
+  "notificationPermissionRequest": "デスクトップ通知の権限が必要です。システム設定で有効にしますか？",
+  "goToSettings": "設定を開く",
+  "menuTokens": "トークン",
+  "menuSortOrder": "並べ替え",
+  "importPreview": "インポートプレビュー",
+  "importReady": "インポート可能",
+  "importDuplicate": "重複",
+  "importError": "エラー",
+  "importSelectedCount": "{count} 個のトークンをインポート",
+  "@importSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSelectAll": "すべて選択",
+  "importDeselectAll": "すべて解除",
+  "importInvalidData": "無効なトークンデータ",
+  "importNoTokens": "インポートするトークンがありません",
+  "importCategoryNew": "新規",
+  "importCategoryExisting": "既存",
+  "importCategoryContains": "含む: {names} ({count}個のトークン)",
+  "@importCategoryContains": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importCategoryContainsMore": "含む: {names}… ({count}個のトークン)",
+  "@importCategoryContainsMore": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedCategoryCount": "{count} 個のカテゴリをインポート",
+  "@importSelectedCategoryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedBothCount": "{tokenCount} 個のトークンと{categoryCount} 個のカテゴリをインポート",
+  "@importSelectedBothCount": {
+    "placeholders": {
+      "tokenCount": {"type": "int"},
+      "categoryCount": {"type": "int"}
+    }
+  },
+  "importOverwriteExisting": "上書き",
+  "importOverwrite": "上書き",
+  "importMergeStrategy": "マージ方法",
+  "importKeepLocal": "ローカルを保持",
+  "importOverwriteLocal": "ローカルを上書き",
+  "tokenCount": "トークン",
+  "categoryCount": "カテゴリ"
 }

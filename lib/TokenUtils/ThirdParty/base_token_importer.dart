@@ -17,8 +17,7 @@ import 'package:cloudotp/Models/token_category_binding.dart';
 
 import '../../Models/opt_token.dart';
 import '../../Models/token_category.dart';
-import '../../l10n/l10n.dart';
-import '../import_token_util.dart';
+import '../../Screens/Token/import_preview_screen.dart';
 
 enum DecryptResult {
   success,
@@ -33,9 +32,6 @@ abstract class BaseTokenImporter {
   });
 
   static importResult(ImporterResult res) async {
-    ImportAnalysis analysis = ImportAnalysis();
-    analysis.parseSuccess = res.tokens.length;
-    analysis.parseCategorySuccess = res.categories.length;
     for (TokenCategoryBinding binding in res.bindings) {
       res.categories
           .where((element) => element.uid == binding.categoryUid)
@@ -43,13 +39,11 @@ abstract class BaseTokenImporter {
         element.bindings.add(binding.tokenUid);
       });
     }
-    ImportAnalysis tmpAnalysis = await ImportTokenUtil.mergeTokensAndCategories(
-      res.tokens,
-      res.categories,
+    ImportPreviewScreen.show(
+      tokens: res.tokens,
+      categories: res.categories,
+      errors: res.errors,
     );
-    analysis.importSuccess = tmpAnalysis.importSuccess;
-    analysis.importCategorySuccess = tmpAnalysis.importCategorySuccess;
-    analysis.showToast(appLocalizations.fileDoesNotContainToken);
   }
 }
 
@@ -57,6 +51,20 @@ class ImporterResult {
   final List<OtpToken> tokens;
   final List<TokenCategory> categories;
   final List<TokenCategoryBinding> bindings;
+  final List<ImportTokenError> errors;
 
-  ImporterResult(this.tokens, this.categories, this.bindings);
+  ImporterResult(this.tokens, this.categories, this.bindings,
+      [this.errors = const []]);
+}
+
+class ImportTokenError {
+  final String issuer;
+  final String account;
+  final String reason;
+
+  ImportTokenError({
+    required this.issuer,
+    required this.account,
+    required this.reason,
+  });
 }

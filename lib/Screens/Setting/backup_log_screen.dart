@@ -18,6 +18,7 @@ import 'dart:math';
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Models/auto_backup_log.dart';
 import 'package:cloudotp/Screens/Setting/setting_backup_screen.dart';
+import 'package:cloudotp/Screens/Setting/setting_navigation_screen.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -165,21 +166,23 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
         ),
         if (!canBackup)
           Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const SizedBox(height: 20),
               Text(
                 appLocalizations.haveNotSetBackupPassword,
                 style: ChewieTheme.bodyMedium,
               ),
               const SizedBox(height: 10),
               RoundIconTextButton(
+                height: 36,
                 text: appLocalizations.goToSetBackupPassword,
                 background: ChewieTheme.primaryColor,
                 onPressed: () {
                   if (widget.isOverlay) {
-                    RouteUtil.pushDialogRoute(
-                        context,
-                        const BackupSettingScreen(
-                            jumpToAutoBackupPassword: true));
+                    RouteUtil.pushDialogRoute(context,
+                        const SettingNavigationScreen(initPageIndex: 3));
                   } else {
                     RouteUtil.pushCupertinoRoute(
                         context,

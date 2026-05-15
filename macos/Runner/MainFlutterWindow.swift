@@ -9,6 +9,7 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    LocalNotifierOverride.register(with: flutterViewController.registrar(forPlugin: "LocalNotifierOverride"))
 
     super.awakeFromNib()
   }

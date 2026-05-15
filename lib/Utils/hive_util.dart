@@ -81,6 +81,7 @@ class CloudOTPHiveUtil {
   static const String autoLockKey = "autoLock";
   static const String autoLockTimeKey = "autoLockTime";
   static const String enableSafeModeKey = "enableSafeMode";
+  static const String hideGestureTrailKey = "hideGestureTrail";
 
   //System
   static const String oldVersionKey = "oldVersion";

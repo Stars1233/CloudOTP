@@ -47,10 +47,15 @@ class CategoryDao {
   static Future<int> insertCategories(List<TokenCategory> categories) async {
     if (categories.isEmpty) return 0;
     final db = await DatabaseManager.getDataBase();
+    int maxSeq = await getMaxSeq();
+    int maxId = await getMaxId();
     Batch batch = db.batch();
-    for (TokenCategory category in categories) {
-      category.seq = await getMaxSeq() + 1 + categories.indexOf(category);
-      category.id = await getMaxId() + 1 + categories.indexOf(category);
+    for (int i = 0; i < categories.length; i++) {
+      TokenCategory category = categories[i];
+      if (category.seq <= 0) {
+        category.seq = maxSeq + 1 + i;
+      }
+      category.id = maxId + 1 + i;
       if (category.uid.isEmpty) category.uid = StringUtil.generateUid();
       batch.insert(
         tableName,

@@ -111,14 +111,21 @@ class EntryItemState extends SearchableState<EntryItem> {
       // onTap: widget.onTap,
       child: Column(
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(
-              vertical: _paddingVertical,
-              horizontal: _paddingHorizontal,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: _buildRowChildren(),
+          GestureDetector(
+            onTap: widget.onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                color: widget.backgroundColor ?? Colors.transparent,
+                borderRadius: _borderRadius,
+              ),
+              padding: EdgeInsets.symmetric(
+                vertical: _paddingVertical,
+                horizontal: _paddingHorizontal,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: _buildRowChildren(),
+              ),
             ),
           ),
           // _buildBottomDivider(),

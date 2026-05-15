@@ -594,7 +594,7 @@ class ChewieThemeColorData {
         backgroundColor: appBarBackgroundColor,
         surfaceTintColor: appBarSurfaceTintColor,
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         splashFactory: NoSplash.splashFactory,
       ),
       buttonTheme: ButtonThemeData(

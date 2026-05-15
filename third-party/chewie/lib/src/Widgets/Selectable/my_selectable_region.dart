@@ -1665,6 +1665,55 @@ class _SelectableRegionContainerDelegate
   Offset? _lastEndEdgeUpdateGlobalPosition;
 
   @override
+  SelectedContentRange? getSelection() {
+    if (currentSelectionStartIndex == -1 || currentSelectionEndIndex == -1) {
+      return null;
+    }
+    var startOffset = 0;
+    var endOffset = 0;
+    var foundStart = false;
+    bool forwardSelection = currentSelectionEndIndex >= currentSelectionStartIndex;
+    if (currentSelectionEndIndex == currentSelectionStartIndex) {
+      final range = selectables[currentSelectionStartIndex].getSelection()!;
+      forwardSelection = range.endOffset >= range.startOffset;
+    }
+    for (var index = 0; index < selectables.length; index++) {
+      final selectable = selectables[index];
+      final range = selectable.getSelection();
+      if (range == null) {
+        if (foundStart) {
+          return SelectedContentRange(
+            startOffset: forwardSelection ? startOffset : endOffset,
+            endOffset: forwardSelection ? endOffset : startOffset,
+          );
+        }
+        startOffset += selectable.contentLength;
+        endOffset = startOffset;
+        continue;
+      }
+      final selectionStartNormalized = min(range.startOffset, range.endOffset);
+      final selectionEndNormalized = max(range.startOffset, range.endOffset);
+      if (!foundStart) {
+        startOffset += selectionStartNormalized;
+        endOffset = startOffset + (selectionEndNormalized - selectionStartNormalized).abs();
+        foundStart = true;
+      } else {
+        endOffset += (selectionEndNormalized - selectionStartNormalized).abs();
+      }
+    }
+    return foundStart
+        ? SelectedContentRange(
+            startOffset: forwardSelection ? startOffset : endOffset,
+            endOffset: forwardSelection ? endOffset : startOffset,
+          )
+        : null;
+  }
+
+  @override
+  int get contentLength =>
+      selectables.fold<int>(0, (int sum, Selectable selectable) => sum + selectable.contentLength);
+
+  @override
   void remove(Selectable selectable) {
     _hasReceivedStartEvent.remove(selectable);
     _hasReceivedEndEvent.remove(selectable);

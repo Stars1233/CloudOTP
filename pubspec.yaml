@@ -51,7 +51,7 @@ dependencies:
   awesome_cloud:
     path: third-party/awesome_cloud
   # 工具
-  intl: ^0.19.0
+  intl: ^0.20.2
   html: ^0.15.0
   uuid: ^4.4.2 # UUID
   logger: ^2.4.0 # 日志

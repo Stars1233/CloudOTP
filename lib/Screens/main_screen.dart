@@ -34,8 +34,15 @@ import 'package:screen_capturer/screen_capturer.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../Database/category_dao.dart';
+import '../Database/token_category_binding_dao.dart';
+import '../Database/token_dao.dart';
+import '../Models/opt_token.dart';
+import '../Models/token_category.dart';
+import '../TokenUtils/code_generator.dart';
 import '../TokenUtils/import_token_util.dart';
 import '../Utils/app_provider.dart';
+import '../Utils/constant.dart';
 import '../Utils/hive_util.dart';
 import '../Utils/lottie_util.dart';
 import '../Utils/utils.dart';
@@ -70,6 +77,8 @@ class MainScreenState extends BaseWindowState<MainScreen>
         AutomaticKeepAliveClientMixin {
   Timer? _timer;
   TextEditingController searchController = TextEditingController();
+  List<OtpToken> _menuTokens = [];
+  List<TokenCategory> _menuCategories = [];
 
   @override
   void onWindowMinimize() {
@@ -129,6 +138,10 @@ class MainScreenState extends BaseWindowState<MainScreen>
       appProvider.canShowCloudBackupButton = value;
     });
     fetchReleases();
+    if (ResponsiveUtil.isMacOS()) {
+      _checkNotificationPermission();
+      _loadMenuTokenData();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.autoFocusSearchBarKey,
           defaultValue: false)) {
@@ -154,6 +167,64 @@ class MainScreenState extends BaseWindowState<MainScreen>
     searchController.addListener(() {
       homeScreenState?.performSearch(searchController.text);
     });
+  }
+
+  static const _notifierChannel = MethodChannel('local_notifier');
+
+  Future<void> _checkNotificationPermission() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    try {
+      final status =
+          await _notifierChannel.invokeMethod<String>('checkPermission');
+      if (status == 'denied' || status == 'notDetermined') {
+        if (!mounted) return;
+        DialogBuilder.showConfirmDialog(
+          context,
+          title: appLocalizations.setting,
+          message: status == 'denied'
+              ? appLocalizations.notificationPermissionDenied
+              : appLocalizations.notificationPermissionRequest,
+          confirmButtonText: appLocalizations.goToSettings,
+          cancelButtonText: appLocalizations.cancel,
+          onTapConfirm: () async {
+            await _notifierChannel.invokeMethod('openNotificationSettings');
+          },
+        );
+      }
+    } catch (e) {
+      ILogger.error("Failed to check notification permission", e);
+    }
+  }
+
+  Future<void> _loadMenuTokenData() async {
+    if (!DatabaseManager.initialized) return;
+    _menuTokens = await TokenDao.listTokens();
+    _menuTokens.sort((a, b) => a.issuer.compareTo(b.issuer));
+    List<TokenCategory> cats = await CategoryDao.listCategories();
+    for (var cat in cats) {
+      cat.tokens = await BindingDao.getTokens(cat.uid);
+      cat.tokens.sort((a, b) => a.issuer.compareTo(b.issuer));
+    }
+    _menuCategories = cats.where((e) => e.tokens.isNotEmpty).toList();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _copyTokenCode(OtpToken token) async {
+    double currentProgress = token.period == 0
+        ? 0
+        : (token.period * 1000 -
+                (DateTime.now().millisecondsSinceEpoch %
+                    (token.period * 1000))) /
+            (token.period * 1000);
+    if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.autoCopyNextCodeKey) &&
+        currentProgress < autoCopyNextCodeProgressThrehold) {
+      ChewieUtils.copy(context, CodeGenerator.getNextCode(token),
+          toastText: appLocalizations.alreadyCopiedNextCode);
+    } else {
+      ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token));
+    }
+    TokenDao.incTokenCopyTimes(token);
   }
 
   initGlobalConfig() {
@@ -209,11 +280,410 @@ class MainScreenState extends BaseWindowState<MainScreen>
   }
 
   _buildBodyByPlatform() {
-    return ResponsiveUtil.selectByResponsive(
+    Widget body = ResponsiveUtil.selectByResponsive(
       desktop: _buildDesktopBody(),
       landscape: SafeArea(child: _buildDesktopBody()),
       portrait: HomeScreen(key: chewieProvider.panelScreenKey),
     );
+    if (ResponsiveUtil.isMacOS()) {
+      return PlatformMenuBar(
+        menus: _buildMacMenuBar(),
+        child: body,
+      );
+    }
+    return body;
+  }
+
+  String _checked(String label, bool isChecked) =>
+      isChecked ? '✓  $label' : '    $label';
+
+  List<PlatformMenuItem> _buildMacMenuBar() {
+    return [
+      // App menu
+      PlatformMenu(
+        label: ResponsiveUtil.appName,
+        menus: [
+          PlatformMenuItemGroup(members: [
+            PlatformMenuItem(
+              label: appLocalizations.about,
+              onSelected: () => ShortcutsUtil.jumpToAbout(context),
+            ),
+            PlatformMenuItem(
+              label: appLocalizations.checkUpdates,
+              onSelected: () => ChewieUtils.getReleases(
+                context: context,
+                showLoading: true,
+                showUpdateDialog: true,
+                showFailedToast: true,
+                showLatestToast: true,
+              ),
+            ),
+          ]),
+          PlatformMenuItemGroup(members: [
+            PlatformMenuItem(
+              label: appLocalizations.setting,
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.comma,
+                meta: true,
+              ),
+              onSelected: () => ShortcutsUtil.jumpToSetting(context),
+            ),
+          ]),
+          PlatformMenuItemGroup(members: [
+            PlatformMenuItem(
+              label: '${appLocalizations.quit} ${ResponsiveUtil.appName}',
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyQ,
+                meta: true,
+              ),
+              onSelected: () => windowManager.close(),
+            ),
+          ]),
+        ],
+      ),
+      // File menu
+      PlatformMenu(
+        label: appLocalizations.menuFile,
+        menus: [
+          PlatformMenuItemGroup(members: [
+            PlatformMenuItem(
+              label: appLocalizations.addToken,
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyA,
+                control: true,
+                alt: true,
+              ),
+              onSelected: () => RouteUtil.pushDialogRoute(
+                chewieProvider.rootContext,
+                const AddTokenScreen(),
+              ),
+            ),
+            PlatformMenuItem(
+              label: appLocalizations.category,
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyC,
+                control: true,
+                alt: true,
+              ),
+              onSelected: () => RouteUtil.pushDialogRoute(
+                chewieProvider.rootContext,
+                const CategoryScreen(),
+              ),
+            ),
+            PlatformMenu(
+              label: appLocalizations.scanToken,
+              menus: [
+                PlatformMenuItemGroup(members: [
+                  PlatformMenuItem(
+                    label: appLocalizations.scanFromImageFile,
+                    onSelected: () async {
+                      FilePickerResult? result = await FileUtil.pickFiles(
+                        type: FileType.image,
+                        lockParentWindow: true,
+                      );
+                      if (result == null) return;
+                      if (!mounted) return;
+                      await ImportTokenUtil.analyzeImageFile(
+                        result.files.single.path!,
+                        context: context,
+                      );
+                    },
+                  ),
+                  PlatformMenuItem(
+                    label: appLocalizations.scanFromClipboard,
+                    onSelected: () {
+                      ScreenCapturerPlatform.instance
+                          .readImageFromClipboard()
+                          .then((value) {
+                        if (value != null) {
+                          ImportTokenUtil.analyzeImage(value, context: context);
+                        } else {
+                          IToast.showTop(appLocalizations.clipboardNoImage);
+                        }
+                      });
+                    },
+                  ),
+                ]),
+                PlatformMenuItemGroup(members: [
+                  PlatformMenuItem(
+                    label: appLocalizations.scanFromRegionCapture,
+                    onSelected: () => capture(CaptureMode.region),
+                  ),
+                  PlatformMenuItem(
+                    label: appLocalizations.scanFromWindowCapture,
+                    onSelected: () => capture(CaptureMode.window),
+                  ),
+                  PlatformMenuItem(
+                    label: appLocalizations.scanFromScreenCapture,
+                    onSelected: () => capture(CaptureMode.screen),
+                  ),
+                ]),
+              ],
+            ),
+          ]),
+          PlatformMenuItemGroup(members: [
+            PlatformMenuItem(
+              label: appLocalizations.exportImport,
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyI,
+                control: true,
+                alt: true,
+              ),
+              onSelected: () => RouteUtil.pushDialogRoute(
+                chewieProvider.rootContext,
+                const ImportExportTokenScreen(),
+              ),
+            ),
+            PlatformMenuItem(
+              label: appLocalizations.importFromThirdParty,
+              onSelected: () => RouteUtil.pushDialogRoute(
+                chewieProvider.rootContext,
+                const ImportFromThirdPartyBottomSheet(),
+              ),
+            ),
+          ]),
+          PlatformMenuItemGroup(members: [
+            PlatformMenuItem(
+              label: appLocalizations.cloudBackupServiceSetting,
+              onSelected: () => RouteUtil.pushDialogRoute(
+                chewieProvider.rootContext,
+                const CloudServiceScreen(showBack: false),
+              ),
+            ),
+          ]),
+        ],
+      ),
+      // View menu
+      PlatformMenu(
+        label: appLocalizations.menuView,
+        menus: [
+          PlatformMenu(
+            label: appLocalizations.changeLayoutType,
+            menus: [
+              PlatformMenuItem(
+                label: _checked(appLocalizations.simpleLayoutType,
+                    homeScreenState?.layoutType == LayoutType.Simple),
+                onSelected: () =>
+                    homeScreenState?.changeLayoutType(LayoutType.Simple),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.compactLayoutType,
+                    homeScreenState?.layoutType == LayoutType.Compact),
+                onSelected: () =>
+                    homeScreenState?.changeLayoutType(LayoutType.Compact),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.listLayoutType,
+                    homeScreenState?.layoutType == LayoutType.List),
+                onSelected: () =>
+                    homeScreenState?.changeLayoutType(LayoutType.List),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.spotlightLayoutType,
+                    homeScreenState?.layoutType == LayoutType.Spotlight),
+                onSelected: () =>
+                    homeScreenState?.changeLayoutType(LayoutType.Spotlight),
+              ),
+            ],
+          ),
+          PlatformMenu(
+            label: appLocalizations.menuSortOrder,
+            menus: [
+              PlatformMenuItem(
+                label: _checked(appLocalizations.defaultOrder,
+                    homeScreenState?.orderType == OrderType.Default),
+                onSelected: () =>
+                    homeScreenState?.changeOrderType(type: OrderType.Default),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.alphabeticalASCOrder,
+                    homeScreenState?.orderType == OrderType.AlphabeticalASC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.AlphabeticalASC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.alphabeticalDESCOrder,
+                    homeScreenState?.orderType == OrderType.AlphabeticalDESC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.AlphabeticalDESC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.copyTimesDESCOrder,
+                    homeScreenState?.orderType == OrderType.CopyTimesDESC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.CopyTimesDESC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.copyTimesASCOrder,
+                    homeScreenState?.orderType == OrderType.CopyTimesASC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.CopyTimesASC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.lastCopyTimeDESCOrder,
+                    homeScreenState?.orderType == OrderType.LastCopyTimeDESC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.LastCopyTimeDESC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.lastCopyTimeASCOrder,
+                    homeScreenState?.orderType == OrderType.LastCopyTimeASC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.LastCopyTimeASC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.createTimeDESCOrder,
+                    homeScreenState?.orderType == OrderType.CreateTimeDESC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.CreateTimeDESC),
+              ),
+              PlatformMenuItem(
+                label: _checked(appLocalizations.createTimeASCOrder,
+                    homeScreenState?.orderType == OrderType.CreateTimeASC),
+                onSelected: () => homeScreenState?.changeOrderType(
+                    type: OrderType.CreateTimeASC),
+              ),
+            ],
+          ),
+          PlatformMenuItemGroup(members: [
+            PlatformMenu(
+              label: appLocalizations.themeMode,
+              menus: [
+                PlatformMenuItem(
+                  label: _checked(appLocalizations.followSystem,
+                      appProvider.themeMode == ActiveThemeMode.system),
+                  onSelected: () {
+                    appProvider.themeMode = ActiveThemeMode.system;
+                    setState(() {});
+                  },
+                ),
+                PlatformMenuItem(
+                  label: _checked(appLocalizations.lightTheme,
+                      appProvider.themeMode == ActiveThemeMode.light),
+                  onSelected: () {
+                    appProvider.themeMode = ActiveThemeMode.light;
+                    setState(() {});
+                  },
+                ),
+                PlatformMenuItem(
+                  label: _checked(appLocalizations.darkTheme,
+                      appProvider.themeMode == ActiveThemeMode.dark),
+                  onSelected: () {
+                    appProvider.themeMode = ActiveThemeMode.dark;
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
+            PlatformMenu(
+              label: appLocalizations.language,
+              menus: LocaleUtil.localeLabels
+                  .map((tuple) => PlatformMenuItem(
+                        label: _checked(
+                            tuple.item1,
+                            appProvider.locale?.toString() ==
+                                tuple.item2?.toString()),
+                        onSelected: () {
+                          appProvider.locale = tuple.item2;
+                          setState(() {});
+                        },
+                      ))
+                  .toList(),
+            ),
+            PlatformMenu(
+              label: appLocalizations.fontFamily,
+              menus: CustomFont.getAllFonts()
+                  .map((font) => PlatformMenuItem(
+                        label: _checked(
+                            font.intlFontName, appProvider.currentFont == font),
+                        onSelected: () {
+                          CustomFont.loadFont(context, font,
+                              autoRestartApp: true);
+                        },
+                      ))
+                  .toList(),
+            ),
+          ]),
+        ],
+      ),
+      // Tokens menu
+      PlatformMenu(
+        label: appLocalizations.menuTokens,
+        menus: [
+          if (_menuTokens.isNotEmpty)
+            PlatformMenu(
+              label: appLocalizations.allTokens,
+              menus: _menuTokens
+                  .map((token) => PlatformMenuItem(
+                        label: token.issuer,
+                        onSelected: () => _copyTokenCode(token),
+                      ))
+                  .toList(),
+            ),
+          ..._menuCategories.map(
+            (category) => PlatformMenu(
+              label: category.title,
+              menus: category.tokens
+                  .map((token) => PlatformMenuItem(
+                        label: token.issuer,
+                        onSelected: () => _copyTokenCode(token),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+      // Window menu
+      // PlatformMenu(
+      //   label: appLocalizations.menuWindow,
+      //   menus: [
+      //     PlatformMenuItemGroup(members: [
+      //       PlatformMenuItem(
+      //         label: appLocalizations.minimize,
+      //         shortcut: const SingleActivator(
+      //           LogicalKeyboardKey.keyM,
+      //           meta: true,
+      //         ),
+      //         onSelected: () => windowManager.minimize(),
+      //       ),
+      //       PlatformMenuItem(
+      //         label: appLocalizations.zoom,
+      //         onSelected: () => ResponsiveUtil.maximizeOrRestore(),
+      //       ),
+      //     ]),
+      //     PlatformMenuItemGroup(members: [
+      //       PlatformMenuItem(
+      //         label: appLocalizations.lock,
+      //         shortcut: const SingleActivator(
+      //           LogicalKeyboardKey.keyL,
+      //           control: true,
+      //           alt: true,
+      //         ),
+      //         onSelected: () => ShortcutsUtil.lock(context),
+      //       ),
+      //     ]),
+      //   ],
+      // ),
+      // Help menu
+      PlatformMenu(
+        label: appLocalizations.menuHelp,
+        menus: [
+          PlatformMenuItem(
+            label: appLocalizations.shortcutHelp,
+            shortcut: const SingleActivator(LogicalKeyboardKey.f1),
+            onSelected: () => ShortcutsUtil.showShortcutHelp(context),
+          ),
+          PlatformMenuItem(
+            label: 'GitHub',
+            onSelected: () => UriUtil.launchUrlUri(context, repoUrl),
+          ),
+          PlatformMenuItem(
+            label: appLocalizations.officialWebsite,
+            onSelected: () => UriUtil.launchUrlUri(context, officialWebsite),
+          ),
+        ],
+      ),
+    ];
   }
 
   _buildDesktopBody() {
@@ -249,6 +719,9 @@ class MainScreenState extends BaseWindowState<MainScreen>
   }
 
   refresh() {
+    if (ResponsiveUtil.isMacOS()) {
+      _loadMenuTokenData();
+    }
     setState(() {});
   }
 
@@ -504,11 +977,14 @@ class MainScreenState extends BaseWindowState<MainScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ResponsiveUtil.selectByResponsive(
-                  desktop: const SizedBox(height: 8),
-                  landscape: const SizedBox(height: 12),
-                  portrait: const SizedBox(height: 8),
-                ),
+                SizedBox(
+                    height: ResponsiveUtil.isMacOS()
+                        ? 38
+                        : ResponsiveUtil.isDesktop()
+                            ? 8
+                            : ResponsiveUtil.isLandscapeLayout()
+                                ? 12
+                                : 8),
                 _buildLogo(),
                 const SizedBox(height: 8),
                 ToolButton(

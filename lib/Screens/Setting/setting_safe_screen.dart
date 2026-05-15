@@ -55,6 +55,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
   bool _enableSafeMode = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.enableSafeModeKey,
       defaultValue: defaultEnableSafeMode);
+  bool _hideGestureTrail =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideGestureTrailKey);
   bool _allowGuestureBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
   bool _allowDatabaseBiometric = ChewieHiveUtil.getBool(
@@ -146,6 +148,21 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
             description: canAuthenticateResponseString ??
                 appLocalizations.biometricUnlockTip,
             onTap: onBiometricTapped,
+          ),
+        ),
+        Visibility(
+          visible: _gesturePasswdAvailableAndSet,
+          child: CheckboxItem(
+            value: _hideGestureTrail,
+            title: appLocalizations.hideGestureTrail,
+            description: appLocalizations.hideGestureTrailTip,
+            onTap: () {
+              setState(() {
+                _hideGestureTrail = !_hideGestureTrail;
+                ChewieHiveUtil.put(
+                    CloudOTPHiveUtil.hideGestureTrailKey, _hideGestureTrail);
+              });
+            },
           ),
         ),
       ],

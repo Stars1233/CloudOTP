@@ -143,22 +143,41 @@ Future<void> initAndroid() async {
 
 Future<void> initDesktop() async {
   await initWindow();
-  LaunchAtStartup.instance.setup(
-    appName: ResponsiveUtil.appName,
-    appPath: Platform.resolvedExecutable,
-  );
-  await LocalNotifier.instance.setup(
-    appName: ResponsiveUtil.appName,
-    shortcutPolicy: ShortcutPolicy.requireCreate,
-  );
-  ILogger.debug(
-      "LaunchAtStartup: ${await LaunchAtStartup.instance.isEnabled()}");
-  ChewieHiveUtil.put(ChewieHiveUtil.launchAtStartupKey,
-      await LaunchAtStartup.instance.isEnabled());
-  for (String scheme in kWindowsSchemes) {
-    await protocolHandler.register(scheme);
+  try {
+    LaunchAtStartup.instance.setup(
+      appName: ResponsiveUtil.appName,
+      appPath: Platform.resolvedExecutable,
+    );
+  } catch (e, t) {
+    ILogger.error("Failed to setup LaunchAtStartup", e, t);
   }
-  await HotKeyManager.instance.unregisterAll();
+  try {
+    await LocalNotifier.instance.setup(
+      appName: ResponsiveUtil.appName,
+      shortcutPolicy: ShortcutPolicy.requireCreate,
+    );
+  } catch (e, t) {
+    ILogger.error("Failed to setup LocalNotifier", e, t);
+  }
+  try {
+    bool isEnabled = await LaunchAtStartup.instance.isEnabled();
+    ILogger.debug("LaunchAtStartup: $isEnabled");
+    ChewieHiveUtil.put(ChewieHiveUtil.launchAtStartupKey, isEnabled);
+  } catch (e, t) {
+    ILogger.error("Failed to check LaunchAtStartup status", e, t);
+  }
+  try {
+    for (String scheme in kWindowsSchemes) {
+      await protocolHandler.register(scheme);
+    }
+  } catch (e, t) {
+    ILogger.error("Failed to register protocol handler", e, t);
+  }
+  try {
+    await HotKeyManager.instance.unregisterAll();
+  } catch (e, t) {
+    ILogger.error("Failed to unregister hotkeys", e, t);
+  }
   ILogger.debug(
       "http proxy: ${Platform.environment['http_proxy']}, https proxy: ${Platform.environment['https_proxy']}");
 }

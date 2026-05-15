@@ -155,7 +155,12 @@ class Utils {
         await trayManager.setIcon('assets/logo-transparent.png');
       }
 
-      bool lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      bool lauchAtStartup = false;
+      try {
+        lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      } catch (e, t) {
+        ILogger.error("Failed to check LaunchAtStartup in tray", e, t);
+      }
       if (!ResponsiveUtil.isLinux()) {
         ILogger.debug(
             "Setting tray tooltip to app name ${ResponsiveUtil.appName}");
@@ -241,7 +246,12 @@ class Utils {
         await trayManager.setIcon('assets/logo-transparent.png');
       }
 
-      bool lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      bool lauchAtStartup = false;
+      try {
+        lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      } catch (e, t) {
+        ILogger.error("Failed to check LaunchAtStartup in initSimpleTray", e, t);
+      }
       if (!ResponsiveUtil.isLinux()) {
         await trayManager.setToolTip(ResponsiveUtil.appName);
       }

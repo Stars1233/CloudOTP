@@ -174,6 +174,8 @@ class TokenCategoryParameters extends $pb.GeneratedMessage {
     $core.String? remark,
     $core.String? uid,
     $core.String? bindings,
+    $core.bool? pinned,
+    $core.int? seq,
   }) {
     final $result = create();
     if (secret != null) {
@@ -196,6 +198,12 @@ class TokenCategoryParameters extends $pb.GeneratedMessage {
     }
     if (bindings != null) {
       $result.bindings = bindings;
+    }
+    if (pinned != null) {
+      $result.pinned = pinned;
+    }
+    if (seq != null) {
+      $result.seq = seq;
     }
     return $result;
   }
@@ -221,6 +229,8 @@ class TokenCategoryParameters extends $pb.GeneratedMessage {
     ..aOS(5, _omitFieldNames ? '' : 'remark')
     ..aOS(6, _omitFieldNames ? '' : 'uid')
     ..aOS(7, _omitFieldNames ? '' : 'bindings')
+    ..aOB(8, _omitFieldNames ? '' : 'pinned')
+    ..a<$core.int>(9, _omitFieldNames ? '' : 'seq', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('Using this can add significant overhead to your binary. '
@@ -349,6 +359,34 @@ class TokenCategoryParameters extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(7)
   void clearBindings() => clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.bool get pinned => $_getBF(7);
+
+  @$pb.TagNumber(8)
+  set pinned($core.bool v) {
+    $_setBool(7, v);
+  }
+
+  @$pb.TagNumber(8)
+  $core.bool hasPinned() => $_has(7);
+
+  @$pb.TagNumber(8)
+  void clearPinned() => clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.int get seq => $_getIZ(8);
+
+  @$pb.TagNumber(9)
+  set seq($core.int v) {
+    $_setSignedInt32(8, v);
+  }
+
+  @$pb.TagNumber(9)
+  $core.bool hasSeq() => $_has(8);
+
+  @$pb.TagNumber(9)
+  void clearSeq() => clearField(9);
 }
 
 const _omitFieldNames = $core.bool.fromEnvironment('protobuf.omit_field_names');

@@ -13,8 +13,6 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:convert';
-
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Models/opt_token.dart';
 import 'package:flutter/services.dart';
@@ -26,9 +24,9 @@ class TokenImageUtil {
   static final Map<String, List<String>> _matchCache = {};
 
   static loadBrandLogos() async {
-    final manifestContent = await rootBundle.loadString('AssetManifest.json');
-    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-    final brandFiles = manifestMap.keys
+    final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final brandFiles = assetManifest
+        .listAssets()
         .where((String key) =>
             key.startsWith('assets/brand/') && key.endsWith('.png'))
         .toList();

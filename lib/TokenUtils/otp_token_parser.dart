@@ -51,6 +51,9 @@ class OtpTokenParser {
       default:
         break;
     }
+    if (token.imagePath.isNotEmpty) {
+      uriText += "&image=${token.imagePath}";
+    }
     return Uri.parse(Uri.encodeFull(uriText));
   }
 
@@ -171,7 +174,13 @@ class OtpTokenParser {
         );
       }
     }
-    token.imagePath = TokenImageUtil.matchBrandLogo(token) ?? "";
+    if (queryParameters.containsKey("image") &&
+        queryParameters["image"].notNullOrEmpty) {
+      token.imagePath = queryParameters["image"]!;
+    }
+    if (token.imagePath.isEmpty) {
+      token.imagePath = TokenImageUtil.matchBrandLogo(token) ?? "";
+    }
     return token;
   }
 
@@ -213,7 +222,9 @@ class OtpTokenParser {
       token.secret = queryParameters["secret"]!;
       if (!CheckTokenUtil.isSecretBase32(token.secret)) return null;
     }
-    token.imagePath = TokenImageUtil.matchBrandLogo(token) ?? "";
+    if (token.imagePath.isEmpty) {
+      token.imagePath = TokenImageUtil.matchBrandLogo(token) ?? "";
+    }
     return token;
   }
 

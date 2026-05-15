@@ -97,6 +97,8 @@ class TokenCategory {
       description: description,
       remark: jsonEncode(remark),
       bindings: (await BindingDao.getTokenUids(uid)).join(","),
+      pinned: pinned,
+      seq: seq,
     );
   }
 
@@ -112,13 +114,13 @@ class TokenCategory {
     }
     return TokenCategory(
       id: 0,
-      seq: 0,
+      seq: parameters.hasSeq() ? parameters.seq : 0,
       uid: parameters.uid,
       title: parameters.title,
       description: parameters.description,
       createTimeStamp: DateTime.now().millisecondsSinceEpoch,
       editTimeStamp: DateTime.now().millisecondsSinceEpoch,
-      pinned: false,
+      pinned: parameters.hasPinned() ? parameters.pinned : false,
       remark: jsonDecode(parameters.remark),
       bindings: parameters.bindings.split(","),
     );

@@ -589,8 +589,28 @@
   "clipboardNoImage": "剪贴板中无图片",
   "importSuccess": "导入成功",
   "copySuccess": "已复制到剪贴板",
-  "importResultTip": "解析成功{parseSuccess}个令牌，导入成功{importSuccess}个令牌",
-  "importCategoryResultTip": "共包含{parseSuccess}个分类，导入成功{importSuccess}个分类",
+  "importTokenResult": "解析 {parseSuccess} 个令牌，导入 {importSuccess} 个",
+  "@importTokenResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importTokenResultWithError": "解析 {parseSuccess} 个令牌（失败 {parseFailed} 个），导入 {importSuccess} 个",
+  "@importTokenResultWithError": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "parseFailed": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importCategoryResult": "解析 {parseSuccess} 个分类，导入 {importSuccess} 个",
+  "@importCategoryResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
   "importFailed": "导入失败",
   "searchIconName": "搜索图标名称",
   "setIconForToken": "选择令牌图标",
@@ -704,8 +724,75 @@
   "cloudBackupSettings": "云备份",
   "databaseEncryptionSettings": "数据库加密",
   "gestureLockSettings": "手势锁",
+  "hideGestureTrail": "隐藏手势轨迹",
+  "hideGestureTrailTip": "解锁时隐藏绘制的图案",
   "autoLockSettings": "自动锁定",
   "projectRepoAbout": "项目仓库",
   "appAbout": "APP",
-  "contactAbout": "联系我们"
+  "contactAbout": "联系我们",
+  "menuFile": "文件",
+  "menuEdit": "编辑",
+  "menuView": "视图",
+  "menuWindow": "窗口",
+  "menuHelp": "帮助",
+  "quit": "退出",
+  "minimize": "最小化",
+  "zoom": "缩放",
+  "notificationPermissionDenied": "通知权限已被拒绝，无法显示桌面通知。请在系统设置中开启通知权限。",
+  "notificationPermissionRequest": "需要通知权限以显示桌面通知。是否前往系统设置开启？",
+  "goToSettings": "前往设置",
+  "menuTokens": "令牌",
+  "menuSortOrder": "排序方式",
+  "importPreview": "导入预览",
+  "importReady": "可导入",
+  "importDuplicate": "已存在",
+  "importError": "错误",
+  "importSelectedCount": "导入 {count} 个令牌",
+  "@importSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSelectAll": "全选",
+  "importDeselectAll": "取消全选",
+  "importInvalidData": "无效的令牌数据",
+  "importNoTokens": "没有可导入的令牌",
+  "importCategoryNew": "新增",
+  "importCategoryExisting": "已存在",
+  "importCategoryContains": "包含: {names} ({count}个令牌)",
+  "@importCategoryContains": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importCategoryContainsMore": "包含: {names}…等({count}个令牌)",
+  "@importCategoryContainsMore": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedCategoryCount": "导入 {count} 个分类",
+  "@importSelectedCategoryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedBothCount": "导入 {tokenCount} 个令牌和 {categoryCount} 个分类",
+  "@importSelectedBothCount": {
+    "placeholders": {
+      "tokenCount": {"type": "int"},
+      "categoryCount": {"type": "int"}
+    }
+  },
+  "importOverwriteExisting": "覆盖已存在",
+  "importOverwrite": "覆盖",
+  "importMergeStrategy": "合并策略",
+  "importKeepLocal": "保留本地",
+  "importOverwriteLocal": "覆盖本地",
+  "tokenCount": "令牌",
+  "categoryCount": "分类"
 }

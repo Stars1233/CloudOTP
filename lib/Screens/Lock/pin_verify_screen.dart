@@ -55,6 +55,8 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
       ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey);
   late final bool _enableBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
+  final bool _hideGestureTrail =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideGestureTrailKey);
   late final GestureNotifier _notifier = GestureNotifier(
       status: GestureStatus.verify,
       gestureText: appLocalizations.verifyGestureLock);
@@ -136,31 +138,30 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
               child: PopScope(
                 canPop: !widget.isModal,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 50),
+                    const Spacer(),
                     Text(
                       _notifier.gestureText,
                       style: ChewieTheme.titleMedium,
                     ),
                     const SizedBox(height: 30),
-                    Flexible(
-                      child: GestureUnlockView(
-                        key: _gestureUnlockView,
-                        size: min(MediaQuery.sizeOf(context).width, 400),
-                        padding: 60,
-                        roundSpace: 40,
-                        defaultColor: Colors.grey.withOpacity(0.5),
-                        selectedColor: ChewieTheme.primaryColor,
-                        failedColor: Colors.redAccent,
-                        disableColor: Colors.grey,
-                        solidRadiusRatio: 0.3,
-                        lineWidth: 2,
-                        touchRadiusRatio: 0.3,
-                        onCompleted: _gestureComplete,
-                      ),
+                    GestureUnlockView(
+                      key: _gestureUnlockView,
+                      size: min(MediaQuery.sizeOf(context).width, 400),
+                      padding: 60,
+                      roundSpace: 40,
+                      defaultColor: Colors.grey.withOpacity(0.5),
+                      selectedColor: ChewieTheme.primaryColor,
+                      failedColor: Colors.redAccent,
+                      disableColor: Colors.grey,
+                      solidRadiusRatio: 0.3,
+                      lineWidth: 2,
+                      touchRadiusRatio: 0.3,
+                      showLine: !_hideGestureTrail,
+                      onCompleted: _gestureComplete,
                     ),
                     Visibility(
                       visible: _biometricAvailable && _enableBiometric,

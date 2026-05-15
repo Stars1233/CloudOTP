@@ -589,8 +589,28 @@
   "clipboardNoImage": "No image in clipboard",
   "importSuccess": "Import successful",
   "copySuccess": "Copied to clipboard",
-  "importResultTip": "{parseSuccess} tokens parsed successfully, {importSuccess} tokens imported successfully",
-  "importCategoryResultTip": "{parseSuccess} categories found, {importSuccess} categories imported successfully",
+  "importTokenResult": "Parsed {parseSuccess} tokens, imported {importSuccess}",
+  "@importTokenResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importTokenResultWithError": "Parsed {parseSuccess} tokens ({parseFailed} failed), imported {importSuccess}",
+  "@importTokenResultWithError": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "parseFailed": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importCategoryResult": "Parsed {parseSuccess} categories, imported {importSuccess}",
+  "@importCategoryResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
   "importFailed": "Import failed",
   "searchIconName": "Search icon name",
   "setIconForToken": "Choose token icon",
@@ -704,8 +724,75 @@
   "cloudBackupSettings": "Cloud Backup",
   "databaseEncryptionSettings": "Database Encryption",
   "gestureLockSettings": "Gesture Lock",
+  "hideGestureTrail": "Hide Gesture Trail",
+  "hideGestureTrailTip": "Hide the drawn pattern when unlocking",
   "autoLockSettings": "Auto Lock",
   "projectRepoAbout": "Project Repository",
   "appAbout": "App",
-  "contactAbout": "Contact"
+  "contactAbout": "Contact",
+  "menuFile": "File",
+  "menuEdit": "Edit",
+  "menuView": "View",
+  "menuWindow": "Window",
+  "menuHelp": "Help",
+  "quit": "Quit",
+  "minimize": "Minimize",
+  "zoom": "Zoom",
+  "notificationPermissionDenied": "Notification permission has been denied. Please enable it in System Settings to receive desktop notifications.",
+  "notificationPermissionRequest": "Desktop notification permission is required. Go to System Settings to enable it?",
+  "goToSettings": "Go to Settings",
+  "menuTokens": "Tokens",
+  "menuSortOrder": "Sort Order",
+  "importPreview": "Import Preview",
+  "importReady": "Ready",
+  "importDuplicate": "Duplicate",
+  "importError": "Error",
+  "importSelectedCount": "Import {count} tokens",
+  "@importSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSelectAll": "Select All",
+  "importDeselectAll": "Deselect All",
+  "importInvalidData": "Invalid token data",
+  "importNoTokens": "No tokens to import",
+  "importCategoryNew": "New",
+  "importCategoryExisting": "Existing",
+  "importCategoryContains": "Contains: {names} ({count} tokens)",
+  "@importCategoryContains": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importCategoryContainsMore": "Contains: {names}... ({count} tokens)",
+  "@importCategoryContainsMore": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedCategoryCount": "Import {count} categories",
+  "@importSelectedCategoryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedBothCount": "Import {tokenCount} tokens and {categoryCount} categories",
+  "@importSelectedBothCount": {
+    "placeholders": {
+      "tokenCount": {"type": "int"},
+      "categoryCount": {"type": "int"}
+    }
+  },
+  "importOverwriteExisting": "Overwrite",
+  "importOverwrite": "Overwrite",
+  "importMergeStrategy": "Merge Strategy",
+  "importKeepLocal": "Keep Local",
+  "importOverwriteLocal": "Overwrite Local",
+  "tokenCount": "Tokens",
+  "categoryCount": "Categories"
 }

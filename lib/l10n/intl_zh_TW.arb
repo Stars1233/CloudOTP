@@ -589,8 +589,28 @@
   "clipboardNoImage": "剪貼簿中無圖片",
   "importSuccess": "導入成功",
   "copySuccess": "已複製到剪貼簿",
-  "importResultTip": "解析成功{parseSuccess}個令牌，導入成功{importSuccess}個令牌",
-  "importCategoryResultTip": "共包含{parseSuccess}個分類，導入成功{importSuccess}個分類",
+  "importTokenResult": "解析 {parseSuccess} 個令牌，導入 {importSuccess} 個",
+  "@importTokenResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importTokenResultWithError": "解析 {parseSuccess} 個令牌（失敗 {parseFailed} 個），導入 {importSuccess} 個",
+  "@importTokenResultWithError": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "parseFailed": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importCategoryResult": "解析 {parseSuccess} 個分類，導入 {importSuccess} 個",
+  "@importCategoryResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
   "importFailed": "導入失敗",
   "searchIconName": "搜尋圖示名稱",
   "setIconForToken": "選擇令牌圖示",
@@ -704,8 +724,75 @@
   "cloudBackupSettings": "雲端備份",
   "databaseEncryptionSettings": "資料庫加密",
   "gestureLockSettings": "手勢鎖",
+  "hideGestureTrail": "隱藏手勢軌跡",
+  "hideGestureTrailTip": "解鎖時隱藏繪製的圖案",
   "autoLockSettings": "自動鎖定",
   "projectRepoAbout": "專案倉庫",
   "appAbout": "APP",
-  "contactAbout": "聯絡我們"
+  "contactAbout": "聯絡我們",
+  "menuFile": "檔案",
+  "menuEdit": "編輯",
+  "menuView": "顯示方式",
+  "menuWindow": "視窗",
+  "menuHelp": "說明",
+  "quit": "結束",
+  "minimize": "最小化",
+  "zoom": "縮放",
+  "notificationPermissionDenied": "通知權限已被拒絕，無法顯示桌面通知。請在系統設定中開啟通知權限。",
+  "notificationPermissionRequest": "需要通知權限以顯示桌面通知。是否前往系統設定開啟？",
+  "goToSettings": "前往設定",
+  "menuTokens": "令牌",
+  "menuSortOrder": "排序方式",
+  "importPreview": "匯入預覽",
+  "importReady": "可匯入",
+  "importDuplicate": "已存在",
+  "importError": "錯誤",
+  "importSelectedCount": "匯入 {count} 個令牌",
+  "@importSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSelectAll": "全選",
+  "importDeselectAll": "取消全選",
+  "importInvalidData": "無效的令牌資料",
+  "importNoTokens": "沒有可匯入的令牌",
+  "importCategoryNew": "新增",
+  "importCategoryExisting": "已存在",
+  "importCategoryContains": "包含: {names} ({count}個令牌)",
+  "@importCategoryContains": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importCategoryContainsMore": "包含: {names}…等({count}個令牌)",
+  "@importCategoryContainsMore": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedCategoryCount": "匯入 {count} 個分類",
+  "@importSelectedCategoryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedBothCount": "匯入 {tokenCount} 個令牌和 {categoryCount} 個分類",
+  "@importSelectedBothCount": {
+    "placeholders": {
+      "tokenCount": {"type": "int"},
+      "categoryCount": {"type": "int"}
+    }
+  },
+  "importOverwriteExisting": "覆蓋已存在",
+  "importOverwrite": "覆蓋",
+  "importMergeStrategy": "合併策略",
+  "importKeepLocal": "保留本地",
+  "importOverwriteLocal": "覆蓋本地",
+  "tokenCount": "令牌",
+  "categoryCount": "分類"
 }

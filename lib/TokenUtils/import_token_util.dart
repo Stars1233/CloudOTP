@@ -30,7 +30,9 @@ import 'package:zxing2/qrcode.dart';
 
 import '../Database/category_dao.dart';
 import '../Database/config_dao.dart';
+import '../Database/token_category_binding_dao.dart';
 import '../Models/token_category.dart';
+import '../Screens/Token/import_preview_screen.dart';
 import '../Utils/constant.dart';
 import '../Utils/hive_util.dart';
 import '../Widgets/BottomSheet/token_option_bottom_sheet.dart';
@@ -38,6 +40,7 @@ import '../l10n/l10n.dart';
 import 'Backup/backup.dart';
 import 'Backup/backup_encrypt_interface.dart';
 import 'Backup/backup_encrypt_v1.dart';
+import 'ThirdParty/base_token_importer.dart';
 
 extension TrimPadding on String {
   String trimPadding() {
@@ -46,46 +49,46 @@ extension TrimPadding on String {
 }
 
 class ImportAnalysis {
-  int parseFailed;
-
-  int parseSuccess;
-
-  int importSuccess;
-
+  int parseTokenSuccess;
+  int parseTokenFailed;
+  int importTokenSuccess;
   int parseCategorySuccess;
-
   int importCategorySuccess;
 
-  int importConfigSuccess;
-
-  int importCloudServiceConfigSuccess;
-
   ImportAnalysis({
-    this.parseFailed = 0,
-    this.parseSuccess = 0,
-    this.importSuccess = 0,
+    this.parseTokenSuccess = 0,
+    this.parseTokenFailed = 0,
+    this.importTokenSuccess = 0,
     this.parseCategorySuccess = 0,
     this.importCategorySuccess = 0,
-    this.importConfigSuccess = 0,
-    this.importCloudServiceConfigSuccess = 0,
   });
 
   showToast([String noTokenToast = ""]) {
-    String tokenToast =
-        appLocalizations.importResultTip(importSuccess, parseSuccess);
-    String categoryToast = appLocalizations.importCategoryResultTip(
-        importCategorySuccess, parseCategorySuccess);
-    if (parseSuccess > 0) {
-      if (parseCategorySuccess > 0) {
-        IToast.showTop("$tokenToast; $categoryToast");
+    ILogger.info(toString());
+    List<String> parts = [];
+    if (parseTokenSuccess > 0 || parseTokenFailed > 0) {
+      if (parseTokenFailed > 0) {
+        parts.add(appLocalizations.importTokenResultWithError(
+            parseTokenSuccess, parseTokenFailed, importTokenSuccess));
       } else {
-        IToast.showTop(tokenToast);
+        parts.add(appLocalizations.importTokenResult(
+            parseTokenSuccess, importTokenSuccess));
       }
-    } else if (parseCategorySuccess > 0) {
-      IToast.showTop(categoryToast);
+    }
+    if (parseCategorySuccess > 0) {
+      parts.add(appLocalizations.importCategoryResult(
+          parseCategorySuccess, importCategorySuccess));
+    }
+    if (parts.isNotEmpty) {
+      IToast.showTop(parts.join("; "));
     } else {
       IToast.showTop(noTokenToast);
     }
+  }
+
+  @override
+  String toString() {
+    return "ImportAnalysis(parseTokenSuccess: $parseTokenSuccess, parseTokenFailed: $parseTokenFailed, importTokenSuccess: $importTokenSuccess, parseCategorySuccess: $parseCategorySuccess, importCategorySuccess: $importCategorySuccess)";
   }
 }
 
@@ -298,13 +301,13 @@ class ImportTokenUtil {
           IToast.showTop(appLocalizations.importFailed);
           return true;
         }
-        ImportAnalysis analysis = ImportAnalysis();
-        analysis.parseSuccess = tokens.length;
-        analysis.importSuccess = await mergeTokens(tokens);
         if (showLoading) {
           CustomLoadingDialog.dismissLoading();
         }
-        analysis.showToast(appLocalizations.fileDoesNotContainToken);
+        ImportPreviewScreen.show(
+          tokens: tokens,
+          categories: [],
+        );
         return true;
       }
     } catch (e, t) {
@@ -458,16 +461,10 @@ class ImportTokenUtil {
     Backup backup = await compute((_) async {
       return await BackupEncryptionV1().decrypt(content, tmpPassword);
     }, null);
-    ImportAnalysis analysis = ImportAnalysis();
-    analysis.parseSuccess = backup.tokens.length;
-    analysis.parseCategorySuccess = backup.categories.length;
-    ImportAnalysis tmpAnalysis = await mergeTokensAndCategories(
-      backup.tokens,
-      backup.categories,
+    ImportPreviewScreen.show(
+      tokens: backup.tokens,
+      categories: backup.categories,
     );
-    analysis.importSuccess = tmpAnalysis.importSuccess;
-    analysis.importCategorySuccess = tmpAnalysis.importCategorySuccess;
-    analysis.showToast(appLocalizations.fileDoesNotContainToken);
     return true;
   }
 
@@ -485,7 +482,6 @@ class ImportTokenUtil {
     if (showLoading) {
       CustomLoadingDialog.showLoading(title: appLocalizations.importing);
     }
-    ImportAnalysis analysis = ImportAnalysis();
     List<String> lines = content.split("\n");
     List<OtpToken> tokens = [];
     for (String line in lines) {
@@ -493,16 +489,19 @@ class ImportTokenUtil {
       List<OtpToken> parsedTokens = OtpTokenParser.parseUri(line);
       if (parsedTokens.isNotEmpty) {
         tokens.addAll(parsedTokens);
-        analysis.parseSuccess += parsedTokens.length;
-      } else {
-        analysis.parseFailed++;
       }
     }
-    analysis.importSuccess = await mergeTokens(tokens);
     if (showLoading) {
       CustomLoadingDialog.dismissLoading();
     }
-    if (showToast) analysis.showToast(noTokenToast);
+    if (tokens.isEmpty) {
+      if (showToast && noTokenToast.isNotEmpty) IToast.showTop(noTokenToast);
+      return [];
+    }
+    ImportPreviewScreen.show(
+      tokens: tokens,
+      categories: [],
+    );
     return tokens;
   }
 
@@ -620,7 +619,7 @@ class ImportTokenUtil {
     return null;
   }
 
-  static bool checkCategoryExist(
+  static TokenCategory? findExistingCategory(
     TokenCategory category,
     List<TokenCategory> categoryList,
   ) {
@@ -630,10 +629,10 @@ class ImportTokenUtil {
         category.uid = StringUtil.generateUid();
       }
       if (tokenCategory.title == category.title) {
-        return true;
+        return tokenCategory;
       }
     }
-    return false;
+    return null;
   }
 
   static Future<ImportAnalysis> mergeTokensAndCategories(
@@ -642,7 +641,9 @@ class ImportTokenUtil {
     bool performInsert = true,
   }) async {
     ImportAnalysis analysis = ImportAnalysis();
-    analysis.importSuccess = await mergeTokens(tokenList);
+    analysis.parseTokenSuccess = tokenList.length;
+    analysis.parseCategorySuccess = categoryList.length;
+    analysis.importTokenSuccess = await mergeTokens(tokenList);
     Map<String, String> uidMap = await getAlreadyExistUid(tokenList);
     for (TokenCategory category in categoryList) {
       category.bindings = category.bindings.map((e) => uidMap[e] ?? e).toList();
@@ -661,8 +662,10 @@ class ImportTokenUtil {
       if (toMergeToken.issuer.isEmpty) {
         toMergeToken.issuer = toMergeToken.account;
       }
-      toMergeToken.imagePath =
-          TokenImageUtil.matchBrandLogo(toMergeToken) ?? "";
+      if (toMergeToken.imagePath.isEmpty) {
+        toMergeToken.imagePath =
+            TokenImageUtil.matchBrandLogo(toMergeToken) ?? "";
+      }
       OtpToken? alreadyToken = checkTokenExist(toMergeToken, already);
       if (alreadyToken == null &&
           checkTokenExist(toMergeToken, finalMergeTokenList) == null) {
@@ -695,16 +698,208 @@ class ImportTokenUtil {
     }
     List<TokenCategory> already = await CategoryDao.listCategories();
     List<TokenCategory> newCategoryList = [];
+    List<TokenCategory> updatedCategoryList = [];
     for (TokenCategory category in categoryList) {
-      if (!checkCategoryExist(category, already) &&
-          !checkCategoryExist(category, newCategoryList)) {
+      TokenCategory? existingInDb = findExistingCategory(category, already);
+      TokenCategory? existingInNew =
+          findExistingCategory(category, newCategoryList);
+      if (existingInDb != null) {
+        bool needUpdate = false;
+        if (category.pinned && !existingInDb.pinned) {
+          existingInDb.pinned = true;
+          needUpdate = true;
+        }
+        if (category.bindings.isNotEmpty) {
+          for (String binding in category.bindings) {
+            if (!existingInDb.bindings.contains(binding)) {
+              existingInDb.bindings.add(binding);
+              needUpdate = true;
+            }
+          }
+        }
+        if (needUpdate) {
+          updatedCategoryList.add(existingInDb);
+        }
+      } else if (existingInNew == null) {
         newCategoryList.add(category);
       }
     }
     if (performInsert) {
       await CategoryDao.insertCategories(newCategoryList);
+      if (updatedCategoryList.isNotEmpty) {
+        await CategoryDao.updateCategories(updatedCategoryList);
+        for (TokenCategory cat in updatedCategoryList) {
+          if (cat.bindings.isNotEmpty) {
+            await BindingDao.bingdingsForCategory(cat.uid, cat.bindings);
+          }
+        }
+      }
       homeScreenState?.refresh();
     }
     return newCategoryList.length;
   }
+
+  static Future<List<ImportTokenItem>> previewImport(
+    List<OtpToken> tokens, {
+    List<ImportTokenError> errors = const [],
+  }) async {
+    List<OtpToken> already = await TokenDao.listTokens();
+    List<ImportTokenItem> items = [];
+    for (OtpToken token in tokens) {
+      if (token.issuer.isEmpty) {
+        token.issuer = token.account;
+      }
+      if (token.imagePath.isEmpty) {
+        token.imagePath = TokenImageUtil.matchBrandLogo(token) ?? "";
+      }
+      OtpToken? existing = checkTokenExist(token, already);
+      if (existing != null) {
+        items.add(ImportTokenItem(
+          token: token,
+          existingToken: existing,
+          status: ImportTokenStatus.duplicate,
+          selected: false,
+        ));
+      } else {
+        items.add(ImportTokenItem(
+          token: token,
+          status: ImportTokenStatus.ready,
+          selected: true,
+        ));
+      }
+    }
+    for (ImportTokenError error in errors) {
+      OtpToken placeholder = OtpToken.init();
+      placeholder.issuer = error.issuer;
+      placeholder.account = error.account;
+      items.add(ImportTokenItem(
+        token: placeholder,
+        status: ImportTokenStatus.error,
+        errorReason: error.reason,
+        selected: false,
+      ));
+    }
+    return items;
+  }
+
+  static Future<List<ImportCategoryItem>> previewCategories(
+    List<TokenCategory> categories,
+  ) async {
+    List<TokenCategory> already = await CategoryDao.listCategories();
+    List<ImportCategoryItem> items = [];
+    for (TokenCategory category in categories) {
+      TokenCategory? existingCat =
+          already.where((e) => e.title == category.title).firstOrNull;
+      items.add(ImportCategoryItem(
+        category: category,
+        existingCategory: existingCat,
+        isNew: existingCat == null,
+        selected: existingCat == null,
+      ));
+    }
+    return items;
+  }
+
+  static Future<ImportAnalysis> confirmImport(
+    List<OtpToken> selectedTokens,
+    List<TokenCategory> categories, {
+    bool overwriteExisting = false,
+    List<ImportTokenItem> tokenItems = const [],
+    List<ImportCategoryItem> categoryItems = const [],
+  }) async {
+    ImportAnalysis analysis = ImportAnalysis();
+    analysis.parseTokenSuccess =
+        tokenItems.where((e) => e.status != ImportTokenStatus.error).length;
+    analysis.parseTokenFailed =
+        tokenItems.where((e) => e.status == ImportTokenStatus.error).length;
+    analysis.parseCategorySuccess = categoryItems.length;
+    if (!overwriteExisting) {
+      var result =
+          await mergeTokensAndCategories(selectedTokens, categories);
+      analysis.importTokenSuccess = result.importTokenSuccess;
+      analysis.importCategorySuccess = result.importCategorySuccess;
+      return analysis;
+    }
+    Set<String> selectedUids = selectedTokens.map((t) => t.uid).toSet();
+    List<OtpToken> newTokens = [];
+    List<OtpToken> overwriteTokens = [];
+    for (var item in tokenItems) {
+      if (!selectedUids.contains(item.token.uid)) continue;
+      if (item.status == ImportTokenStatus.duplicate &&
+          item.existingToken != null) {
+        OtpToken existing = item.existingToken!;
+        existing.pinned = item.token.pinned;
+        existing.imagePath = item.token.imagePath;
+        existing.description = item.token.description;
+        overwriteTokens.add(existing);
+      } else if (item.status == ImportTokenStatus.ready) {
+        newTokens.add(item.token);
+      }
+    }
+    analysis.importTokenSuccess = await mergeTokens(newTokens);
+    if (overwriteTokens.isNotEmpty) {
+      await TokenDao.updateTokens(overwriteTokens);
+      analysis.importTokenSuccess += overwriteTokens.length;
+    }
+    Map<String, String> uidMap =
+        await getAlreadyExistUid([...newTokens, ...selectedTokens]);
+    List<TokenCategory> newCategories = [];
+    for (var catItem in categoryItems) {
+      if (!catItem.selected) continue;
+      var cat = catItem.category;
+      cat.bindings = cat.bindings.map((e) => uidMap[e] ?? e).toList();
+      if (!catItem.isNew && catItem.existingCategory != null) {
+        TokenCategory existing = catItem.existingCategory!;
+        existing.pinned = cat.pinned;
+        existing.description = cat.description;
+        existing.bindings = cat.bindings;
+        await CategoryDao.updateCategories([existing]);
+        await BindingDao.bingdingsForCategory(existing.uid, existing.bindings);
+        analysis.importCategorySuccess++;
+      } else if (catItem.isNew) {
+        newCategories.add(cat);
+      }
+    }
+    if (newCategories.isNotEmpty) {
+      analysis.importCategorySuccess += await mergeCategories(newCategories);
+    }
+    homeScreenState?.refresh();
+    return analysis;
+  }
+}
+
+enum ImportTokenStatus {
+  ready,
+  duplicate,
+  error,
+}
+
+class ImportTokenItem {
+  final OtpToken token;
+  final OtpToken? existingToken;
+  final ImportTokenStatus status;
+  final String? errorReason;
+  bool selected;
+
+  ImportTokenItem({
+    required this.token,
+    this.existingToken,
+    required this.status,
+    this.errorReason,
+    required this.selected,
+  });
+}
+
+class ImportCategoryItem {
+  final TokenCategory category;
+  final TokenCategory? existingCategory;
+  final bool isNew;
+  bool selected;
+
+  ImportCategoryItem({
+    required this.category,
+    this.existingCategory,
+    required this.isNew,
+    required this.selected,
+  });
 }
