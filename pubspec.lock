@@ -1296,10 +1296,10 @@ packages:
     dependency: "direct main"
     description:
       name: mobile_scanner
-      sha256: d234581c090526676fd8fab4ada92f35c6746e3fb4f05a399665d75a399fb760
+      sha256: c92c26bf2231695b6d3477c8dcf435f51e28f87b1745966b1fe4c47a286171ce
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "5.2.3"
+    version: "7.2.0"
   modal_bottom_sheet:
     dependency: "direct main"
     description:
@@ -1746,10 +1746,10 @@ packages:
     dependency: "direct main"
     description:
       name: screen_protector
-      sha256: "305fd157f6f0b210afe216e790022bfe469c3b1d1f2e0d3dcc5906cc9c49c3e9"
+      sha256: "7f53d7a0c238a62dc970841fd13053f2b79f14b7f8d2c82a11fef65b066f42cd"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.4.2+1"
+    version: "1.5.1"
   screen_retriever:
     dependency: transitive
     description:

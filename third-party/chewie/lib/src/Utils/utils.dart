@@ -23,25 +23,24 @@ class ChewieUtils {
   }
 
   static Future<void> enableSafeMode() async {
-    await ScreenProtector.preventScreenshotOn();
-    await ScreenProtector.protectDataLeakageOn();
-    await ScreenProtector.protectDataLeakageWithBlur();
-    await ScreenProtector.protectDataLeakageWithColor(
-        ChewieTheme.scaffoldBackgroundColor);
-    if (ResponsiveUtil.isAndroid()) {
-      SystemChrome.setSystemUIOverlayStyle(
-          const SystemUiOverlayStyle(statusBarColor: Colors.white));
+    if (ResponsiveUtil.isIOS()) {
+      await ScreenProtector.preventScreenshotOn();
+      await ScreenProtector.protectDataLeakageWithBlur();
+      await ScreenProtector.protectDataLeakageWithColor(
+          ChewieTheme.scaffoldBackgroundColor);
+    } else if (ResponsiveUtil.isAndroid()) {
+      await ScreenProtector.protectDataLeakageOn();
       FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
-      FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_BLUR_BEHIND);
     }
   }
 
   static Future<void> disableSafeMode() async {
-    await ScreenProtector.preventScreenshotOff();
-    await ScreenProtector.protectDataLeakageOff();
-    await ScreenProtector.protectDataLeakageWithBlurOff();
-    await ScreenProtector.protectDataLeakageWithColorOff();
-    if (ResponsiveUtil.isAndroid()) {
+    if (ResponsiveUtil.isIOS()) {
+      await ScreenProtector.preventScreenshotOff();
+      await ScreenProtector.protectDataLeakageWithBlurOff();
+      await ScreenProtector.protectDataLeakageWithColorOff();
+    } else if (ResponsiveUtil.isAndroid()) {
+      await ScreenProtector.protectDataLeakageOff();
       FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
     }
   }

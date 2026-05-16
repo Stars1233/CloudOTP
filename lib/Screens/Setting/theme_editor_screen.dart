@@ -42,6 +42,7 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
     with TickerProviderStateMixin {
   late ChewieThemeColorData _theme;
   late TextEditingController _nameController;
+  final FocusNode _nameFocusNode = FocusNode();
   bool get _isEditing => widget.editIndex != null;
 
   @override
@@ -53,11 +54,15 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
     _nameController = TextEditingController(
       text: _isEditing ? _theme.name : '',
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _nameFocusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _nameFocusNode.dispose();
     super.dispose();
   }
 
@@ -245,6 +250,28 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
     }
   }
 
+  Widget _buildColorGroup(
+    String title,
+    List<Widget> children, {
+    bool initiallyExpanded = false,
+  }) {
+    return CaptionItem(
+      title: title,
+      initiallyExpanded: initiallyExpanded,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 8,
+            right: 8,
+            top: 3,
+            bottom: 3,
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
   Widget _buildColorRow(String field, String label) {
     final color = _getColor(field);
     return InkWell(
@@ -261,7 +288,7 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           children: [
             Container(
@@ -278,11 +305,9 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
               child: Text(label, style: ChewieTheme.bodyMedium),
             ),
             Text(
-              '#${color.toHex().substring(3)}',
+              '#${color.toHex().substring(3).toUpperCase()}',
               style: ChewieTheme.bodySmall,
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: ChewieTheme.iconColor),
           ],
         ),
       ),
@@ -299,12 +324,12 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
       padding: widget.padding,
       onTapBack: () => DialogNavigatorHelper.responsivePopPage(),
       actions: [
-        TextButton(
-          onPressed: _save,
-          child: Text(
-            appLocalizations.save,
-            style: TextStyle(color: ChewieTheme.primaryColor),
+        CircleIconButton(
+          icon: Icon(
+            LucideIcons.check,
+            color: ChewieTheme.iconColor,
           ),
+          onTap: _save,
         ),
       ],
       desktopActions: [
@@ -317,46 +342,40 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
       ],
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: InputItem(
             controller: _nameController,
+            focusNode: _nameFocusNode,
+            title: appLocalizations.themeName,
             hint: appLocalizations.themeNameHint,
             textInputAction: TextInputAction.done,
           ),
         ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: ThemeItem(
-              themeColorData: _theme,
-              index: 0,
-              groupIndex: 0,
-              onChanged: null,
-            ),
-          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: _ThemePreview(theme: _theme),
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupBackground,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupBackground,
+          [
             _buildColorRow('scaffoldBackgroundColor', 'Scaffold Background'),
             _buildColorRow('canvasColor', 'Canvas'),
             _buildColorRow('cardColor', 'Card'),
           ],
+          initiallyExpanded: true,
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupText,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupText,
+          [
             _buildColorRow('textColor', 'Text'),
             _buildColorRow('textLightGreyColor', 'Text Light Grey'),
             _buildColorRow('textDarkGreyColor', 'Text Dark Grey'),
             _buildColorRow('hintColor', 'Hint'),
           ],
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupAccent,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupAccent,
+          [
             _buildColorRow('primaryColor', 'Primary'),
             _buildColorRow('indicatorColor', 'Indicator'),
             _buildColorRow('cursorColor', 'Cursor'),
@@ -364,10 +383,9 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
             _buildColorRow('textSelectionHandleColor', 'Selection Handle'),
           ],
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupButtons,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupButtons,
+          [
             _buildColorRow('buttonPrimaryColor', 'Primary Button'),
             _buildColorRow('buttonSecondaryColor', 'Secondary Button'),
             _buildColorRow('buttonHoverColor', 'Button Hover'),
@@ -375,19 +393,17 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
             _buildColorRow('buttonDisabledColor', 'Button Disabled'),
           ],
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupAppBar,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupAppBar,
+          [
             _buildColorRow('appBarBackgroundColor', 'AppBar Background'),
             _buildColorRow('appBarSurfaceTintColor', 'AppBar Surface Tint'),
             _buildColorRow('appBarShadowColor', 'AppBar Shadow'),
           ],
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupSurfaces,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupSurfaces,
+          [
             _buildColorRow('hoverColor', 'Hover'),
             _buildColorRow('splashColor', 'Splash'),
             _buildColorRow('highlightColor', 'Highlight'),
@@ -397,26 +413,255 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
             _buildColorRow('iconColor', 'Icon'),
           ],
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupScrollbar,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupScrollbar,
+          [
             _buildColorRow('scrollBarThumbColor', 'Thumb'),
             _buildColorRow('scrollBarThumbHoverColor', 'Thumb Hover'),
             _buildColorRow('scrollBarTrackColor', 'Track'),
             _buildColorRow('scrollBarTrackHoverColor', 'Track Hover'),
           ],
         ),
-        CaptionItem(
-          title: appLocalizations.colorGroupStatus,
-          initiallyExpanded: false,
-          children: [
+        _buildColorGroup(
+          appLocalizations.colorGroupStatus,
+          [
             _buildColorRow('successColor', 'Success'),
             _buildColorRow('warningColor', 'Warning'),
             _buildColorRow('errorColor', 'Error'),
           ],
         ),
         const SizedBox(height: 30),
+      ],
+    );
+  }
+}
+
+class _ThemePreview extends StatelessWidget {
+  final ChewieThemeColorData theme;
+
+  const _ThemePreview({required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.borderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildAppBar(),
+            Container(
+              color: theme.scaffoldBackgroundColor,
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _buildListCard(),
+                  const SizedBox(height: 10),
+                  _buildButtonRow(),
+                  const SizedBox(height: 10),
+                  _buildStatusRow(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      color: theme.appBarBackgroundColor,
+      child: Row(
+        children: [
+          Icon(LucideIcons.chevronLeft, size: 18, color: theme.iconColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Preview',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: theme.textColor,
+              ),
+            ),
+          ),
+          Icon(LucideIcons.ellipsis, size: 18, color: theme.iconColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.canvasColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.borderColor, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          _buildListTile(LucideIcons.user, 'Title Text', 'Description text'),
+          Divider(height: 1, color: theme.dividerColor, indent: 42),
+          _buildListTile(LucideIcons.settings, 'Second Item', 'Detail info'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListTile(IconData icon, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: theme.splashColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 15, color: theme.primaryColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textColor,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.textLightGreyColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(LucideIcons.chevronRight,
+              size: 14, color: theme.textDarkGreyColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButtonRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: theme.buttonPrimaryColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'Primary',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.canvasColor,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: theme.buttonSecondaryColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: theme.borderColor, width: 0.5),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'Secondary',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: theme.textColor,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          decoration: BoxDecoration(
+            color: theme.buttonDisabledColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'Disabled',
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.hintColor,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusRow() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.borderColor, width: 0.5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatusDot(theme.successColor, 'Success'),
+          _buildStatusDot(theme.warningColor, 'Warning'),
+          _buildStatusDot(theme.errorColor, 'Error'),
+          _buildStatusDot(theme.primaryColor, 'Primary'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusDot(Color color, String label) {
+    return Column(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10, color: theme.textLightGreyColor),
+        ),
       ],
     );
   }

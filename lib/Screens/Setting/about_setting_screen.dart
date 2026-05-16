@@ -268,7 +268,7 @@ class _AboutSettingScreenState extends BaseDynamicState<AboutSettingScreen>
         EntryItem(
           title: appLocalizations.officialWebsite,
           onTap: () {
-            UriUtil.launchUrlUri(context, officialWebsite);
+            UriUtil.launchUrlUri(context, cloudotpOfficialWebsite);
           },
           showLeading: true,
           leading: LucideIcons.house,

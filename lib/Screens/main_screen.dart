@@ -679,7 +679,8 @@ class MainScreenState extends BaseWindowState<MainScreen>
           ),
           PlatformMenuItem(
             label: appLocalizations.officialWebsite,
-            onSelected: () => UriUtil.launchUrlUri(context, officialWebsite),
+            onSelected: () =>
+                UriUtil.launchUrlUri(context, cloudotpOfficialWebsite),
           ),
         ],
       ),

@@ -30,7 +30,7 @@ dependencies:
   # 二维码
   image: ^4.2.0 # 图片
   zxing2: ^0.2.3 # 二维码
-  mobile_scanner: ^5.2.2 # 扫码
+  mobile_scanner: ^7.2.0 # 扫码
   pretty_qr_code: ^3.3.0 # 二维码
   screen_capturer:
     path: third-party/tool/screen_capturer_lib/screen_capturer
@@ -83,7 +83,7 @@ dependencies:
   responsive_builder: ^0.7.1 # 响应式布局
   flutter_displaymode: ^0.6.0 # 设置刷新率
   flutter_resizable_container: ^2.0.0 # 可调整大小的容器
-  screen_protector: ^1.4.2+1
+  screen_protector: ^1.5.1
   flutter_windowmanager:
     path: third-party/tool/flutter_windowmanager
   move_to_background:

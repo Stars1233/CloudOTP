@@ -19,6 +19,7 @@ import 'package:cloudotp/Models/token_category.dart';
 import 'package:cloudotp/TokenUtils/ThirdParty/base_token_importer.dart';
 import 'package:cloudotp/TokenUtils/import_token_util.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../Widgets/cloudotp/cloudotp_item_builder.dart';
 import '../../l10n/l10n.dart';
@@ -223,16 +224,23 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
         titleLeftMargin: ResponsiveUtil.isLandscapeLayout() ? 15 : 5,
         actions: [
           if (!_loading)
-            TextButton(
-              onPressed: _toggleSelectAll,
-              child: Text(
-                _allSelected
-                    ? appLocalizations.importDeselectAll
-                    : appLocalizations.importSelectAll,
-                style: TextStyle(color: ChewieTheme.primaryColor),
+            CircleIconButton(
+              icon: Icon(
+                _allSelected ? LucideIcons.listX : LucideIcons.listChecks,
+                color: ChewieTheme.iconColor,
               ),
+              onTap: _toggleSelectAll,
             ),
           const SizedBox(width: 5),
+        ],
+        desktopActions: [
+          if (!_loading)
+            ToolButton(
+              context: context,
+              icon: _allSelected ? LucideIcons.listX : LucideIcons.listChecks,
+              buttonSize: const Size(32, 32),
+              onPressed: _toggleSelectAll,
+            ),
         ],
       ),
       body: _loading
@@ -241,7 +249,8 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding:
+                        const EdgeInsets.only(left: 6, right: 6, bottom: 10),
                     children: [
                       const SizedBox(height: 10),
                       InlineSelectionItem<SelectionItemModel<bool>>(
@@ -303,7 +312,7 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
                   });
                 },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.all(8),
             child: Row(
               children: [
                 Checkbox(
@@ -454,11 +463,11 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: 16,
         right: 16,
         top: 12,
-        bottom: 12 + MediaQuery.of(context).padding.bottom,
+        bottom: 12,
       ),
       decoration: BoxDecoration(
         color: ChewieTheme.scaffoldBackgroundColor,

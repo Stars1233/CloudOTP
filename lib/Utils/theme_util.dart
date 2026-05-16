@@ -18,6 +18,7 @@ import 'dart:io';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
@@ -50,22 +51,22 @@ class ThemeUtil {
 
   static void exportToClipboard(
       BuildContext context, ChewieThemeColorData theme) {
-    ChewieUtils.copy(context, exportThemeToJson(theme));
+    ChewieUtils.copy(context, exportThemeToJson(theme),
+        toastText: appLocalizations.themeExportSuccess);
   }
 
   static Future<bool> exportToFile(ChewieThemeColorData theme) async {
     final json = exportThemeToJson(theme);
+    final bytes = Uint8List.fromList(utf8.encode(json));
     final fileName = '${theme.name.replaceAll(RegExp(r'[^\w一-鿿-]'), '_')}.json';
     String? filePath = await FileUtil.saveFile(
       dialogTitle: appLocalizations.exportTheme,
       fileName: fileName,
       type: FileType.custom,
       allowedExtensions: ['json'],
+      bytes: bytes,
     );
-    if (filePath == null) return false;
-    final file = File(filePath);
-    await file.writeAsString(json);
-    return true;
+    return filePath != null;
   }
 
   static Future<ChewieThemeColorData?> importFromClipboard() async {

@@ -318,33 +318,43 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
       responsive: true,
       (ctx) => _MenuListSheet(
         title: appLocalizations.chooseBaseTheme,
-        items: [
-          ...allThemes.map((theme) => _MenuAction(
-                label: theme.i18nName,
+        children: [
+          ...allThemes.map((theme) => EntryItem(
+                paddingHorizontal: 20,
+                title: theme.i18nName,
+                showTrailing: false,
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _navigateToEditor(theme, isDark);
                 },
               )),
-          ...customThemes.map((theme) => _MenuAction(
-                label: theme.name,
+          ...customThemes.map((theme) => EntryItem(
+                paddingHorizontal: 20,
+                title: theme.name,
+                showTrailing: false,
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _navigateToEditor(theme, isDark);
                 },
               )),
-          _MenuAction(isDivider: true),
-          _MenuAction(
-            label: appLocalizations.importFromClipboard,
-            icon: Icons.content_paste_rounded,
+          const MyDivider(horizontal: 10, vertical: 5, width: 1),
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.importFromClipboard,
+            showLeading: true,
+            leading: LucideIcons.clipboardPaste,
+            showTrailing: false,
             onTap: () {
               Navigator.of(ctx).pop();
               _importFromClipboard(isDark);
             },
           ),
-          _MenuAction(
-            label: appLocalizations.importFromFile,
-            icon: Icons.file_open_outlined,
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.importFromFile,
+            showLeading: true,
+            leading: LucideIcons.fileInput,
+            showTrailing: false,
             onTap: () {
               Navigator.of(ctx).pop();
               _importFromFile(isDark);
@@ -383,18 +393,24 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
       responsive: true,
       (ctx) => _MenuListSheet(
         title: theme.name,
-        items: [
-          _MenuAction(
-            label: appLocalizations.editTheme,
-            icon: Icons.edit_outlined,
+        children: [
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.editTheme,
+            showLeading: true,
+            leading: LucideIcons.pencil,
+            showTrailing: false,
             onTap: () {
               Navigator.of(ctx).pop();
               _navigateToEditor(theme, isDark, editIndex: customIndex);
             },
           ),
-          _MenuAction(
-            label: appLocalizations.duplicateTheme,
-            icon: Icons.copy_outlined,
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.duplicateTheme,
+            showLeading: true,
+            leading: LucideIcons.copy,
+            showTrailing: false,
             onTap: () {
               Navigator.of(ctx).pop();
               final copy = theme.copyWith(
@@ -409,30 +425,38 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
               setState(() {});
             },
           ),
-          _MenuAction(isDivider: true),
-          _MenuAction(
-            label: appLocalizations.exportToClipboard,
-            icon: Icons.content_copy_outlined,
+          const MyDivider(horizontal: 10, vertical: 5, width: 1),
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.exportToClipboard,
+            showLeading: true,
+            leading: LucideIcons.clipboardCopy,
+            showTrailing: false,
             onTap: () {
               Navigator.of(ctx).pop();
               ThemeUtil.exportToClipboard(context, theme);
-              IToast.showTop(appLocalizations.themeExportSuccess);
             },
           ),
-          _MenuAction(
-            label: appLocalizations.exportToFile,
-            icon: Icons.save_outlined,
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.exportToFile,
+            showLeading: true,
+            leading: LucideIcons.fileOutput,
+            showTrailing: false,
             onTap: () async {
               Navigator.of(ctx).pop();
               final ok = await ThemeUtil.exportToFile(theme);
               if (ok) IToast.showTop(appLocalizations.themeExportSuccess);
             },
           ),
-          _MenuAction(isDivider: true),
-          _MenuAction(
-            label: appLocalizations.deleteTheme,
-            icon: Icons.delete_outline,
-            isDestructive: true,
+          const MyDivider(horizontal: 10, vertical: 5, width: 1),
+          EntryItem(
+            paddingHorizontal: 20,
+            title: appLocalizations.deleteTheme,
+            showLeading: true,
+            leading: LucideIcons.trash2,
+            titleColor: ChewieTheme.errorColor,
+            showTrailing: false,
             onTap: () {
               Navigator.of(ctx).pop();
               DialogBuilder.showConfirmDialog(
@@ -609,27 +633,11 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
   }
 }
 
-class _MenuAction {
-  final String label;
-  final IconData? icon;
-  final VoidCallback? onTap;
-  final bool isDivider;
-  final bool isDestructive;
-
-  _MenuAction({
-    this.label = '',
-    this.icon,
-    this.onTap,
-    this.isDivider = false,
-    this.isDestructive = false,
-  });
-}
-
 class _MenuListSheet extends StatelessWidget {
   final String title;
-  final List<_MenuAction> items;
+  final List<Widget> children;
 
-  const _MenuListSheet({required this.title, required this.items});
+  const _MenuListSheet({required this.title, required this.children});
 
   static const Radius _radius = ChewieDimens.defaultRadius;
 
@@ -642,7 +650,6 @@ class _MenuListSheet extends StatelessWidget {
         runAlignment: WrapAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(
                   top: _radius,
@@ -652,58 +659,16 @@ class _MenuListSheet extends StatelessWidget {
               border: ChewieTheme.border,
               boxShadow: ChewieTheme.defaultBoxShadow,
             ),
-            child: Material(
-              type: MaterialType.transparency,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    alignment: Alignment.center,
-                    child: Text(title, style: ChewieTheme.titleLarge),
-                  ),
-                  ...items.map((item) {
-                    if (item.isDivider) {
-                      return const MyDivider(
-                        vertical: 8,
-                        horizontal: 4,
-                        width: 1,
-                      );
-                    }
-                    return InkWell(
-                      onTap: item.onTap,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 12),
-                        child: Row(
-                          children: [
-                            if (item.icon != null) ...[
-                              Icon(item.icon,
-                                  size: 22,
-                                  color: item.isDestructive
-                                      ? ChewieTheme.errorColor
-                                      : ChewieTheme.iconColor),
-                              const SizedBox(width: 12),
-                            ],
-                            Expanded(
-                              child: Text(
-                                item.label,
-                                style: ChewieTheme.bodyLarge.copyWith(
-                                  color: item.isDestructive
-                                      ? ChewieTheme.errorColor
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                ],
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  alignment: Alignment.center,
+                  child: Text(title, style: ChewieTheme.titleLarge),
+                ),
+                Column(children: children),
+              ],
             ),
           ),
         ],

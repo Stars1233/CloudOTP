@@ -51,7 +51,8 @@ class CloudOTPHiveUtil {
   static const String autoHideCodeKey = "autoHideCode";
   static const String defaultHideCodeKey = "defaultHideCode";
   static const String showEyeKey = "showEye";
-  static const String issuerAndAccountShowOptionKey = "issuerAndAccountShowOption";
+  static const String issuerAndAccountShowOptionKey =
+      "issuerAndAccountShowOption";
 
   //Appearance
   static const String showCloudBackupButtonKey = "showCloudBackupButton";
@@ -102,6 +103,7 @@ class CloudOTPHiveUtil {
         CloudOTPHiveUtil.dragToReorderKey, !ResponsiveUtil.isMobile());
     await ChewieHiveUtil.put(
         CloudOTPHiveUtil.autoMinimizeAfterClickToCopyKey, false);
+    await ChewieHiveUtil.put(CloudOTPHiveUtil.hideGestureTrailKey, false);
   }
 
   static bool canLock() => canGuestureLock() || canDatabaseLock();

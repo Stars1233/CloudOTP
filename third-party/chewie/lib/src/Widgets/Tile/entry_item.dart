@@ -136,7 +136,12 @@ class EntryItemState extends SearchableState<EntryItem> {
 
   List<Widget> _buildRowChildren() {
     return [
-      if (widget.showLeading) Icon(widget.leading, size: 20),
+      if (widget.showLeading)
+        Icon(
+          widget.leading,
+          size: 20,
+          color: widget.titleColor ?? ChewieTheme.iconColor,
+        ),
       SizedBox(width: widget.showLeading ? 10 : 5),
       Expanded(child: _buildTextContent()),
       const SizedBox(width: 50),

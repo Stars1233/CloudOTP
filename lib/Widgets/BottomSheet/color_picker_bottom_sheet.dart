@@ -16,6 +16,7 @@
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../l10n/l10n.dart';
 
@@ -76,8 +77,7 @@ class _ColorPickerBottomSheetState extends State<ColorPickerBottomSheet> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(
                   top: radius,
-                  bottom:
-                      ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
+                  bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
               color: ChewieTheme.scaffoldBackgroundColor,
               border: ChewieTheme.border,
               boxShadow: ChewieTheme.defaultBoxShadow,
@@ -94,73 +94,76 @@ class _ColorPickerBottomSheetState extends State<ColorPickerBottomSheet> {
                     child: Text(widget.title, style: ChewieTheme.titleLarge),
                   ),
                   ColorPicker(
-                  color: _currentColor,
-                  onColorChanged: (Color color) {
-                    setState(() => _currentColor = color);
-                  },
-                  pickersEnabled: const <ColorPickerType, bool>{
-                    ColorPickerType.wheel: true,
-                    ColorPickerType.primary: false,
-                    ColorPickerType.accent: false,
-                  },
-                  enableShadesSelection: true,
-                  enableOpacity: true,
-                  showColorCode: true,
-                  colorCodeHasColor: true,
-                  copyPasteBehavior: const ColorPickerCopyPasteBehavior(
-                    copyFormat: ColorPickerCopyFormat.hexRRGGBB,
+                    color: _currentColor,
+                    onColorChanged: (Color color) {
+                      setState(() => _currentColor = color);
+                    },
+                    pickersEnabled: const <ColorPickerType, bool>{
+                      ColorPickerType.wheel: true,
+                      ColorPickerType.primary: false,
+                      ColorPickerType.accent: false,
+                    },
+                    enableShadesSelection: true,
+                    enableOpacity: true,
+                    showColorCode: true,
+                    colorCodeHasColor: true,
+                    copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+                      copyFormat: ColorPickerCopyFormat.hexRRGGBB,
+                      copyIcon: LucideIcons.copy,
+                      pasteButton: true,
+                      pasteIcon: LucideIcons.clipboardPaste,
+                    ),
+                    actionButtons: const ColorPickerActionButtons(
+                      okButton: false,
+                      closeButton: false,
+                      dialogActionButtons: false,
+                    ),
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    heading: null,
+                    subheading: null,
+                    wheelWidth: 20,
+                    wheelDiameter: 220,
                   ),
-                  actionButtons: const ColorPickerActionButtons(
-                    okButton: false,
-                    closeButton: false,
-                    dialogActionButtons: false,
-                  ),
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  heading: null,
-                  subheading: null,
-                  wheelWidth: 20,
-                  wheelDiameter: 220,
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 45,
-                          child: RoundIconTextButton(
-                            text: appLocalizations.cancel,
-                            onPressed: () => Navigator.of(context).pop(),
-                            fontSizeDelta: 2,
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 45,
+                            child: RoundIconTextButton(
+                              text: appLocalizations.cancel,
+                              onPressed: () => Navigator.of(context).pop(),
+                              fontSizeDelta: 2,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SizedBox(
-                          height: 45,
-                          child: RoundIconTextButton(
-                            background: ChewieTheme.primaryColor,
-                            color: Colors.white,
-                            text: appLocalizations.confirm,
-                            onPressed: () {
-                              widget.onColorChanged(_currentColor);
-                              Navigator.of(context).pop();
-                            },
-                            fontSizeDelta: 2,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SizedBox(
+                            height: 45,
+                            child: RoundIconTextButton(
+                              background: ChewieTheme.primaryColor,
+                              color: Colors.white,
+                              text: appLocalizations.confirm,
+                              onPressed: () {
+                                widget.onColorChanged(_currentColor);
+                                Navigator.of(context).pop();
+                              },
+                              fontSizeDelta: 2,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
               ),
             ),
           ),

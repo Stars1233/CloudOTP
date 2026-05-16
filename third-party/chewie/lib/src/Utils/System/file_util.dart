@@ -426,7 +426,11 @@ class FileUtil {
       image.imageUrl,
       headers: headers,
     );
-    final result = await Share.shareXFiles([XFile(file.path)], text: message);
+    final result = await Share.shareXFiles(
+      [XFile(file.path)],
+      text: message,
+      sharePositionOrigin: UriUtil.shareOriginRect(),
+    );
     if (result.status == ShareResultStatus.success) {
       IToast.showTop("分享成功");
     } else if (result.status == ShareResultStatus.dismissed) {

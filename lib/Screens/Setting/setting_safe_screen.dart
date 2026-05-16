@@ -55,8 +55,9 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
   bool _enableSafeMode = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.enableSafeModeKey,
       defaultValue: defaultEnableSafeMode);
-  bool _hideGestureTrail =
-      ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideGestureTrailKey);
+  bool _hideGestureTrail = ChewieHiveUtil.getBool(
+      CloudOTPHiveUtil.hideGestureTrailKey,
+      defaultValue: false);
   bool _allowGuestureBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
   bool _allowDatabaseBiometric = ChewieHiveUtil.getBool(

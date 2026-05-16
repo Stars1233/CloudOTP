@@ -39,8 +39,9 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
           .notNullOrEmpty;
   late final bool _enableBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
-  final bool _hideGestureTrail =
-      ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideGestureTrailKey);
+  final bool _hideGestureTrail = ChewieHiveUtil.getBool(
+      CloudOTPHiveUtil.hideGestureTrailKey,
+      defaultValue: false);
   late final GestureNotifier _notifier = _isEditMode
       ? GestureNotifier(
           status: GestureStatus.verify,

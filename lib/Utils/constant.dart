@@ -13,7 +13,6 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../l10n/l10n.dart';
@@ -31,22 +30,20 @@ const String hotpPlaceholderText = "*";
 
 const appLicense = "GPL-3.0";
 
-String shareAppText = appLocalizations.shareAppText(officialWebsite);
+String shareAppText = appLocalizations.shareAppText(cloudotpOfficialWebsite);
 const String feedbackEmail = "2014027378@qq.com";
 String feedbackSubject = appLocalizations.feedbackSubject;
 const String feedbackBody = "";
 const List<Locale> websiteSupportLocales = [Locale("en"), Locale("zh", "CN")];
+String cloudotpOfficialWebsite = "https://otp.cloudchewie.com";
 const String defaultDownloadsWebsite =
     "https://apps.cloudchewie.com/cloudotp/downloads";
 const String downloadsWebsite =
     "https://apps.cloudchewie.com/{locale}/cloudotp/downloads";
-const String sqlcipherLearnMore =
-    "https://apps.cloudchewie.com/cloudotp/sqlcipher/";
+const String sqlcipherLearnMore = "https://otp.cloudchewie.com/docs/sqlcipher";
 const String telegramLink = "https://t.me/CloudOTP_official";
-const String privacyPolicyWebsite =
-    "https://apps.cloudchewie.com/cloudotp/privacy/";
-const String serviceTermWebsite =
-    "https://apps.cloudchewie.com/cloudotp/service/";
+const String privacyPolicyWebsite = "https://otp.cloudchewie.com/privacy";
+const String serviceTermWebsite = "https://otp.cloudchewie.com/service-term";
 
 RegExp otpauthMigrationReg =
     RegExp(r"^otpauth-migration://offline\?data=(.*)$");

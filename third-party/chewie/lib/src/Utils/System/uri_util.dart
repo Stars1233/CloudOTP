@@ -125,8 +125,19 @@ class UriUtil {
     return true;
   }
 
+  static Rect shareOriginRect() {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    final size = view.physicalSize / view.devicePixelRatio;
+    return Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: 1,
+      height: 1,
+    );
+  }
+
   static share(String str) {
-    Share.share(str).then((shareResult) {
+    Share.share(str, sharePositionOrigin: shareOriginRect())
+        .then((shareResult) {
       if (shareResult.status == ShareResultStatus.success) {
         IToast.showTop(chewieLocalizations.shareSuccess);
       } else if (shareResult.status == ShareResultStatus.dismissed) {
@@ -222,7 +233,7 @@ class UriUtil {
     } catch (e, t) {
       ILogger.error("Failed to resolve url $url", e, t);
       if (!quiet) await CustomLoadingDialog.dismissLoading();
-      if (!quiet) Share.share(url);
+      if (!quiet) Share.share(url, sharePositionOrigin: shareOriginRect());
       return false;
     }
   }

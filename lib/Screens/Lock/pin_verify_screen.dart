@@ -59,8 +59,9 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
 
   late final bool _enableBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
-  final bool _hideGestureTrail =
-      ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideGestureTrailKey);
+  final bool _hideGestureTrail = ChewieHiveUtil.getBool(
+      CloudOTPHiveUtil.hideGestureTrailKey,
+      defaultValue: false);
   late final GestureNotifier _notifier = GestureNotifier(
       status: GestureStatus.verify,
       gestureText: appLocalizations.verifyGestureLock);
@@ -160,20 +161,20 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
                     Semantics(
                       label: appLocalizations.verifyGestureLock,
                       child: GestureUnlockView(
-                      key: _gestureUnlockView,
-                      size: min(MediaQuery.sizeOf(context).width, 400),
-                      padding: 60,
-                      roundSpace: 40,
-                      defaultColor: Colors.grey.withOpacity(0.5),
-                      selectedColor: ChewieTheme.primaryColor,
-                      failedColor: Colors.redAccent,
-                      disableColor: Colors.grey,
-                      solidRadiusRatio: 0.3,
-                      lineWidth: 2,
-                      touchRadiusRatio: 0.3,
-                      showLine: !_hideGestureTrail,
-                      onCompleted: _gestureComplete,
-                    ),
+                        key: _gestureUnlockView,
+                        size: min(MediaQuery.sizeOf(context).width, 400),
+                        padding: 60,
+                        roundSpace: 40,
+                        defaultColor: Colors.grey.withOpacity(0.5),
+                        selectedColor: ChewieTheme.primaryColor,
+                        failedColor: Colors.redAccent,
+                        disableColor: Colors.grey,
+                        solidRadiusRatio: 0.3,
+                        lineWidth: 2,
+                        touchRadiusRatio: 0.3,
+                        showLine: !_hideGestureTrail,
+                        onCompleted: _gestureComplete,
+                      ),
                     ),
                     Visibility(
                       visible: _biometricAvailable && _enableBiometric,
