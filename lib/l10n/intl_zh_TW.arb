@@ -823,5 +823,6 @@
   "colorGroupStatus": "狀態",
   "accentColor": "強調色",
   "resetToDefault": "預設",
-  "customColor": "自訂"
+  "customColor": "自訂",
+  "webDavHttpWarning": "警告：HTTP 連線未加密，您的憑證可能被攔截，請使用 HTTPS。"
 }

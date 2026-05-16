@@ -14,8 +14,10 @@
  */
 
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:cloudotp/Database/config_dao.dart';
 import 'package:cloudotp/Screens/home_screen.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
@@ -87,6 +89,8 @@ class CloudOTPHiveUtil {
   static const String enableSafeModeKey = "enableSafeMode";
   static const String hideGestureTrailKey = "hideGestureTrail";
   static const String followSystemTextScaleKey = "followSystemTextScale";
+  static const String gestureFailedAttemptsKey = "gestureFailedAttempts";
+  static const String gestureLockoutEndKey = "gestureLockoutEnd";
 
   //System
   static const String oldVersionKey = "oldVersion";
@@ -119,23 +123,44 @@ class CloudOTPHiveUtil {
       getEncryptDatabaseStatus() == EncryptDatabaseStatus.customPassword &&
       DatabaseManager.isDatabaseEncrypted;
 
-  static String _hashGesturePassword(String password) =>
-      sha256.convert(utf8.encode(password)).hex();
+  static String _generateSalt() {
+    final random = Random.secure();
+    final bytes = List.generate(16, (_) => random.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
 
-  static bool _isHashed(String value) =>
+  static String _hashWithSalt(String password, String salt) =>
+      sha256.convert(utf8.encode('$salt$password')).hex();
+
+  static bool _isLegacyHash(String value) =>
       value.length == 64 && RegExp(r'^[0-9a-f]+$').hasMatch(value);
 
+  static bool _isSaltedHash(String value) =>
+      value.length == 97 && value[32] == '\$';
+
   static void setGesturePassword(String password) {
-    ChewieHiveUtil.put(guesturePasswdKey, _hashGesturePassword(password));
+    final salt = _generateSalt();
+    final hash = _hashWithSalt(password, salt);
+    ChewieHiveUtil.put(guesturePasswdKey, '$salt\$$hash');
   }
 
   static bool verifyGesturePassword(String input) {
     final stored = ChewieHiveUtil.getString(guesturePasswdKey);
     if (stored == null || stored.isEmpty) return false;
-    if (_isHashed(stored)) {
-      return stored == _hashGesturePassword(input);
+    if (_isSaltedHash(stored)) {
+      final salt = stored.substring(0, 32);
+      final hash = stored.substring(33);
+      return hash == _hashWithSalt(input, salt);
     }
-    // Legacy plaintext — migrate to hash on successful match
+    if (_isLegacyHash(stored)) {
+      final legacyHash = sha256.convert(utf8.encode(input)).hex();
+      if (stored == legacyHash) {
+        setGesturePassword(input);
+        return true;
+      }
+      return false;
+    }
+    // Legacy plaintext
     if (stored == input) {
       setGesturePassword(input);
       return true;
@@ -169,11 +194,34 @@ class CloudOTPHiveUtil {
     await ChewieHiveUtil.put(CloudOTPHiveUtil.maxBackupsCountKey, count);
   }
 
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const String _secureDbPasswordKey = 'cloudotp_db_password';
+
   static Future<String> regeneratePassword() async {
     String password = MockUtil.getRandomString(length: 16);
+    await _secureStorage.write(key: _secureDbPasswordKey, value: password);
+    // Remove from Hive if it was there before (migration cleanup)
     await ChewieHiveUtil.put(
-        CloudOTPHiveUtil.defaultDatabasePasswordKey, password);
+        CloudOTPHiveUtil.defaultDatabasePasswordKey, '');
     return password;
+  }
+
+  static Future<String> getDatabasePassword() async {
+    // Try secure storage first
+    String? password =
+        await _secureStorage.read(key: _secureDbPasswordKey);
+    if (password != null && password.isNotEmpty) return password;
+    // Migrate from Hive if present
+    String? hivePassword =
+        ChewieHiveUtil.getString(CloudOTPHiveUtil.defaultDatabasePasswordKey);
+    if (hivePassword != null && hivePassword.isNotEmpty) {
+      await _secureStorage.write(
+          key: _secureDbPasswordKey, value: hivePassword);
+      await ChewieHiveUtil.put(
+          CloudOTPHiveUtil.defaultDatabasePasswordKey, '');
+      return hivePassword;
+    }
+    return '';
   }
 
   static Future<String> getBackupPath() async {

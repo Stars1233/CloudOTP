@@ -70,6 +70,7 @@ dependencies:
   local_auth: ^2.2.0 # 指纹验证
   local_auth_android: ^1.0.42 # 指纹验证
   share_plus: ^10.1.4 # 分享
+  flutter_secure_storage: ^8.1.0 # 安全存储
   protocol_handler: ^0.2.0 # 协议处理
   biometric_storage:
     path: third-party/tool/biometric_storage

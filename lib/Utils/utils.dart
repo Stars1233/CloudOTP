@@ -312,7 +312,8 @@ class Utils {
     } else if (menuItem.key == TrayKey.officialWebsite.key) {
       UriUtil.launchUrlUri(context, officialWebsite);
     } else if (menuItem.key.notNullOrEmpty &&
-        menuItem.key!.startsWith(TrayKey.copyTokenCode.key)) {
+        menuItem.key!.startsWith(TrayKey.copyTokenCode.key) &&
+        !isSimple) {
       String uid = menuItem.key!.split('_').last;
       OtpToken? token = await TokenDao.getTokenByUid(uid);
       if (token != null) {
@@ -325,14 +326,16 @@ class Utils {
         if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.autoCopyNextCodeKey) &&
             currentProgress < autoCopyNextCodeProgressThrehold) {
           ChewieUtils.copy(context, CodeGenerator.getNextCode(token),
-              toastText: appLocalizations.alreadyCopiedNextCode);
+              toastText: appLocalizations.alreadyCopiedNextCode,
+              autoClear: true);
           TokenDao.incTokenCopyTimes(token);
           IToast.showDesktopNotification(
             appLocalizations.alreadyCopiedNextCode,
             body: CodeGenerator.getNextCode(token),
           );
         } else {
-          ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token));
+          ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token),
+              autoClear: true);
           TokenDao.incTokenCopyTimes(token);
           IToast.showDesktopNotification(
             appLocalizations.copySuccess,

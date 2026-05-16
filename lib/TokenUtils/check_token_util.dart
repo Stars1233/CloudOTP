@@ -84,7 +84,7 @@ class CheckTokenUtil {
     try {
       base32.decode(str.toUpperCase());
     } catch (e, t) {
-      ILogger.error("Failed to decode base32 from $str", e, t);
+      ILogger.error("Failed to decode base32", e, t);
       return false;
     }
     return true;

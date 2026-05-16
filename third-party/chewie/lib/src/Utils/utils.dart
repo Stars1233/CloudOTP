@@ -90,10 +90,14 @@ class ChewieUtils {
     return data?.text;
   }
 
+  static Timer? _clipboardClearTimer;
+
   static void copy(
     BuildContext context,
     dynamic data, {
     String? toastText,
+    bool autoClear = false,
+    Duration autoClearDuration = const Duration(seconds: 30),
   }) {
     Clipboard.setData(ClipboardData(text: data.toString())).then((value) {
       toastText ??= chewieLocalizations.copySuccess;
@@ -103,6 +107,12 @@ class ChewieUtils {
       }
     });
     HapticFeedback.mediumImpact();
+    if (autoClear) {
+      _clipboardClearTimer?.cancel();
+      _clipboardClearTimer = Timer(autoClearDuration, () {
+        Clipboard.setData(const ClipboardData(text: ''));
+      });
+    }
   }
 
   static int binarySearch<T>(

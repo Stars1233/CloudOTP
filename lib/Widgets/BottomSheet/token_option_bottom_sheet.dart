@@ -272,7 +272,7 @@ class TokenOptionBottomSheetState
           title: appLocalizations.copyTokenCode,
           onTap: () {
             Navigator.pop(context);
-            ChewieUtils.copy(context, getCurrentCode());
+            ChewieUtils.copy(context, getCurrentCode(), autoClear: true);
             TokenDao.incTokenCopyTimes(widget.token);
           },
         ),
@@ -281,7 +281,7 @@ class TokenOptionBottomSheetState
           title: appLocalizations.copyNextTokenCode,
           onTap: () {
             Navigator.pop(context);
-            ChewieUtils.copy(context, getNextCode());
+            ChewieUtils.copy(context, getNextCode(), autoClear: true);
             TokenDao.incTokenCopyTimes(widget.token);
           },
         ),

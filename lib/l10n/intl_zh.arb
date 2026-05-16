@@ -823,5 +823,6 @@
   "colorGroupStatus": "状态",
   "accentColor": "强调色",
   "resetToDefault": "默认",
-  "customColor": "自定义"
+  "customColor": "自定义",
+  "webDavHttpWarning": "警告：HTTP 连接未加密，您的凭据可能被截获，请使用 HTTPS。"
 }

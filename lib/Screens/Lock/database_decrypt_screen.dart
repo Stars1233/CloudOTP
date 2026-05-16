@@ -161,7 +161,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
               ? ResponsiveAppBar(
                   title: appLocalizations.appName,
                   showBack: false,
-                  titleLeftMargin: 15,
+                  titleLeftMargin: ResponsiveUtil.isMacOS() ? 78 : 15,
                   actions: const [
                     BlankIconButton(),
                   ],

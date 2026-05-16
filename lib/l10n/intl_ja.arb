@@ -823,5 +823,6 @@
   "colorGroupStatus": "ステータス",
   "accentColor": "アクセントカラー",
   "resetToDefault": "デフォルト",
-  "customColor": "カスタム"
+  "customColor": "カスタム",
+  "webDavHttpWarning": "警告：HTTP接続は暗号化されていません。資格情報が傍受される可能性があります。HTTPSを使用してください。"
 }

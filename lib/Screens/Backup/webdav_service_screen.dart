@@ -203,6 +203,9 @@ class _WebDavServiceScreenState extends BaseDynamicState<WebDavServiceScreen>
                 if (!RegexUtil.isUrlOrIp(text)) {
                   return appLocalizations.webDavServerInvalid;
                 }
+                if (text.startsWith('http://')) {
+                  return appLocalizations.webDavHttpWarning;
+                }
                 return null;
               },
               hint: appLocalizations.webDavServerHint,

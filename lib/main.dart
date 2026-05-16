@@ -123,8 +123,7 @@ Future<void> initHive() async {
   ChewieHiveUtil.put(CloudOTPHiveUtil.oldVersionKey, ResponsiveUtil.version);
   try {
     await DatabaseManager.initDataBase(
-        ChewieHiveUtil.getString(CloudOTPHiveUtil.defaultDatabasePasswordKey) ??
-            "");
+        await CloudOTPHiveUtil.getDatabasePassword());
   } catch (e) {
     if (DatabaseManager.lib != null) {
       CloudOTPHiveUtil.setEncryptDatabaseStatus(

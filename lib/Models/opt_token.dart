@@ -462,7 +462,7 @@ class OtpToken {
 
   @override
   String toString() {
-    return "OtpToken($id, $uid, $seq, $issuer, $secret, $account, $imagePath, $tokenType, $algorithm, $digits, $counterString, $periodString, $pinned, $createTimeStamp, $editTimeStamp, $remark, $copyTimes, $lastCopyTimeStamp, $pin, $description)";
+    return "OtpToken($id, $uid, $seq, $issuer, [REDACTED], $account, $imagePath, $tokenType, $algorithm, $digits, $counterString, $periodString, $pinned, $createTimeStamp, $editTimeStamp, $remark, $copyTimes, $lastCopyTimeStamp, [REDACTED], $description)";
   }
 
   OtpToken({

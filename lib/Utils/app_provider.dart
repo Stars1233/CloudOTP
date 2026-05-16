@@ -218,7 +218,20 @@ class AppProvider with ChangeNotifier {
 
   String latestVersion = "";
 
-  bool preventLock = false;
+  Timer? _preventLockTimer;
+  bool _preventLock = false;
+
+  bool get preventLock => _preventLock;
+
+  set preventLock(bool value) {
+    _preventLockTimer?.cancel();
+    _preventLock = value;
+    if (value) {
+      _preventLockTimer = Timer(const Duration(minutes: 5), () {
+        _preventLock = false;
+      });
+    }
+  }
 
   FocusNode shortcutFocusNode = FocusNode();
   FocusNode searchFocusNode = FocusNode();

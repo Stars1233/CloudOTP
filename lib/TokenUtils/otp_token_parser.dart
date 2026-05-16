@@ -78,7 +78,7 @@ class OtpTokenParser {
         return token == null ? [] : [token];
       }
     } catch (e, t) {
-      ILogger.error("Failed to parse uri $line", e, t);
+      ILogger.error("Failed to parse uri", e, t);
       return [];
     }
   }

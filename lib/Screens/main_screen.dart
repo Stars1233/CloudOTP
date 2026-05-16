@@ -108,7 +108,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
 
   @override
   void onProtocolUrlReceived(String url) {
-    ILogger.info("Received protocol url: $url");
+    ILogger.info("Received protocol url: ${Uri.parse(url).replace(queryParameters: {}).toString()}");
   }
 
   Future<void> fetchReleases() async {
@@ -220,9 +220,10 @@ class MainScreenState extends BaseWindowState<MainScreen>
     if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.autoCopyNextCodeKey) &&
         currentProgress < autoCopyNextCodeProgressThrehold) {
       ChewieUtils.copy(context, CodeGenerator.getNextCode(token),
-          toastText: appLocalizations.alreadyCopiedNextCode);
+          toastText: appLocalizations.alreadyCopiedNextCode, autoClear: true);
     } else {
-      ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token));
+      ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token),
+          autoClear: true);
     }
     TokenDao.incTokenCopyTimes(token);
   }
@@ -245,6 +246,9 @@ class MainScreenState extends BaseWindowState<MainScreen>
   Future<void> jumpToLock({
     bool autoAuth = false,
   }) async {
+    _menuTokens = [];
+    _menuCategories = [];
+    Utils.initSimpleTray();
     if (CloudOTPHiveUtil.canDatabaseLock()) {
       ILogger.debug("Jump to database lock screen");
       await DatabaseManager.resetDatabase();
@@ -257,6 +261,8 @@ class MainScreenState extends BaseWindowState<MainScreen>
         PinVerifyScreen(
           onSuccess: () {
             appProvider.preventLock = false;
+            _loadMenuTokenData();
+            Utils.initTray();
           },
           showWindowTitle: true,
           isModal: true,
@@ -688,6 +694,9 @@ class MainScreenState extends BaseWindowState<MainScreen>
   }
 
   _buildDesktopBody() {
+    if (ResponsiveUtil.isMacOS()) {
+      return _buildMacOSDesktopBody();
+    }
     return MyScaffold(
       backgroundColor: ChewieTheme.appBarBackgroundColor,
       resizeToAvoidBottomInset: false,
@@ -701,6 +710,28 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 Positioned(
                   right: 0,
                   child: _buildTitleBar(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _buildMacOSDesktopBody() {
+    return MyScaffold(
+      backgroundColor: ChewieTheme.appBarBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      body: Column(
+        children: [
+          _buildMacOSTitleBar(),
+          Expanded(
+            child: Row(
+              children: [
+                _buildSideBar(),
+                Expanded(
+                  child: HomeScreen(key: chewieProvider.panelScreenKey),
                 ),
               ],
             ),
@@ -979,13 +1010,11 @@ class MainScreenState extends BaseWindowState<MainScreen>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                    height: ResponsiveUtil.isMacOS()
-                        ? 38
-                        : ResponsiveUtil.isDesktop()
-                            ? 8
-                            : ResponsiveUtil.isLandscapeLayout()
-                                ? 12
-                                : 8),
+                    height: ResponsiveUtil.isDesktop()
+                        ? 8
+                        : ResponsiveUtil.isLandscapeLayout()
+                            ? 12
+                            : 8),
                 _buildLogo(),
                 const SizedBox(height: 8),
                 ToolButton(
@@ -1193,6 +1222,46 @@ class MainScreenState extends BaseWindowState<MainScreen>
             windowManager.setAlwaysOnTop(isStayOnTop);
           });
         },
+      ),
+    );
+  }
+
+  Widget _buildMacOSTitleBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: ChewieTheme.appBarBackgroundColor,
+        border: ChewieTheme.bottomDivider,
+      ),
+      child: WindowTitleWrapper(
+        height: 48,
+        backgroundColor: Colors.transparent,
+        isStayOnTop: isStayOnTop,
+        isMaximized: isMaximized,
+        onStayOnTopTap: () {
+          setState(() {
+            isStayOnTop = !isStayOnTop;
+            windowManager.setAlwaysOnTop(isStayOnTop);
+          });
+        },
+        leftWidgets: [
+          const SizedBox(width: 78),
+          Container(
+            constraints: const BoxConstraints(
+                maxWidth: 300, minWidth: 200, maxHeight: 36),
+            child: MySearchBar(
+              borderRadius: 8,
+              bottomMargin: 18,
+              focusNode: appProvider.searchFocusNode,
+              controller: searchController,
+              background: ChewieTheme.scaffoldBackgroundColor,
+              hintText: appLocalizations.searchToken,
+              onSubmitted: (text) {
+                homeScreenState?.performSearch(text.toString());
+              },
+            ),
+          ),
+          const Spacer(),
+        ],
       ),
     );
   }

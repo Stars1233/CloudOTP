@@ -51,10 +51,10 @@ class CloudLogger {
 
   static void infoResponse(String tag, String message, Response response) {
     if (logInfo != null) {
-      logInfo!(tag, "$message [${response.statusCode}] [${response.body}]");
+      logInfo!(tag, "$message [${response.statusCode}]");
     } else {
       debugPrint(
-          '[$tag] [INFO RESPONSE] : $message [${response.statusCode}] [${response.body}]');
+          '[$tag] [INFO RESPONSE] : $message [${response.statusCode}]');
     }
   }
 

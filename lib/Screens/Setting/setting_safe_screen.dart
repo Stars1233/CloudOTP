@@ -312,8 +312,6 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
               onChanged: (autoLockOption) {
                 if (autoLockOption == null) return;
                 appProvider.autoLockTime = autoLockOption.autoLockTime;
-                ChewieHiveUtil.put(CloudOTPHiveUtil.autoLockTimeKey,
-                    autoLockOption.autoLockTime);
               },
             ),
           ),

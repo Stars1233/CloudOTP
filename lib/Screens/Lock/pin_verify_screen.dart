@@ -73,6 +73,46 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
   Timer? _lockoutTimer;
   int _lockoutRemaining = 0;
 
+  void _restoreLockoutState() {
+    _failedAttempts = ChewieHiveUtil.getInt(
+        CloudOTPHiveUtil.gestureFailedAttemptsKey,
+        defaultValue: 0);
+    final lockoutEnd = ChewieHiveUtil.getInt(
+        CloudOTPHiveUtil.gestureLockoutEndKey,
+        defaultValue: 0);
+    if (lockoutEnd > 0) {
+      final remaining =
+          (lockoutEnd - DateTime.now().millisecondsSinceEpoch) ~/ 1000;
+      if (remaining > 0) {
+        _lockoutRemaining = remaining;
+        _isLockedOut = true;
+        _lockoutTimer?.cancel();
+        _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          setState(() {
+            _lockoutRemaining--;
+            if (_lockoutRemaining <= 0) {
+              _isLockedOut = false;
+              timer.cancel();
+              ChewieHiveUtil.put(CloudOTPHiveUtil.gestureLockoutEndKey, 0);
+              _notifier.setStatus(
+                status: GestureStatus.verify,
+                gestureText: appLocalizations.verifyGestureLock,
+              );
+            } else {
+              _notifier.setStatus(
+                status: GestureStatus.verifyFailedCountOverflow,
+                gestureText:
+                    '${appLocalizations.gestureLockWrong} (${_lockoutRemaining}s)',
+              );
+            }
+          });
+        });
+      } else {
+        ChewieHiveUtil.put(CloudOTPHiveUtil.gestureLockoutEndKey, 0);
+      }
+    }
+  }
+
   bool get _biometricAvailable => canAuthenticateResponse?.isSuccess ?? false;
 
   @override
@@ -99,6 +139,7 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
                 scale: 1.5);
       }
     });
+    _restoreLockoutState();
     initBiometricAuthentication();
   }
 
@@ -130,7 +171,7 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
               ? ResponsiveAppBar(
                   title: appLocalizations.verifyGestureLock,
                   showBack: false,
-                  titleLeftMargin: 15,
+                  titleLeftMargin: ResponsiveUtil.isMacOS() ? 78 : 15,
                   actions: const [
                     BlankIconButton(),
                   ],
@@ -220,6 +261,8 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
         : _lockoutDurationSeconds;
     _isLockedOut = true;
     _lockoutRemaining = duration;
+    ChewieHiveUtil.put(CloudOTPHiveUtil.gestureLockoutEndKey,
+        DateTime.now().millisecondsSinceEpoch + duration * 1000);
     _lockoutTimer?.cancel();
     _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -227,6 +270,7 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
         if (_lockoutRemaining <= 0) {
           _isLockedOut = false;
           timer.cancel();
+          ChewieHiveUtil.put(CloudOTPHiveUtil.gestureLockoutEndKey, 0);
           _notifier.setStatus(
             status: GestureStatus.verify,
             gestureText: appLocalizations.verifyGestureLock,
@@ -251,12 +295,15 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
 
   success() {
     _failedAttempts = 0;
+    ChewieHiveUtil.put(CloudOTPHiveUtil.gestureFailedAttemptsKey, 0);
+    ChewieHiveUtil.put(CloudOTPHiveUtil.gestureLockoutEndKey, 0);
     if (widget.onSuccess != null) widget.onSuccess!();
     if (widget.jumpToMain) {
       ShortcutsUtil.jumpToMain();
     } else {
       Navigator.of(context).pop();
     }
+    Utils.initTray();
     _gestureUnlockView.currentState?.updateStatus(UnlockStatus.normal);
   }
 
@@ -270,6 +317,8 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
           success();
         } else {
           _failedAttempts++;
+          ChewieHiveUtil.put(
+              CloudOTPHiveUtil.gestureFailedAttemptsKey, _failedAttempts);
           if (_failedAttempts >= _maxFailedAttempts) {
             _startLockout();
           } else {

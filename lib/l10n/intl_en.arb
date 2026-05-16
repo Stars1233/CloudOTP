@@ -823,5 +823,6 @@
   "colorGroupStatus": "Status",
   "accentColor": "Accent Color",
   "resetToDefault": "Default",
-  "customColor": "Custom"
+  "customColor": "Custom",
+  "webDavHttpWarning": "Warning: HTTP is not encrypted. Your credentials may be intercepted. Please use HTTPS."
 }

@@ -13,6 +13,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -33,6 +34,13 @@ class PinChangeScreen extends StatefulWidget {
 }
 
 class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
+  static const int _maxVerifyAttempts = 5;
+  static const int _verifyLockoutSeconds = 60;
+  int _verifyFailedAttempts = 0;
+  bool _verifyLockedOut = false;
+  Timer? _verifyLockoutTimer;
+  int _verifyLockoutRemaining = 0;
+
   String _gesturePassword = "";
   bool _isEditMode =
       ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey)
@@ -56,6 +64,46 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
   CanAuthenticateResponse? canAuthenticateResponse;
 
   bool get _biometricAvailable => canAuthenticateResponse?.isSuccess ?? false;
+
+  @override
+  void dispose() {
+    _verifyLockoutTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startVerifyLockout() {
+    _verifyLockedOut = true;
+    _verifyLockoutRemaining = _verifyLockoutSeconds;
+    _verifyLockoutTimer?.cancel();
+    _verifyLockoutTimer =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _verifyLockoutRemaining--;
+        if (_verifyLockoutRemaining <= 0) {
+          _verifyLockedOut = false;
+          _verifyFailedAttempts = 0;
+          timer.cancel();
+          _notifier.setStatus(
+            status: GestureStatus.verify,
+            gestureText: appLocalizations.drawOldGestureLock,
+          );
+        } else {
+          _notifier.setStatus(
+            status: GestureStatus.verifyFailedCountOverflow,
+            gestureText:
+                '${appLocalizations.gestureLockWrong} (${_verifyLockoutRemaining}s)',
+          );
+        }
+      });
+    });
+    setState(() {
+      _notifier.setStatus(
+        status: GestureStatus.verifyFailedCountOverflow,
+        gestureText:
+            '${appLocalizations.gestureLockWrong} (${_verifyLockoutRemaining}s)',
+      );
+    });
+  }
 
   @override
   void initState() {
@@ -193,8 +241,10 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
             _gestureUnlockView.currentState?.updateStatus(UnlockStatus.failed);
           }
         } else {
+          if (_verifyLockedOut) return;
           String password = GestureUnlockView.selectedToString(selected);
           if (CloudOTPHiveUtil.verifyGesturePassword(password)) {
+            _verifyFailedAttempts = 0;
             setState(() {
               _notifier.setStatus(
                 status: GestureStatus.create,
@@ -204,12 +254,19 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
             });
             _gestureUnlockView.currentState?.updateStatus(UnlockStatus.normal);
           } else {
-            setState(() {
-              _notifier.setStatus(
-                status: GestureStatus.verifyFailed,
-                gestureText: appLocalizations.gestureLockWrong,
-              );
-            });
+            _verifyFailedAttempts++;
+            if (_verifyFailedAttempts >= _maxVerifyAttempts) {
+              _startVerifyLockout();
+            } else {
+              final remaining = _maxVerifyAttempts - _verifyFailedAttempts;
+              setState(() {
+                _notifier.setStatus(
+                  status: GestureStatus.verifyFailed,
+                  gestureText:
+                      '${appLocalizations.gestureLockWrong} ($remaining)',
+                );
+              });
+            }
             _gestureUnlockView.currentState?.updateStatus(UnlockStatus.failed);
           }
         }

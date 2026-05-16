@@ -422,12 +422,12 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   }
 
   _processCopyCode() {
-    ChewieUtils.copy(context, getCurrentCode());
+    ChewieUtils.copy(context, getCurrentCode(), autoClear: true);
     TokenDao.incTokenCopyTimes(widget.token);
   }
 
   _processCopyNextCode() {
-    ChewieUtils.copy(context, getNextCode());
+    ChewieUtils.copy(context, getNextCode(), autoClear: true);
     TokenDao.incTokenCopyTimes(widget.token);
   }
 

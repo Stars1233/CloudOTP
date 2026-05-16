@@ -277,24 +277,26 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
     return MyScaffold(
       resizeToAvoidBottomInset: false,
       appBar: ResponsiveUtil.selectByOrientationNullable(
-        landscape: ResponsiveAppBar(
-          titleLeftMargin: 10,
-          titleWidget: Container(
-            constraints: const BoxConstraints(
-                maxWidth: 300, minWidth: 200, maxHeight: 36),
-            child: MySearchBar(
-              borderRadius: 8,
-              bottomMargin: 18,
-              focusNode: appProvider.searchFocusNode,
-              controller: _searchController,
-              background: ChewieTheme.scaffoldBackgroundColor,
-              hintText: appLocalizations.searchToken,
-              onSubmitted: (text) {
-                performSearch(text);
-              },
-            ),
-          ),
-        ),
+        landscape: ResponsiveUtil.isMacOS()
+            ? null
+            : ResponsiveAppBar(
+                titleLeftMargin: 10,
+                titleWidget: Container(
+                  constraints: const BoxConstraints(
+                      maxWidth: 300, minWidth: 200, maxHeight: 36),
+                  child: MySearchBar(
+                    borderRadius: 8,
+                    bottomMargin: 18,
+                    focusNode: appProvider.searchFocusNode,
+                    controller: _searchController,
+                    background: ChewieTheme.scaffoldBackgroundColor,
+                    hintText: appLocalizations.searchToken,
+                    onSubmitted: (text) {
+                      performSearch(text);
+                    },
+                  ),
+                ),
+              ),
         portrait: null,
       ) as PreferredSizeWidget?,
       body: ResponsiveUtil.selectByOrientation(
