@@ -43,20 +43,20 @@ jobs:
             artifact_path: |
               build/linux/*.deb
               build/linux/*.tar.gz
-#          - target: iOS
-#            os: macos-latest
-#            cache_pod_key: ios-pods
-#            cache_pod_path: ios/Pods
-#            cache_pod_restore_keys_hash_file: ios/Podfile.lock
-#            artifact_name: release-iOS
-#            artifact_path: build/**/*.ipa
-#          - target: MacOS
-#            os: macos-latest
-#            cache_pod_key: macos-pods
-#            cache_pod_path: macos/Pods
-#            cache_pod_restore_keys_hash_file: macos/Podfile.lock
-#            artifact_name: release-MacOS
-#            artifact_path: /Users/runner/work/CloudOTP/CloudOTP/*.dmg
+          - target: iOS
+            os: macos-latest
+            cache_pod_key: ios-pods
+            cache_pod_path: ios/Pods
+            cache_pod_restore_keys_hash_file: ios/Podfile.lock
+            artifact_name: release-iOS
+            artifact_path: build/ios/ipa/*.ipa
+          - target: macOS
+            os: macos-latest
+            cache_pod_key: macos-pods
+            cache_pod_path: macos/Pods
+            cache_pod_restore_keys_hash_file: macos/Podfile.lock
+            artifact_name: release-macOS
+            artifact_path: build/macos/*.dmg
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       date: ${{ steps.get_version.outputs.date}}
@@ -92,6 +92,15 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: gradle
+
+      # Cache CocoaPods
+      - name: Cache CocoaPods
+        if: matrix.cache_pod_key != ''
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.cache_pod_path }}
+          key: ${{ matrix.cache_pod_key }}-${{ hashFiles(matrix.cache_pod_restore_keys_hash_file) }}
+          restore-keys: ${{ matrix.cache_pod_key }}-
 
       # Flutter Pub Get
       - name: Flutter Pub Get
@@ -188,6 +197,24 @@ jobs:
           dpkg-deb --build --root-owner-group CloudOTP-${{ steps.get_version.outputs.version }}-linux-${{ steps.get_version.outputs.arch }}
           tar -zcvf CloudOTP-${{ steps.get_version.outputs.version }}-linux-${{ steps.get_version.outputs.arch }}.tar.gz -C CloudOTP-${{ steps.get_version.outputs.version }}-linux-${{ steps.get_version.outputs.arch }} .
 
+      # Build iOS .ipa (no codesign)
+      - name: Build iOS
+        if: matrix.target == 'iOS'
+        run: |
+          flutter build ipa --release --no-codesign
+          cd build/ios/ipa
+          mv CloudOTP.ipa CloudOTP-${{ steps.get_version.outputs.version }}-ios.ipa 2>/dev/null || true
+
+      # Build macOS .app & .dmg
+      - name: Build macOS
+        if: matrix.target == 'macOS'
+        run: |
+          flutter build macos --release
+          APP_PATH="build/macos/Build/Products/Release/CloudOTP.app"
+          DMG_NAME="CloudOTP-${{ steps.get_version.outputs.version }}-macos-universal.dmg"
+          mkdir -p build/macos
+          hdiutil create -volname CloudOTP -srcfolder "$APP_PATH" -ov -format UDZO "build/macos/$DMG_NAME"
+
       # Upload Artifacts
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -225,6 +252,8 @@ jobs:
           mv /tmp/artifacts/release-Linux/*.tar.gz /tmp/artifacts/final/
           mv /tmp/artifacts/release-Linux-arm/*.deb /tmp/artifacts/final/
           mv /tmp/artifacts/release-Linux-arm/*.tar.gz /tmp/artifacts/final/
+          mv /tmp/artifacts/release-iOS/*.ipa /tmp/artifacts/final/ 2>/dev/null || true
+          mv /tmp/artifacts/release-macOS/*.dmg /tmp/artifacts/final/ 2>/dev/null || true
 
           cd /tmp/artifacts/final
           for file in *; do
