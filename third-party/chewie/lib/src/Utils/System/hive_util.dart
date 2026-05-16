@@ -24,6 +24,7 @@ class ChewieHiveUtil {
   //Appearance
   static const String enableLandscapeInTabletKey = "enableLandscapeInTablet";
   static const String fontFamilyKey = "fontFamily";
+  static const String fontSizeKey = "fontSize";
   static const String customFontsKey = "customFonts";
   static const String lightThemeIndexKey = "lightThemeIndex";
   static const String darkThemeIndexKey = "darkThemeIndex";
@@ -162,12 +163,12 @@ class ChewieHiveUtil {
     }
   }
 
-  static int? getFontSize() {
-    return 2;
+  static int getFontSize() {
+    return ChewieHiveUtil.getInt(ChewieHiveUtil.fontSizeKey, defaultValue: 2);
   }
 
-  static void setFontSize(int? fontSize) {
-    ChewieHiveUtil.put(ChewieHiveUtil.fontFamilyKey, fontSize);
+  static void setFontSize(int fontSize) {
+    ChewieHiveUtil.put(ChewieHiveUtil.fontSizeKey, fontSize);
   }
 
   static ActiveThemeMode getThemeMode() {

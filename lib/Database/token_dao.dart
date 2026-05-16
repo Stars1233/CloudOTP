@@ -44,13 +44,15 @@ class TokenDao {
   static Future<int> insertTokens(List<OtpToken> tokens) async {
     if (tokens.isEmpty) return 0;
     final db = await DatabaseManager.getDataBase();
+    int maxSeq = await getMaxSeq();
+    int maxId = await getMaxId();
     Batch batch = db.batch();
-    for (OtpToken token in tokens) {
-      token.seq = await getMaxSeq() + 1 + tokens.indexOf(token);
-      token.id = await getMaxId() + 1 + tokens.indexOf(token);
+    for (int i = 0; i < tokens.length; i++) {
+      tokens[i].seq = maxSeq + 1 + i;
+      tokens[i].id = maxId + 1 + i;
       batch.insert(
         tableName,
-        token.toMap(),
+        tokens[i].toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }

@@ -210,7 +210,7 @@ class ImportFromThirdPartyBottomSheetState
           title: appLocalizations.importFromWinauth,
           dialogTitle: appLocalizations.importFromWinauthTitle,
           description: appLocalizations.importFromWinauthTip,
-          allowedExtensions: ['zip', 'txt'],
+          allowedExtensions: ['txt'],
           onImport: (path) {
             WinauthTokenImporter().importFromPath(path);
           },

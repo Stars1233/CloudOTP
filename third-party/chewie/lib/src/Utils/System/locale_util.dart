@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
 class LocaleUtil with ChangeNotifier {
+  // Full label list for shared library; apps filter via supportedLocales
   static List<Tuple2<String, Locale?>> localeLabels = <Tuple2<String, Locale?>>[
     Tuple2(chewieLocalizations.followSystem, null),
     const Tuple2("Deutsch", Locale("de")),

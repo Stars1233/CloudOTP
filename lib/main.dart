@@ -93,8 +93,11 @@ Future<void> initApp(WidgetsBinding widgetsBinding) async {
   await ResponsiveUtil.init();
   await FileUtil.migrationDataToSupportDirectory();
   FlutterError.onError = onError;
-  imageCache.maximumSizeBytes = 1024 * 1024 * 1024 * 2;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 1024 * 1024 * 1024 * 2;
+  final cacheSize = ResponsiveUtil.isMobile()
+      ? 256 * 1024 * 1024 // 256MB for mobile
+      : 1024 * 1024 * 1024; // 1GB for desktop
+  imageCache.maximumSizeBytes = cacheSize;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = cacheSize;
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await initHive();
   await initCryptoUtil();
@@ -316,8 +319,12 @@ class MyApp extends StatelessWidget {
                 if (widget != null) ...[
                   OverlayEntry(
                     builder: (context) => MediaQuery(
-                      data: MediaQuery.of(context)
-                          .copyWith(textScaler: TextScaler.noScaling),
+                      data: ChewieHiveUtil.getBool(
+                              CloudOTPHiveUtil.followSystemTextScaleKey,
+                              defaultValue: false)
+                          ? MediaQuery.of(context)
+                          : MediaQuery.of(context)
+                              .copyWith(textScaler: TextScaler.noScaling),
                       child: Listener(
                         onPointerDown: (_) {
                           if (!ResponsiveUtil.isDesktop() &&

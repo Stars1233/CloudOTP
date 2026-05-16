@@ -107,11 +107,14 @@ class DatabaseManager {
     await ConfigDao.initConfig();
   }
 
+  static String _escapeSql(String value) => value.replaceAll("'", "''");
+
   static Future<bool> changePassword(String password) async {
     if (_database != null) {
+      final escaped = _escapeSql(password);
       if (isDatabaseEncrypted) {
         List<Map<String, Object?>> res =
-            await _database!.rawQuery("PRAGMA rekey='$password'");
+            await _database!.rawQuery("PRAGMA rekey='$escaped'");
         ILogger.info("Change database password result is $res");
         if (res.isNotEmpty) {
           appProvider.currentDatabasePassword = password;
@@ -120,7 +123,7 @@ class DatabaseManager {
       } else {
         try {
           await _database!.rawQuery(
-              "ATTACH DATABASE 'encrypted.db' AS tmp KEY '$password'");
+              "ATTACH DATABASE 'encrypted.db' AS tmp KEY '$escaped'");
           await _database!.rawQuery("SELECT sqlcipher_export('tmp')");
           await _database!.rawQuery("DETACH DATABASE tmp");
           return true;
@@ -136,8 +139,9 @@ class DatabaseManager {
 
   static Future<void> _onConfigure(Database db, String password) async {
     if (isDatabaseEncrypted) {
+      final escaped = _escapeSql(password);
       List<Map<String, Object?>> res =
-          await db.rawQuery("PRAGMA KEY='$password'");
+          await db.rawQuery("PRAGMA KEY='$escaped'");
       if (res.isNotEmpty) {
         ILogger.info(
             "Configure database with cipher successfully. Result is $res");

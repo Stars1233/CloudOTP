@@ -206,12 +206,17 @@ class CustomFont {
     await downloadFont(
       context: context,
       showToast: false,
-      onFinished: (value) {
+      onFinished: (success) {
         dialog.dismiss();
-        chewieProvider.darkTheme = chewieProvider.darkTheme;
-        chewieProvider.lightTheme = chewieProvider.lightTheme;
-        if (autoRestartApp) {
-          ResponsiveUtil.restartApp(context);
+        if (success) {
+          chewieProvider.darkTheme = chewieProvider.darkTheme;
+          chewieProvider.lightTheme = chewieProvider.lightTheme;
+          if (autoRestartApp) {
+            ResponsiveUtil.restartApp(context);
+          }
+        } else {
+          IToast.showTop(chewieLocalizations.fontFamlyLoadFailed);
+          ChewieHiveUtil.put(ChewieHiveUtil.fontFamilyKey, Default.fontFamily);
         }
       },
       onReceiveProgress: (progress) {

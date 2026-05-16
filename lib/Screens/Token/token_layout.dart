@@ -88,7 +88,7 @@ class TokenLayoutNotifier extends ChangeNotifier {
 
 class TokenLayoutState extends BaseDynamicState<TokenLayout>
     with TickerProviderStateMixin {
-  Timer? _timer;
+  StreamSubscription? _tickerSubscription;
 
   TokenLayoutNotifier tokenLayoutNotifier = TokenLayoutNotifier();
 
@@ -110,7 +110,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _tickerSubscription?.cancel();
     tokenLayoutNotifier.dispose();
     super.dispose();
   }
@@ -135,7 +135,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   resetTimer() {
     tokenLayoutNotifier.haveToResetHOTP = false;
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _tickerSubscription?.cancel();
+    globalTokenTicker.start();
+    _tickerSubscription = globalTokenTicker.stream.listen((_) {
       if (mounted) {
         progressNotifier.value = currentProgress;
         if (remainingMilliseconds <= 180 && appProvider.autoHideCode) {
@@ -238,12 +240,16 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   }
 
   _buildContextMenuRegion() {
-    return ContextMenuRegion(
-      key: ValueKey("contextMenuRegion${widget.token.keyString}"),
-      enable: ResponsiveUtil.isDesktop(),
-      enableOnLongPress: false,
-      contextMenu: _buildContextMenuButtons(),
-      child: Selector<AppProvider, bool>(
+    return Semantics(
+      label: '${widget.token.issuer} ${widget.token.account}',
+      hint: appLocalizations.copyTokenCode,
+      button: true,
+      child: ContextMenuRegion(
+        key: ValueKey("contextMenuRegion${widget.token.keyString}"),
+        enable: ResponsiveUtil.isDesktop(),
+        enableOnLongPress: false,
+        contextMenu: _buildContextMenuButtons(),
+        child: Selector<AppProvider, bool>(
         selector: (context, provider) => provider.dragToReorder,
         builder: (context, dragToReorder, child) =>
             Selector<AppProvider, IssuerAndAccountShowOption>(
@@ -264,6 +270,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             );
           }
         ),
+      ),
       ),
     );
   }

@@ -100,7 +100,7 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
         },
       ),
     );
-    // list.add(ItemBuilder.buildEmptyThemeItem(context: context, onTap: null));
+    // TODO: Enable custom theme creation when theme editor UI is implemented
     return list;
   }
 

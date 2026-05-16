@@ -34,12 +34,9 @@ class PinChangeScreen extends StatefulWidget {
 
 class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
   String _gesturePassword = "";
-  final String? _oldPassword =
-      ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey);
   bool _isEditMode =
-      ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey) != null &&
-          ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey)!
-              .isNotEmpty;
+      ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey)
+          .notNullOrEmpty;
   late final bool _enableBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
   final bool _hideGestureTrail =
@@ -183,7 +180,7 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
               );
               Navigator.pop(context);
             });
-            ChewieHiveUtil.put(CloudOTPHiveUtil.guesturePasswdKey,
+            CloudOTPHiveUtil.setGesturePassword(
                 GestureUnlockView.selectedToString(selected));
           } else {
             setState(() {
@@ -196,7 +193,7 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
           }
         } else {
           String password = GestureUnlockView.selectedToString(selected);
-          if (_oldPassword == password) {
+          if (CloudOTPHiveUtil.verifyGesturePassword(password)) {
             setState(() {
               _notifier.setStatus(
                 status: GestureStatus.create,

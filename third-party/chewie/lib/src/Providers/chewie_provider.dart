@@ -117,11 +117,11 @@ class ChewieProvider with ChangeNotifier {
     ];
   }
 
-  int? _fontSize = ChewieHiveUtil.getFontSize();
+  int _fontSize = ChewieHiveUtil.getFontSize();
 
-  int? get fontSize => _fontSize;
+  int get fontSize => _fontSize;
 
-  set fontSize(int? value) {
+  set fontSize(int value) {
     if (value != _fontSize) {
       _fontSize = value;
       notifyListeners();

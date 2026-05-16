@@ -13,6 +13,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
+
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Models/auto_backup_log.dart';
 import 'package:cloudotp/Screens/Setting/setting_general_screen.dart';
@@ -45,6 +47,29 @@ HomeScreenState? get homeScreenState =>
 //     keyboardHandlerKey.currentState;
 
 Queue autoBackupQueue = Queue();
+
+class GlobalTokenTicker {
+  static final GlobalTokenTicker _instance = GlobalTokenTicker._();
+  factory GlobalTokenTicker() => _instance;
+  GlobalTokenTicker._();
+
+  Timer? _timer;
+  final StreamController<void> _controller = StreamController.broadcast();
+
+  Stream<void> get stream => _controller.stream;
+
+  void start() {
+    _timer ??= Timer.periodic(
+        const Duration(milliseconds: 100), (_) => _controller.add(null));
+  }
+
+  void stop() {
+    _timer?.cancel();
+    _timer = null;
+  }
+}
+
+final globalTokenTicker = GlobalTokenTicker();
 
 AppProvider appProvider = AppProvider();
 

@@ -15,6 +15,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -42,10 +43,11 @@ class BackupEncryptionV1 implements BackupEncryptInterface {
       throw EncryptEmptyPasswordException();
     }
 
-    final random = SecureRandom("Fortuna")
-      ..seed(KeyParameter(Uint8List.fromList(List.generate(32, (_) => 1))));
-    final salt = random.nextBytes(saltLength);
-    final iv = random.nextBytes(ivLength);
+    final secureRandom = Random.secure();
+    final salt = Uint8List.fromList(
+        List.generate(saltLength, (_) => secureRandom.nextInt(256)));
+    final iv = Uint8List.fromList(
+        List.generate(ivLength, (_) => secureRandom.nextInt(256)));
 
     final key = deriveKey(password, salt);
     final parameters =

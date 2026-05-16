@@ -13,10 +13,13 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:convert';
+
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/config_dao.dart';
 import 'package:cloudotp/Screens/home_screen.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
+import 'package:hashlib/hashlib.dart';
 
 import '../Database/database_manager.dart';
 import 'constant.dart';
@@ -82,6 +85,7 @@ class CloudOTPHiveUtil {
   static const String autoLockTimeKey = "autoLockTime";
   static const String enableSafeModeKey = "enableSafeMode";
   static const String hideGestureTrailKey = "hideGestureTrail";
+  static const String followSystemTextScaleKey = "followSystemTextScale";
 
   //System
   static const String oldVersionKey = "oldVersion";
@@ -112,6 +116,30 @@ class CloudOTPHiveUtil {
   static bool canDatabaseLock() =>
       getEncryptDatabaseStatus() == EncryptDatabaseStatus.customPassword &&
       DatabaseManager.isDatabaseEncrypted;
+
+  static String _hashGesturePassword(String password) =>
+      sha256.convert(utf8.encode(password)).hex();
+
+  static bool _isHashed(String value) =>
+      value.length == 64 && RegExp(r'^[0-9a-f]+$').hasMatch(value);
+
+  static void setGesturePassword(String password) {
+    ChewieHiveUtil.put(guesturePasswdKey, _hashGesturePassword(password));
+  }
+
+  static bool verifyGesturePassword(String input) {
+    final stored = ChewieHiveUtil.getString(guesturePasswdKey);
+    if (stored == null || stored.isEmpty) return false;
+    if (_isHashed(stored)) {
+      return stored == _hashGesturePassword(input);
+    }
+    // Legacy plaintext — migrate to hash on successful match
+    if (stored == input) {
+      setGesturePassword(input);
+      return true;
+    }
+    return false;
+  }
 
   static Future<bool> showCloudEntry() async {
     String autoBackupPassword = (await ConfigDao.getConfig()).backupPassword;
