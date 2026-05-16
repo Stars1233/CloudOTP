@@ -250,27 +250,28 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
         enableOnLongPress: false,
         contextMenu: _buildContextMenuButtons(),
         child: Selector<AppProvider, bool>(
-        selector: (context, provider) => provider.dragToReorder,
-        builder: (context, dragToReorder, child) =>
-            Selector<AppProvider, IssuerAndAccountShowOption>(
-          selector: (context, provider) => provider.issuerAndAccountShowOption,
-          builder: (context, issuerAndAccountShowOption, child) {
-            return GestureDetector(
-              onLongPress: dragToReorder && !ResponsiveUtil.isDesktop()
-                  ? () {
-                showContextMenu();
-                HapticFeedback.lightImpact();
-              }
-                  : null,
-              child: PressableAnimation(
-                child: _buildBody(
-                  issuerAndAccountShowOption: issuerAndAccountShowOption,
+          selector: (context, provider) => provider.dragToReorder,
+          builder: (context, dragToReorder, child) =>
+              Selector<AppProvider, IssuerAndAccountShowOption>(
+            selector: (context, provider) =>
+                provider.issuerAndAccountShowOption,
+            builder: (context, issuerAndAccountShowOption, child) {
+              return GestureDetector(
+                onLongPress: dragToReorder && !ResponsiveUtil.isDesktop()
+                    ? () {
+                        showContextMenu();
+                        HapticFeedback.lightImpact();
+                      }
+                    : null,
+                child: PressableAnimation(
+                  child: _buildBody(
+                    issuerAndAccountShowOption: issuerAndAccountShowOption,
+                  ),
                 ),
-              ),
-            );
-          }
+              );
+            },
+          ),
         ),
-      ),
       ),
     );
   }

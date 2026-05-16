@@ -496,6 +496,106 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  final List<ChewieThemeColorData> _customLightThemes =
+      ChewieHiveUtil.getCustomLightThemes();
+
+  List<ChewieThemeColorData> get customLightThemes => _customLightThemes;
+
+  final List<ChewieThemeColorData> _customDarkThemes =
+      ChewieHiveUtil.getCustomDarkThemes();
+
+  List<ChewieThemeColorData> get customDarkThemes => _customDarkThemes;
+
+  void addCustomLightTheme(ChewieThemeColorData theme) {
+    _customLightThemes.add(theme);
+    ChewieHiveUtil.setCustomLightThemes(_customLightThemes);
+    notifyListeners();
+  }
+
+  void updateCustomLightTheme(int index, ChewieThemeColorData theme) {
+    if (index >= 0 && index < _customLightThemes.length) {
+      _customLightThemes[index] = theme;
+      ChewieHiveUtil.setCustomLightThemes(_customLightThemes);
+      int activeIndex = ChewieHiveUtil.getLightThemeIndex();
+      int builtInCount = ChewieThemeColorData.defaultLightThemes.length;
+      if (activeIndex == builtInCount + index) {
+        _lightTheme = ChewieHiveUtil.getLightTheme();
+        chewieProvider.lightTheme = _lightTheme;
+      }
+      notifyListeners();
+    }
+  }
+
+  void deleteCustomLightTheme(int index) {
+    if (index < 0 || index >= _customLightThemes.length) return;
+    _customLightThemes.removeAt(index);
+    ChewieHiveUtil.setCustomLightThemes(_customLightThemes);
+    int activeIndex = ChewieHiveUtil.getLightThemeIndex();
+    int builtInCount = ChewieThemeColorData.defaultLightThemes.length;
+    int deletedGlobalIndex = builtInCount + index;
+    if (activeIndex == deletedGlobalIndex) {
+      setLightTheme(0);
+    } else if (activeIndex > deletedGlobalIndex) {
+      ChewieHiveUtil.setLightTheme(activeIndex - 1);
+      _lightTheme = ChewieHiveUtil.getLightTheme();
+      chewieProvider.lightTheme = _lightTheme;
+    }
+    notifyListeners();
+  }
+
+  void addCustomDarkTheme(ChewieThemeColorData theme) {
+    _customDarkThemes.add(theme);
+    ChewieHiveUtil.setCustomDarkThemes(_customDarkThemes);
+    notifyListeners();
+  }
+
+  void updateCustomDarkTheme(int index, ChewieThemeColorData theme) {
+    if (index >= 0 && index < _customDarkThemes.length) {
+      _customDarkThemes[index] = theme;
+      ChewieHiveUtil.setCustomDarkThemes(_customDarkThemes);
+      int activeIndex = ChewieHiveUtil.getDarkThemeIndex();
+      int builtInCount = ChewieThemeColorData.defaultDarkThemes.length;
+      if (activeIndex == builtInCount + index) {
+        _darkTheme = ChewieHiveUtil.getDarkTheme();
+        chewieProvider.darkTheme = _darkTheme;
+      }
+      notifyListeners();
+    }
+  }
+
+  void deleteCustomDarkTheme(int index) {
+    if (index < 0 || index >= _customDarkThemes.length) return;
+    _customDarkThemes.removeAt(index);
+    ChewieHiveUtil.setCustomDarkThemes(_customDarkThemes);
+    int activeIndex = ChewieHiveUtil.getDarkThemeIndex();
+    int builtInCount = ChewieThemeColorData.defaultDarkThemes.length;
+    int deletedGlobalIndex = builtInCount + index;
+    if (activeIndex == deletedGlobalIndex) {
+      setDarkTheme(0);
+    } else if (activeIndex > deletedGlobalIndex) {
+      ChewieHiveUtil.setDarkTheme(activeIndex - 1);
+      _darkTheme = ChewieHiveUtil.getDarkTheme();
+      chewieProvider.darkTheme = _darkTheme;
+    }
+    notifyListeners();
+  }
+
+  void setLightPrimaryColorOverride(Color? color, int paletteIndex) {
+    ChewieHiveUtil.setCustomLightPrimaryColor(color);
+    ChewieHiveUtil.setLightThemePrimaryColorIndex(paletteIndex);
+    _lightTheme = ChewieHiveUtil.getLightTheme();
+    chewieProvider.lightTheme = _lightTheme;
+    notifyListeners();
+  }
+
+  void setDarkPrimaryColorOverride(Color? color, int paletteIndex) {
+    ChewieHiveUtil.setCustomDarkPrimaryColor(color);
+    ChewieHiveUtil.setDarkThemePrimaryColorIndex(paletteIndex);
+    _darkTheme = ChewieHiveUtil.getDarkTheme();
+    chewieProvider.darkTheme = _darkTheme;
+    notifyListeners();
+  }
+
   Locale? _locale = ChewieHiveUtil.getLocale();
 
   Locale? get locale => _locale;

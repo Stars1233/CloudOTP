@@ -278,6 +278,7 @@ class ChewieThemeColorData {
 
   static List<ChewieThemeColorData> defaultDarkThemes = [
     ChewieThemeColorData(
+      isDarkMode: true,
       id: "PureBlack",
       name: "极简黑",
       canvasColor: const Color(0xFF212121),
@@ -316,6 +317,7 @@ class ChewieThemeColorData {
       errorColor: const Color(0xFFCF6679),
     ),
     ChewieThemeColorData(
+      isDarkMode: true,
       id: "BlueIron",
       name: "蓝铁",
       scaffoldBackgroundColor: const Color(0xFF1D2733),
@@ -354,6 +356,7 @@ class ChewieThemeColorData {
       errorColor: const Color(0xFFCF6679),
     ),
     ChewieThemeColorData(
+      isDarkMode: true,
       id: "GithubDark",
       name: "Github深色",
       canvasColor: const Color(0xFF0d1117),
@@ -678,6 +681,103 @@ class ChewieThemeColorData {
         'warningColor': warningColor.toHex(),
         'errorColor': errorColor.toHex(),
       };
+
+  static String generateId() =>
+      'custom_${DateTime.now().millisecondsSinceEpoch}';
+
+  ChewieThemeColorData copyWith({
+    bool? isDarkMode,
+    String? id,
+    String? name,
+    String? description,
+    Color? primaryColor,
+    Color? canvasColor,
+    Color? scaffoldBackgroundColor,
+    Color? cardColor,
+    Color? hintColor,
+    Color? indicatorColor,
+    Color? hoverColor,
+    Color? splashColor,
+    Color? highlightColor,
+    Color? shadowColor,
+    Color? iconColor,
+    Color? appBarBackgroundColor,
+    Color? appBarSurfaceTintColor,
+    Color? appBarShadowColor,
+    double? appBarElevation,
+    double? appBarScrollUnderElevation,
+    Color? textColor,
+    Color? textLightGreyColor,
+    Color? textDarkGreyColor,
+    Color? buttonPrimaryColor,
+    Color? buttonSecondaryColor,
+    Color? buttonDisabledColor,
+    Color? buttonHoverColor,
+    Color? buttonLightHoverColor,
+    Color? textSelectionColor,
+    Color? textSelectionHandleColor,
+    Color? cursorColor,
+    Color? dividerColor,
+    Color? borderColor,
+    Color? scrollBarThumbColor,
+    Color? scrollBarThumbHoverColor,
+    Color? scrollBarTrackColor,
+    Color? scrollBarTrackHoverColor,
+    Color? successColor,
+    Color? warningColor,
+    Color? errorColor,
+  }) {
+    return ChewieThemeColorData(
+      isDarkMode: isDarkMode ?? this.isDarkMode,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      primaryColor: primaryColor ?? this.primaryColor,
+      canvasColor: canvasColor ?? this.canvasColor,
+      scaffoldBackgroundColor:
+          scaffoldBackgroundColor ?? this.scaffoldBackgroundColor,
+      cardColor: cardColor ?? this.cardColor,
+      hintColor: hintColor ?? this.hintColor,
+      indicatorColor: indicatorColor ?? this.indicatorColor,
+      hoverColor: hoverColor ?? this.hoverColor,
+      splashColor: splashColor ?? this.splashColor,
+      highlightColor: highlightColor ?? this.highlightColor,
+      shadowColor: shadowColor ?? this.shadowColor,
+      iconColor: iconColor ?? this.iconColor,
+      appBarBackgroundColor:
+          appBarBackgroundColor ?? this.appBarBackgroundColor,
+      appBarSurfaceTintColor:
+          appBarSurfaceTintColor ?? this.appBarSurfaceTintColor,
+      appBarShadowColor: appBarShadowColor ?? this.appBarShadowColor,
+      appBarElevation: appBarElevation ?? this.appBarElevation,
+      appBarScrollUnderElevation:
+          appBarScrollUnderElevation ?? this.appBarScrollUnderElevation,
+      textColor: textColor ?? this.textColor,
+      textLightGreyColor: textLightGreyColor ?? this.textLightGreyColor,
+      textDarkGreyColor: textDarkGreyColor ?? this.textDarkGreyColor,
+      buttonPrimaryColor: buttonPrimaryColor ?? this.buttonPrimaryColor,
+      buttonSecondaryColor: buttonSecondaryColor ?? this.buttonSecondaryColor,
+      buttonDisabledColor: buttonDisabledColor ?? this.buttonDisabledColor,
+      buttonHoverColor: buttonHoverColor ?? this.buttonHoverColor,
+      buttonLightHoverColor:
+          buttonLightHoverColor ?? this.buttonLightHoverColor,
+      textSelectionColor: textSelectionColor ?? this.textSelectionColor,
+      textSelectionHandleColor:
+          textSelectionHandleColor ?? this.textSelectionHandleColor,
+      cursorColor: cursorColor ?? this.cursorColor,
+      dividerColor: dividerColor ?? this.dividerColor,
+      borderColor: borderColor ?? this.borderColor,
+      scrollBarThumbColor: scrollBarThumbColor ?? this.scrollBarThumbColor,
+      scrollBarThumbHoverColor:
+          scrollBarThumbHoverColor ?? this.scrollBarThumbHoverColor,
+      scrollBarTrackColor: scrollBarTrackColor ?? this.scrollBarTrackColor,
+      scrollBarTrackHoverColor:
+          scrollBarTrackHoverColor ?? this.scrollBarTrackHoverColor,
+      successColor: successColor ?? this.successColor,
+      warningColor: warningColor ?? this.warningColor,
+      errorColor: errorColor ?? this.errorColor,
+    );
+  }
 
   factory ChewieThemeColorData.fromJson(Map<String, dynamic> map) {
     return ChewieThemeColorData(

@@ -512,7 +512,10 @@ class CaptionItemState extends BaseDynamicState<CaptionItem>
           child: SizeTransition(
             sizeFactor: _sizeAnimation,
             axisAlignment: -1.0,
-            child: Column(children: widget.children),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: widget.children,
+            ),
           ),
         ),
       ],

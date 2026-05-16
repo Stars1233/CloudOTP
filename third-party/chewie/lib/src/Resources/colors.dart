@@ -146,10 +146,10 @@ extension HexColor on Color {
   }
 
   String toHex({bool leadingHashSign = true}) => '${leadingHashSign ? '#' : ''}'
-      '${a.toInt().toRadixString(16).padLeft(2, '0')}'
-      '${r.toInt().toRadixString(16).padLeft(2, '0')}'
-      '${g.toInt().toRadixString(16).padLeft(2, '0')}'
-      '${b.toInt().toRadixString(16).padLeft(2, '0')}';
+      '${(a * 255).round().toRadixString(16).padLeft(2, '0')}'
+      '${(r * 255).round().toRadixString(16).padLeft(2, '0')}'
+      '${(g * 255).round().toRadixString(16).padLeft(2, '0')}'
+      '${(b * 255).round().toRadixString(16).padLeft(2, '0')}';
 }
 
 extension HexColorString on String {
