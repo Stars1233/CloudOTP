@@ -23,7 +23,7 @@ apply plugin: 'com.android.library'
 
 android {
     namespace "com.sayegh.move_to_background"
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdk 21

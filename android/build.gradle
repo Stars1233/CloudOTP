@@ -22,7 +22,7 @@ rootProject.buildDir = '../build'
 subprojects {
     afterEvaluate {
         android {
-            compileSdkVersion 34
+            compileSdkVersion 35
         }
         if (it.plugins.hasPlugin('com.android.library') || it.plugins.hasPlugin('com.android.application')) {
             it.android {

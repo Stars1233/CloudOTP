@@ -211,6 +211,12 @@ jobs:
           mv CloudOTP.ipa CloudOTP-${{ steps.get_version.outputs.version }}-ios.ipa 2>/dev/null || true
 
       # Build macOS .app & .dmg
+      - name: Disable macOS codesigning
+        if: matrix.target == 'macOS'
+        run: |
+          echo 'CODE_SIGN_IDENTITY=-' > macos/Runner/CI.xcconfig
+          echo 'CODE_SIGN_ENTITLEMENTS=' >> macos/Runner/CI.xcconfig
+          echo '#include "Runner/CI.xcconfig"' | cat - macos/Flutter/Release.xcconfig > temp && mv temp macos/Flutter/Release.xcconfig
       - name: Build macOS
         if: matrix.target == 'macOS'
         run: |
