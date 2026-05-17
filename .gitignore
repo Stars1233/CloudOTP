@@ -50,6 +50,7 @@ app.*.map.json
 **/generated/
 
 cloudotp.db
+*.ipa
 
 /assets/fonts/**
 
