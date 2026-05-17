@@ -105,14 +105,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.11.0"
-  audio_session:
-    dependency: transitive
-    description:
-      name: audio_session
-      sha256: "343e83bc7809fbda2591a49e525d6b63213ade10c76f15813be9aed6657b3261"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.1.21"
   auto_size_text:
     dependency: "direct main"
     description:
@@ -270,14 +262,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.3"
-  chewie:
-    dependency: transitive
-    description:
-      name: chewie
-      sha256: "335df378c025588aef400c704bd71f0daea479d4cd57c471c88c056c1144e7cd"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.8.5"
   cli_util:
     dependency: transitive
     description:
@@ -366,14 +350,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.0"
-  cupertino_icons:
-    dependency: transitive
-    description:
-      name: cupertino_icons
-      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.0.8"
   dart_style:
     dependency: transitive
     description:
@@ -382,14 +358,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.6"
-  dbus:
-    dependency: transitive
-    description:
-      name: dbus
-      sha256: "365c771ac3b0e58845f39ec6deebc76e3276aa9922b0cc60840712094d9047ac"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.7.10"
   decimal:
     dependency: transitive
     description:
@@ -720,14 +688,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.1.3"
-  flutter_svg:
-    dependency: transitive
-    description:
-      name: flutter_svg
-      sha256: "7b4ca6cf3304575fe9c8ec64813c8d02ee41d2afe60bcfe0678bcb5375d596a2"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.0.10+1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -752,16 +712,8 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_widget_from_html:
-    dependency: "direct main"
-    description:
-      name: flutter_widget_from_html
-      sha256: "9e2a6201c4d2eb910b6b3ebb2a9f5c490fc61c9a1aa35eafdde38f0fc659cf4c"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.15.2"
   flutter_widget_from_html_core:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_widget_from_html_core
       sha256: b1048fd119a14762e2361bd057da608148a895477846d6149109b2151d2f7abf
@@ -799,54 +751,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.0.0"
-  fwfh_cached_network_image:
-    dependency: transitive
-    description:
-      name: fwfh_cached_network_image
-      sha256: "8e44226801bfba27930673953afce8af44da7e92573be93f60385d9865a089dd"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.14.3"
-  fwfh_chewie:
-    dependency: transitive
-    description:
-      name: fwfh_chewie
-      sha256: "37bde9cedfb6dc5546176f7f0c56af1e814966cb33ec58f16c9565ed93ccb704"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.14.8"
-  fwfh_just_audio:
-    dependency: transitive
-    description:
-      name: fwfh_just_audio
-      sha256: "38dc2c55803bd3cef33042c473e0c40b891ad4548078424641a32032f6a1245f"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.15.2"
-  fwfh_svg:
-    dependency: transitive
-    description:
-      name: fwfh_svg
-      sha256: "550b1014d12b5528d8bdb6e3b44b58721f3fb1f65d7a852d1623a817008bdfc4"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.8.3"
-  fwfh_url_launcher:
-    dependency: transitive
-    description:
-      name: fwfh_url_launcher
-      sha256: b9f5d55a5ae2c2c07243ba33f7ba49ac9544bdb2f4c16d8139df9ccbebe3449c
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.9.1"
-  fwfh_webview:
-    dependency: transitive
-    description:
-      name: fwfh_webview
-      sha256: f67890bc0d6278da98bd197469ae9511c859f7db327e92299fe0ea0cf46c4057
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.15.2"
   get_it:
     dependency: transitive
     description:
@@ -1086,30 +990,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "6.8.0"
-  just_audio:
-    dependency: transitive
-    description:
-      name: just_audio
-      sha256: d8e8aaf417d33e345299c17f6457f72bd4ba0c549dc34607abb5183a354edc4d
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.9.40"
-  just_audio_platform_interface:
-    dependency: transitive
-    description:
-      name: just_audio_platform_interface
-      sha256: "0243828cce503c8366cc2090cefb2b3c871aa8ed2f520670d76fd47aa1ab2790"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "4.3.0"
-  just_audio_web:
-    dependency: transitive
-    description:
-      name: just_audio_web
-      sha256: "9a98035b8b24b40749507687520ec5ab404e291d2b0937823ff45d92cb18d448"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.4.13"
   launch_at_startup:
     dependency: "direct main"
     description:
@@ -2130,30 +2010,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.5.1"
-  vector_graphics:
-    dependency: transitive
-    description:
-      name: vector_graphics
-      sha256: "32c3c684e02f9bc0afb0ae0aa653337a2fe022e8ab064bcd7ffda27a74e288e3"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.1.11+1"
-  vector_graphics_codec:
-    dependency: transitive
-    description:
-      name: vector_graphics_codec
-      sha256: c86987475f162fadff579e7320c7ddda04cd2fdeffbe1129227a85d9ac9e03da
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.1.11+1"
-  vector_graphics_compiler:
-    dependency: transitive
-    description:
-      name: vector_graphics_compiler
-      sha256: "12faff3f73b1741a36ca7e31b292ddeb629af819ca9efe9953b70bd63fc8cd81"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.1.11+1"
   vector_math:
     dependency: "direct main"
     description:
@@ -2162,46 +2018,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.2.0"
-  video_player:
-    dependency: transitive
-    description:
-      name: video_player
-      sha256: e30df0d226c4ef82e2c150ebf6834b3522cf3f654d8e2f9419d376cdc071425d
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.9.1"
-  video_player_android:
-    dependency: transitive
-    description:
-      name: video_player_android
-      sha256: "45d21bbba3d10b7182aa08ade5d4c68ed3367016d40f29732bb04a799b26842d"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.7.5"
-  video_player_avfoundation:
-    dependency: transitive
-    description:
-      name: video_player_avfoundation
-      sha256: d1e9a824f2b324000dc8fb2dcb2a3285b6c1c7c487521c63306cc5b394f68a7c
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.6.1"
-  video_player_platform_interface:
-    dependency: transitive
-    description:
-      name: video_player_platform_interface
-      sha256: "236454725fafcacf98f0f39af0d7c7ab2ce84762e3b63f2cbb3ef9a7e0550bc6"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.2.2"
-  video_player_web:
-    dependency: transitive
-    description:
-      name: video_player_web
-      sha256: "6dcdd298136523eaf7dfc31abaf0dfba9aa8a8dbc96670e87e9d42b6f2caf774"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.3.2"
   visibility_detector:
     dependency: transitive
     description:
@@ -2218,22 +2034,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "14.3.0"
-  wakelock_plus:
-    dependency: transitive
-    description:
-      name: wakelock_plus
-      sha256: bf4ee6f17a2fa373ed3753ad0e602b7603f8c75af006d5b9bdade263928c0484
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.2.8"
-  wakelock_plus_platform_interface:
-    dependency: transitive
-    description:
-      name: wakelock_plus_platform_interface
-      sha256: "422d1cdbb448079a8a62a5a770b69baa489f8f7ca21aef47800c726d404f9d16"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.2.1"
   watcher:
     dependency: transitive
     description:
@@ -2266,14 +2066,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.1"
-  webview_flutter:
-    dependency: transitive
-    description:
-      name: webview_flutter
-      sha256: ec81f57aa1611f8ebecf1d2259da4ef052281cb5ad624131c93546c79ccc7736
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "4.9.0"
   webview_flutter_android:
     dependency: "direct overridden"
     description:
@@ -2290,14 +2082,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.10.0"
-  webview_flutter_wkwebview:
-    dependency: transitive
-    description:
-      name: webview_flutter_wkwebview
-      sha256: "1942a12224ab31e9508cf00c0c6347b931b023b8a4f0811e5dec3b06f94f117d"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "3.15.0"
   win32:
     dependency: transitive
     description:

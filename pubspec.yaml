@@ -24,7 +24,7 @@ dependencies:
   auto_size_text: ^3.0.0 # 自适应文本
   flex_color_picker: ^3.6.0 # 颜色选择器
   flutter_inappwebview: ^6.0.0 # Webview
-  flutter_widget_from_html: ^0.15.2 # 将HTML渲染成组件
+  flutter_widget_from_html_core: ^0.15.2 # 将HTML渲染成组件
   lucide_icons:
     path: third-party/widget/lucide_icons
   # 二维码
@@ -41,7 +41,7 @@ dependencies:
   archive: ^4.0.0 # 压缩
   hive: ^4.0.0-dev.2 # 轻量存储
   isar_flutter_libs: ^4.0.0-dev.13
-  sqflite_sqlcipher: ^3.1.0+1 # SQLite加密
+  sqflite_sqlcipher: 3.1.0+1 # SQLite加密
   sqlite3: 2.7.5 # SQLite
   # 网络
   http: ^1.2.1
