@@ -217,11 +217,14 @@ jobs:
           sed -i '' 's/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "Apple Development"/CODE_SIGN_IDENTITY = "-"/g' macos/Runner.xcodeproj/project.pbxproj
           sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' macos/Runner.xcodeproj/project.pbxproj
           sed -i '' 's/DEVELOPMENT_TEAM = 9CAPQ7Q4W8/DEVELOPMENT_TEAM = ""/g' macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_ENTITLEMENTS = Runner\/Release.entitlements/CODE_SIGN_ENTITLEMENTS = ""/g' macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_ENTITLEMENTS = Runner\/DebugProfile.entitlements/CODE_SIGN_ENTITLEMENTS = ""/g' macos/Runner.xcodeproj/project.pbxproj
       - name: Build macOS
         if: matrix.target == 'macOS'
         run: |
           flutter build macos --release
           APP_PATH="build/macos/Build/Products/Release/CloudOTP.app"
+          codesign --force --deep -s - "$APP_PATH"
           DMG_NAME="CloudOTP-${{ steps.get_version.outputs.version }}-macos-universal.dmg"
           mkdir -p build/macos
           hdiutil create -volname CloudOTP -srcfolder "$APP_PATH" -ov -format UDZO "build/macos/$DMG_NAME"

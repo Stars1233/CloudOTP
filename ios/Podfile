@@ -49,7 +49,7 @@ post_install do |installer|
   # Step 1: Identify bundle targets to remove
   bundle_target_names = Set.new
   pods_project.targets.to_a.each do |target|
-    if target.product_type == 'com.apple.product-type.bundle' && target.name.include?('SQLCipher')
+    if target.respond_to?(:product_type) && target.product_type == 'com.apple.product-type.bundle' && target.name.include?('SQLCipher')
       bundle_target_names << target.name
     end
   end
