@@ -43,17 +43,56 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
   end
 
-  # Remove duplicate SQLCipher.bundle targets and references
-  installer.pods_project.targets.each do |target|
-    if target.name == 'FMDB-SQLCipher' || target.name == 'SQLCipher-SQLCipher'
-      target.remove_from_project
+  # Aggressively remove all SQLCipher.bundle targets and references
+  pods_project = installer.pods_project
+
+  # Step 1: Identify bundle targets to remove
+  bundle_target_names = Set.new
+  pods_project.targets.to_a.each do |target|
+    if target.product_type == 'com.apple.product-type.bundle' && target.name.include?('SQLCipher')
+      bundle_target_names << target.name
     end
-    target.build_phases.each do |phase|
-      if phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) || phase.is_a?(Xcodeproj::Project::Object::PBXResourcesBuildPhase)
-        phase.files.delete_if { |file| file.display_name == 'SQLCipher.bundle' }
+  end
+
+  # Step 2: Remove dependencies on bundle targets from all other targets
+  pods_project.targets.each do |target|
+    next if bundle_target_names.include?(target.name)
+    target.dependencies.to_a.each do |dep|
+      if dep.target && bundle_target_names.include?(dep.target.name)
+        dep.remove_from_project
       end
     end
   end
+
+  # Step 3: Remove SQLCipher.bundle from ALL build phases of ALL targets
+  pods_project.targets.each do |target|
+    next if bundle_target_names.include?(target.name)
+    target.build_phases.each do |phase|
+      next unless phase.respond_to?(:files)
+      phase.files.to_a.each do |build_file|
+        name = build_file.display_name || ''
+        if name.include?('SQLCipher.bundle') || name.include?('SQLCipher-SQLCipher') || name.include?('FMDB-SQLCipher')
+          build_file.remove_from_project
+        end
+      end
+    end
+  end
+
+  # Step 4: Remove the bundle targets themselves
+  pods_project.targets.to_a.each do |target|
+    if bundle_target_names.include?(target.name)
+      target.remove_from_project
+    end
+  end
+
+  # Step 5: Remove all file references to SQLCipher.bundle
+  pods_project.files.to_a.each do |file_ref|
+    if file_ref.path && file_ref.path.include?('SQLCipher.bundle')
+      file_ref.remove_from_project
+    end
+  end
+
+  pods_project.save
 
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|

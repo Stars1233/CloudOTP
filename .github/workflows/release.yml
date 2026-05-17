@@ -217,8 +217,6 @@ jobs:
           sed -i '' 's/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "Apple Development"/CODE_SIGN_IDENTITY = "-"/g' macos/Runner.xcodeproj/project.pbxproj
           sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' macos/Runner.xcodeproj/project.pbxproj
           sed -i '' 's/DEVELOPMENT_TEAM = 9CAPQ7Q4W8/DEVELOPMENT_TEAM = ""/g' macos/Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_ENTITLEMENTS = Runner\/Release.entitlements/CODE_SIGN_ENTITLEMENTS = ""/g' macos/Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_ENTITLEMENTS = Runner\/DebugProfile.entitlements/CODE_SIGN_ENTITLEMENTS = ""/g' macos/Runner.xcodeproj/project.pbxproj
       - name: Build macOS
         if: matrix.target == 'macOS'
         run: |

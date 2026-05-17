@@ -199,26 +199,37 @@ class CloudOTPHiveUtil {
 
   static Future<String> regeneratePassword() async {
     String password = MockUtil.getRandomString(length: 16);
-    await _secureStorage.write(key: _secureDbPasswordKey, value: password);
-    // Remove from Hive if it was there before (migration cleanup)
-    await ChewieHiveUtil.put(
-        CloudOTPHiveUtil.defaultDatabasePasswordKey, '');
+    try {
+      await _secureStorage.write(key: _secureDbPasswordKey, value: password);
+      await ChewieHiveUtil.put(
+          CloudOTPHiveUtil.defaultDatabasePasswordKey, '');
+    } catch (e, t) {
+      ILogger.error(
+          "Secure storage unavailable, falling back to Hive", e, t);
+      await ChewieHiveUtil.put(
+          CloudOTPHiveUtil.defaultDatabasePasswordKey, password);
+    }
     return password;
   }
 
   static Future<String> getDatabasePassword() async {
-    // Try secure storage first
-    String? password =
-        await _secureStorage.read(key: _secureDbPasswordKey);
-    if (password != null && password.isNotEmpty) return password;
-    // Migrate from Hive if present
+    try {
+      String? password =
+          await _secureStorage.read(key: _secureDbPasswordKey);
+      if (password != null && password.isNotEmpty) return password;
+    } catch (e, t) {
+      ILogger.error(
+          "Secure storage unavailable, falling back to Hive", e, t);
+    }
     String? hivePassword =
         ChewieHiveUtil.getString(CloudOTPHiveUtil.defaultDatabasePasswordKey);
     if (hivePassword != null && hivePassword.isNotEmpty) {
-      await _secureStorage.write(
-          key: _secureDbPasswordKey, value: hivePassword);
-      await ChewieHiveUtil.put(
-          CloudOTPHiveUtil.defaultDatabasePasswordKey, '');
+      try {
+        await _secureStorage.write(
+            key: _secureDbPasswordKey, value: hivePassword);
+        await ChewieHiveUtil.put(
+            CloudOTPHiveUtil.defaultDatabasePasswordKey, '');
+      } catch (_) {}
       return hivePassword;
     }
     return '';

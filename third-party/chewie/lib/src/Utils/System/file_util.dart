@@ -249,7 +249,7 @@ class FileUtil {
         ILogger.info("Have migrated data to support directory");
         return;
       }
-      Hive.closeAllBoxes();
+      Hive.box(name: ChewieHiveUtil.settingsBox).close();
     } catch (e, t) {
       ILogger.error("Failed to close all hive boxes", e, t);
     }
