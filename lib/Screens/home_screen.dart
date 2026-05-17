@@ -120,6 +120,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
     OtpToken token, {
     bool forceAll = false,
   }) async {
+    if (tokens.any((element) => element.uid == token.uid)) return;
     if (currentCategoryUid.isEmpty) {
       if (!forceAll) {
         return;
@@ -230,7 +231,10 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       currentCategoryUid,
       searchKey: _searchKey,
     ).then((value) {
-      tokens = value;
+      final seen = <String>{};
+      tokens = value.where((t) => seen.add(t.uid)).toList();
+      final currentUids = seen;
+      tokenKeyMap.removeWhere((uid, _) => !currentUids.contains(uid));
       performSort();
     });
   }

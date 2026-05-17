@@ -342,7 +342,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 LogicalKeyboardKey.keyQ,
                 meta: true,
               ),
-              onSelected: () => windowManager.close(),
+              onSelected: () => windowManager.destroy(),
             ),
           ]),
         ],

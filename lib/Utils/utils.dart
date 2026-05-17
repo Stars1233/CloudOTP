@@ -369,7 +369,7 @@ class Utils {
         Utils.initTray();
       }
     } else if (menuItem.key == TrayKey.exitApp.key) {
-      windowManager.close();
+      windowManager.destroy();
     }
   }
 }

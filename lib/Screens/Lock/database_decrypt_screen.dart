@@ -40,6 +40,11 @@ class DatabaseDecryptScreen extends StatefulWidget {
 class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
     with TrayListener {
   final FocusNode _focusNode = FocusNode();
+
+  @override
+  Future<void> onWindowClose() async {
+    await windowManager.destroy();
+  }
   late InputValidateAsyncController validateAsyncController;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool _isValidated = true;
@@ -159,7 +164,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
           backgroundColor: ChewieTheme.scaffoldBackgroundColor,
           appBar: ResponsiveUtil.isDesktop()
               ? ResponsiveAppBar(
-                  title: appLocalizations.appName,
+                  title: appLocalizations.decryptDatabasePassword,
                   showBack: false,
                   titleLeftMargin: ResponsiveUtil.isMacOS() ? 78 : 15,
                   actions: const [

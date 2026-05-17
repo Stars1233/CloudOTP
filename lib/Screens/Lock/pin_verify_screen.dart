@@ -53,6 +53,11 @@ class PinVerifyScreen extends StatefulWidget {
 class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
     with TrayListener {
   static const int _maxFailedAttempts = 5;
+
+  @override
+  Future<void> onWindowClose() async {
+    await windowManager.destroy();
+  }
   static const int _lockoutDurationSeconds = 30;
   static const int _extendedLockoutDurationSeconds = 300;
   static const int _extendedLockoutThreshold = 10;

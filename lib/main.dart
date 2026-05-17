@@ -196,6 +196,7 @@ Future<void> initWindow() async {
     titleBarStyle: TitleBarStyle.hidden,
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setPreventClose(true);
     await windowManager.setPosition(position);
     await windowManager.show();
     await windowManager.focus();

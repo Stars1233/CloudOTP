@@ -63,4 +63,14 @@ abstract class BaseWindowState<T extends StatefulWidget>
       isMaximized = false;
     });
   }
+
+  @override
+  Future<void> onWindowClose() async {
+    if (ChewieHiveUtil.getBool(ChewieHiveUtil.showTrayKey) &&
+        ChewieHiveUtil.getBool(ChewieHiveUtil.enableCloseToTrayKey)) {
+      await windowManager.hide();
+    } else {
+      await windowManager.destroy();
+    }
+  }
 }

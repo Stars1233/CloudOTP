@@ -10,6 +10,11 @@ class MainFlutterWindow: NSWindow {
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
 
+    self.titleVisibility = .hidden
+    self.titlebarAppearsTransparent = true
+    self.styleMask.insert(.fullSizeContentView)
+    self.isOpaque = false
+
     RegisterGeneratedPlugins(registry: flutterViewController)
     LocalNotifierOverride.register(with: flutterViewController.registrar(forPlugin: "LocalNotifierOverride"))
 

@@ -13,6 +13,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:io';
+
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
@@ -67,12 +69,12 @@ class WindowTitleWrapper extends StatelessWidget {
                   borderRadius: ChewieDimens.borderRadius8,
                   onPressed: onStayOnTopTap,
                 ),
-                const SizedBox(width: 3),
+                if (!Platform.isMacOS) const SizedBox(width: 3),
                 MinimizeWindowButton(
                   colors: ChewieColors.getNormalButtonColors(context),
                   borderRadius: ChewieDimens.borderRadius8,
                 ),
-                const SizedBox(width: 3),
+                if (!Platform.isMacOS) const SizedBox(width: 3),
                 isMaximized
                     ? RestoreWindowButton(
                         colors: ChewieColors.getNormalButtonColors(context),
@@ -84,7 +86,7 @@ class WindowTitleWrapper extends StatelessWidget {
                         borderRadius: ChewieDimens.borderRadius8,
                         onPressed: ResponsiveUtil.maximizeOrRestore,
                       ),
-                const SizedBox(width: 3),
+                if (!Platform.isMacOS) const SizedBox(width: 3),
                 CloseWindowButton(
                   colors: ChewieColors.getCloseButtonColors(context),
                   borderRadius: ChewieDimens.borderRadius8,
