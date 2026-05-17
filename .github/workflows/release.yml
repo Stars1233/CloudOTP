@@ -102,6 +102,11 @@ jobs:
           key: ${{ matrix.cache_pod_key }}-${{ hashFiles(matrix.cache_pod_restore_keys_hash_file) }}
           restore-keys: ${{ matrix.cache_pod_key }}-
 
+      # Update CocoaPods repo
+      - name: Update CocoaPods repo
+        if: matrix.target == 'iOS' || matrix.target == 'macOS'
+        run: pod repo update
+
       # Flutter Pub Get
       - name: Flutter Pub Get
         run: |
