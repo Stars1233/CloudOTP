@@ -12,7 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   # 控件
-  fluttertoast: ^8.2.12
+  fluttertoast: ^9.0.0
   flutter_animate: ^4.5.2
   auto_size_text: ^3.0.0
   lottie: ^3.3.1

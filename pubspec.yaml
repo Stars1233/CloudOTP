@@ -15,7 +15,7 @@ dependencies:
   awesome_chewie:
     path: third-party/chewie
   animations: ^2.0.11 # 动画
-  fluttertoast: ^8.2.6 # 吐司
+  fluttertoast: ^9.0.0 # 吐司
   lottie: ^3.1.2 # Lottie动画
   modal_bottom_sheet: ^3.0.0 # 底部弹窗
   palette_generator: ^0.3.3+3 # 获取主色调
@@ -42,6 +42,7 @@ dependencies:
   hive: ^4.0.0-dev.2 # 轻量存储
   isar_flutter_libs: ^4.0.0-dev.13
   sqflite_sqlcipher: ^3.1.0+1 # SQLite加密
+  sqlite3: 2.7.5 # SQLite
   # 网络
   http: ^1.2.1
   dio: ^5.4.3+1 # 网络请求
