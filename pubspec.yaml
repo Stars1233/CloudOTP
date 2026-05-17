@@ -95,7 +95,7 @@ dependencies:
   window_manager: ^0.4.3
 
 dependency_overrides:
-  webview_flutter_android: 3.16.1
+  webview_flutter_android: 4.3.0
 
 dev_dependencies:
   flutter_test:

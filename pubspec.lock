@@ -2278,10 +2278,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: webview_flutter_android
-      sha256: dad3313c9ead95517bb1cae5e1c9d20ba83729d5a59e5e83c0a2d66203f27f91
+      sha256: d1ee28f44894cbabb1d94cc42f9980297f689ff844d067ec50ff88d86e27d63f
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "3.16.1"
+    version: "4.3.0"
   webview_flutter_platform_interface:
     dependency: transitive
     description:

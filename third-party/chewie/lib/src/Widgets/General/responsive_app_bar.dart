@@ -82,8 +82,7 @@ class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
                         const Spacer(),
                         ...[
                           ...desktopActions,
-                          if (!ResponsiveUtil.isMacOS())
-                            const SizedBox(width: 44),
+                          const SizedBox(width: 44),
                         ],
                       ],
                     ),
