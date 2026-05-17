@@ -43,10 +43,15 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
   end
 
-  # Remove duplicate SQLCipher.bundle targets
+  # Remove duplicate SQLCipher.bundle targets and references
   installer.pods_project.targets.each do |target|
     if target.name == 'FMDB-SQLCipher' || target.name == 'SQLCipher-SQLCipher'
       target.remove_from_project
+    end
+    target.build_phases.each do |phase|
+      if phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) || phase.is_a?(Xcodeproj::Project::Object::PBXResourcesBuildPhase)
+        phase.files.delete_if { |file| file.display_name == 'SQLCipher.bundle' }
+      end
     end
   end
 
