@@ -22,7 +22,6 @@ import 'package:cloudotp/Screens/Setting/setting_safe_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../Utils/app_provider.dart';
 import '../../l10n/l10n.dart';
 
 class MobileSettingNavigationScreen extends StatefulWidget {
@@ -70,7 +69,7 @@ class _MobileSettingNavigationScreenState
                 onTap: () {
                   RouteUtil.pushCupertinoRoute(
                     context,
-                    GeneralSettingScreen(key: generalSettingScreenKey),
+                    GeneralSettingScreen(),
                   );
                 },
               ),

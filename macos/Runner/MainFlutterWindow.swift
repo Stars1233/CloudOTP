@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import LaunchAtLogin
 
 class MainFlutterWindow: NSWindow {
   private let trafficLightVerticalOffset: CGFloat = 18.0
@@ -17,6 +18,23 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     LocalNotifierOverride.register(with: flutterViewController.registrar(forPlugin: "LocalNotifierOverride"))
+
+    FlutterMethodChannel(
+      name: "launch_at_startup", binaryMessenger: flutterViewController.engine.binaryMessenger
+    )
+    .setMethodCallHandler { (_ call: FlutterMethodCall, result: @escaping FlutterResult) in
+      switch call.method {
+      case "launchAtStartupIsEnabled":
+        result(LaunchAtLogin.isEnabled)
+      case "launchAtStartupSetEnabled":
+        if let arguments = call.arguments as? [String: Any] {
+          LaunchAtLogin.isEnabled = arguments["setEnabledValue"] as! Bool
+        }
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
 
     super.awakeFromNib()
   }

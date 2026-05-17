@@ -17,7 +17,6 @@ import 'dart:async';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Models/auto_backup_log.dart';
-import 'package:cloudotp/Screens/Setting/setting_general_screen.dart';
 import 'package:cloudotp/Screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -26,12 +25,6 @@ import 'package:queue/queue.dart';
 import '../Screens/home_screen.dart';
 import '../l10n/l10n.dart';
 import 'hive_util.dart';
-
-GlobalKey<GeneralSettingScreenState> generalSettingScreenKey =
-    GlobalKey<GeneralSettingScreenState>();
-
-GeneralSettingScreenState? get generalSettingScreenState =>
-    generalSettingScreenKey.currentState;
 
 GlobalKey<MainScreenState> mainScreenKey = GlobalKey<MainScreenState>();
 

@@ -4,7 +4,7 @@ description: An awesome two-factor authenticator which supports cloud storage an
 publish_to: none
 
 environment:
-  sdk: '>=3.1.4 <4.0.0'
+  sdk: ">=3.1.4 <4.0.0"
 
 dependencies:
   flutter:
@@ -60,7 +60,7 @@ dependencies:
   hashlib: 1.19.2 # Hash
   pointycastle: ^3.9.1 # 加密
   protobuf: ^3.1.0 # Protobuf
-  protoc_plugin: ^21.1.2  # Protobuf
+  protoc_plugin: ^21.1.2 # Protobuf
   flutter_native_splash: ^2.4.1 # Splash屏
   queue: ^3.1.0+2 # 队列
   logging: ^1.2.0
@@ -171,4 +171,4 @@ flutter:
     - assets/logo-transparent.svg
     - assets/logo-transparent.png
     - assets/logo-transparent-small.png
-  generate: true  # ✅ 启用 l10n 支持
+  generate: true # ✅ 启用 l10n 支持

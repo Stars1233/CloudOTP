@@ -82,15 +82,10 @@ class GeneralSettingScreenState extends BaseDynamicState<GeneralSettingScreen>
     _currentTrayOption = getTrayOption();
   }
 
-  refreshLauchAtStartup() {
-    setState(() {
-      launchAtStartup =
-          ChewieHiveUtil.getBool(ChewieHiveUtil.launchAtStartupKey);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    launchAtStartup =
+        ChewieHiveUtil.getBool(ChewieHiveUtil.launchAtStartupKey);
     return ItemBuilder.buildSettingScreen(
       context: context,
       title: appLocalizations.generalSetting,

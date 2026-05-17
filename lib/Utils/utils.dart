@@ -220,6 +220,9 @@ class Utils {
       );
       await trayManager.setContextMenu(menu);
       ILogger.debug("Tray initialized successfully.");
+      if (ResponsiveUtil.isMacOS()) {
+        mainScreenState?.loadMenuTokenData();
+      }
     } catch (e, t) {
       ILogger.error("Failed to initialize simple tray", e, t);
     }
@@ -357,7 +360,6 @@ class Utils {
     } else if (menuItem.key == TrayKey.launchAtStartup.key) {
       menuItem.checked = !(menuItem.checked == true);
       ChewieHiveUtil.put(ChewieHiveUtil.launchAtStartupKey, menuItem.checked);
-      generalSettingScreenState?.refreshLauchAtStartup();
       if (menuItem.checked == true) {
         await LaunchAtStartup.instance.enable();
       } else {

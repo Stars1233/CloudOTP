@@ -45,6 +45,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
   Future<void> onWindowClose() async {
     await windowManager.destroy();
   }
+
   late InputValidateAsyncController validateAsyncController;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool _isValidated = true;
@@ -124,6 +125,9 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
   @override
   void initState() {
     super.initState();
+    if (ResponsiveUtil.isMacOS()) {
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     chewieProvider.loadingWidgetBuilder = (size, forceDark) => LottieFiles.load(
         LottieFiles.getLoadingPath(chewieProvider.rootContext),
         scale: 1.5);
@@ -154,11 +158,14 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveUtil.isMacOS()) {
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     chewieProvider.resetRootContext();
     ChewieUtils.setSafeMode(ChewieHiveUtil.getBool(
         CloudOTPHiveUtil.enableSafeModeKey,
         defaultValue: defaultEnableSafeMode));
-    return Stack(
+    Widget body = Stack(
       children: [
         MyScaffold(
           backgroundColor: ChewieTheme.scaffoldBackgroundColor,
@@ -205,6 +212,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
           ),
       ],
     );
+    return body;
   }
 
   onSubmit() async {

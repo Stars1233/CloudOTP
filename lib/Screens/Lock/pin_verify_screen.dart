@@ -58,6 +58,7 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
   Future<void> onWindowClose() async {
     await windowManager.destroy();
   }
+
   static const int _lockoutDurationSeconds = 30;
   static const int _extendedLockoutDurationSeconds = 300;
   static const int _extendedLockoutThreshold = 10;
@@ -136,6 +137,9 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
     }
     windowManager.addListener(this);
     super.initState();
+    if (ResponsiveUtil.isMacOS()) {
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         chewieProvider.loadingWidgetBuilder = (size, forceDark) =>
@@ -164,11 +168,14 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveUtil.isMacOS()) {
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     chewieProvider.resetRootContext();
     ChewieUtils.setSafeMode(ChewieHiveUtil.getBool(
         CloudOTPHiveUtil.enableSafeModeKey,
         defaultValue: defaultEnableSafeMode));
-    return Stack(
+    Widget body = Stack(
       children: [
         Scaffold(
           backgroundColor: ChewieTheme.scaffoldBackgroundColor,
@@ -258,6 +265,7 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
           ),
       ],
     );
+    return body;
   }
 
   void _startLockout() {

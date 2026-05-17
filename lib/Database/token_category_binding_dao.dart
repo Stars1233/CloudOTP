@@ -17,6 +17,7 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/token_dao.dart';
 import 'package:cloudotp/Models/opt_token.dart';
 import 'package:cloudotp/Models/token_category_binding.dart';
+import 'package:cloudotp/Utils/utils.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import 'database_manager.dart';
@@ -66,6 +67,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
@@ -81,6 +83,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
@@ -116,6 +119,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
@@ -131,6 +135,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 

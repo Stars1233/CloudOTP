@@ -140,7 +140,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
     fetchReleases();
     if (ResponsiveUtil.isMacOS()) {
       _checkNotificationPermission();
-      _loadMenuTokenData();
+      loadMenuTokenData();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.autoFocusSearchBarKey,
@@ -197,7 +197,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
     }
   }
 
-  Future<void> _loadMenuTokenData() async {
+  Future<void> loadMenuTokenData() async {
     if (!DatabaseManager.initialized) return;
     _menuTokens = await TokenDao.listTokens();
     _menuTokens.sort((a, b) => a.issuer.compareTo(b.issuer));
@@ -207,7 +207,15 @@ class MainScreenState extends BaseWindowState<MainScreen>
       cat.tokens.sort((a, b) => a.issuer.compareTo(b.issuer));
     }
     _menuCategories = cats.where((e) => e.tokens.isNotEmpty).toList();
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          WidgetsBinding.instance.platformMenuDelegate
+              .setMenus(_buildMacMenuBar());
+        }
+      });
+    }
   }
 
   Future<void> _copyTokenCode(OtpToken token) async {
@@ -248,6 +256,10 @@ class MainScreenState extends BaseWindowState<MainScreen>
   }) async {
     _menuTokens = [];
     _menuCategories = [];
+    if (ResponsiveUtil.isMacOS()) {
+      setState(() {});
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     Utils.initSimpleTray();
     if (CloudOTPHiveUtil.canDatabaseLock()) {
       ILogger.debug("Jump to database lock screen");
@@ -261,7 +273,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
         PinVerifyScreen(
           onSuccess: () {
             appProvider.preventLock = false;
-            _loadMenuTokenData();
+            loadMenuTokenData();
             Utils.initTray();
           },
           showWindowTitle: true,
@@ -280,9 +292,16 @@ class MainScreenState extends BaseWindowState<MainScreen>
         CloudOTPHiveUtil.enableSafeModeKey,
         defaultValue: defaultEnableSafeMode));
     super.build(context);
-    return OrientationBuilder(builder: (ctx, ori) {
+    Widget result = OrientationBuilder(builder: (ctx, ori) {
       return _buildBodyByPlatform();
     });
+    if (ResponsiveUtil.isMacOS()) {
+      return PlatformMenuBar(
+        menus: _buildMacMenuBar(),
+        child: result,
+      );
+    }
+    return result;
   }
 
   _buildBodyByPlatform() {
@@ -291,12 +310,6 @@ class MainScreenState extends BaseWindowState<MainScreen>
       landscape: SafeArea(child: _buildDesktopBody()),
       portrait: HomeScreen(key: chewieProvider.panelScreenKey),
     );
-    if (ResponsiveUtil.isMacOS()) {
-      return PlatformMenuBar(
-        menus: _buildMacMenuBar(),
-        child: body,
-      );
-    }
     return body;
   }
 
@@ -752,7 +765,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
 
   refresh() {
     if (ResponsiveUtil.isMacOS()) {
-      _loadMenuTokenData();
+      loadMenuTokenData();
     }
     setState(() {});
   }
