@@ -97,6 +97,7 @@ dependencies:
 
 dependency_overrides:
   webview_flutter_android: 4.3.0
+  sqflite_android: 2.4.0
 
 dev_dependencies:
   flutter_test:

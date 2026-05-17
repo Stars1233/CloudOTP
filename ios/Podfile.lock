@@ -137,7 +137,6 @@ DEPENDENCIES:
   - sodium_libs (from `.symlinks/plugins/sodium_libs/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/darwin`)
   - sqflite_sqlcipher (from `.symlinks/plugins/sqflite_sqlcipher/ios`)
-  - SQLCipher (~> 4.5)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
@@ -244,6 +243,6 @@ SPEC CHECKSUMS:
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
-PODFILE CHECKSUM: 59067792e03d7a5801ba684f46eb50a563a19de4
+PODFILE CHECKSUM: 03198fa0e7d6c5ef8c64d284f9d1ea2640ff5b6d
 
 COCOAPODS: 1.16.2

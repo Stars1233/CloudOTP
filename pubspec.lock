@@ -1794,14 +1794,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.3+2"
+  sqflite_android:
+    dependency: "direct overridden"
+    description:
+      name: sqflite_android
+      sha256: "78f489aab276260cdd26676d2169446c7ecd3484bbd5fead4ca14f3ed4dd9ee3"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.4.0"
   sqflite_common:
     dependency: transitive
     description:
       name: sqflite_common
-      sha256: "2d8e607db72e9cb7748c9c6e739e2c9618320a5517de693d5a24609c4671b1a4"
+      sha256: f8a08a13fb8f0f8c590df89d745000bed44a673ed94bac846739e1a016875c21
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.5.4+4"
+    version: "2.5.7"
   sqflite_common_ffi:
     dependency: "direct dev"
     description:
@@ -1810,6 +1818,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.3+1"
+  sqflite_platform_interface:
+    dependency: transitive
+    description:
+      name: sqflite_platform_interface
+      sha256: "8dd4515c7bdcae0a785b0062859336de775e8c65db81ae33dd5445f35be61920"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.4.0"
   sqflite_sqlcipher:
     dependency: "direct main"
     description:
@@ -2147,5 +2163,5 @@ packages:
     source: hosted
     version: "0.2.3"
 sdks:
-  dart: ">=3.9.0 <4.0.0"
+  dart: ">=3.10.0 <4.0.0"
   flutter: ">=3.38.0"

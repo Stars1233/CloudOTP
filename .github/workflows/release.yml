@@ -216,7 +216,7 @@ jobs:
         run: |
           echo 'CODE_SIGN_IDENTITY=-' > macos/Runner/CI.xcconfig
           echo 'CODE_SIGN_ENTITLEMENTS=' >> macos/Runner/CI.xcconfig
-          echo '#include "Runner/CI.xcconfig"' | cat - macos/Flutter/Release.xcconfig > temp && mv temp macos/Flutter/Release.xcconfig
+          echo '#include "Runner/CI.xcconfig"' | cat - macos/Flutter/Flutter-Release.xcconfig > temp && mv temp macos/Flutter/Flutter-Release.xcconfig
       - name: Build macOS
         if: matrix.target == 'macOS'
         run: |
