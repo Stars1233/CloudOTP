@@ -17,6 +17,7 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/config_dao.dart';
 import 'package:cloudotp/Models/cloud_service_config.dart';
 import 'package:cloudotp/Screens/Backup/cloud_service_screen.dart';
+import 'package:cloudotp/Screens/Setting/backup_log_screen.dart';
 import 'package:cloudotp/TokenUtils/Cloud/webdav_cloud_service.dart';
 import 'package:cloudotp/TokenUtils/export_token_util.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
@@ -339,6 +340,13 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
+          ),
+          EntryItem(
+            title: appLocalizations.backupLogs,
+            trailing: Icons.history_rounded,
+            onTap: () async {
+              RouteUtil.pushCupertinoRoute(context, const BackupLogScreen());
+            },
           ),
         ],
       ),

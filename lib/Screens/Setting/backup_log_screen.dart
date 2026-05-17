@@ -64,7 +64,9 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
         ? _buildDesktopBody()
         : Scaffold(
             appBar: ResponsiveAppBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor: ResponsiveUtil.isLandscapeLayout()
+                  ? ChewieTheme.appBarBackgroundColor
+                  : Colors.transparent,
               title: appLocalizations.backupLogs,
               showBack: true,
               showBorder: true,
@@ -121,8 +123,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 
   _buildBody() {
     return ListView(
-      padding: EdgeInsets.symmetric(
-          horizontal: 10, vertical: widget.isOverlay ? 10 : 0),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       physics: widget.isOverlay
           ? null
           : const BouncingScrollPhysics(

@@ -207,8 +207,11 @@ jobs:
         if: matrix.target == 'iOS'
         run: |
           flutter build ipa --release --no-codesign
-          cd build/ios/ipa
-          mv CloudOTP.ipa CloudOTP-${{ steps.get_version.outputs.version }}-ios.ipa 2>/dev/null || true
+          mkdir -p build/ios/ipa
+          cd build/ios/archive/Runner.xcarchive/Products/Applications
+          mkdir -p Payload
+          mv Runner.app Payload/ 2>/dev/null || mv CloudOTP.app Payload/ 2>/dev/null || true
+          zip -r ../../../../../../build/ios/ipa/CloudOTP-${{ steps.get_version.outputs.version }}-ios.ipa Payload
 
       # Build macOS .app & .dmg
       - name: Disable macOS codesigning
