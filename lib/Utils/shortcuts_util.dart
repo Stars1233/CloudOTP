@@ -194,6 +194,8 @@ extension HotKeyExt on HotKey {
 }
 
 class ShortcutsUtil {
+  static bool _searchListenerAdded = false;
+
   static final shortcuts = [
     CloudOTPShortcut.all(
       key: HotKey(
@@ -274,13 +276,24 @@ class ShortcutsUtil {
     ),
   ];
 
+  static void restoreFocus() {
+    if (!appProvider.searchFocusNode.hasFocus) {
+      appProvider.shortcutFocusNode.requestFocus();
+    }
+  }
+
+  static void _onSearchFocusChanged() {
+    if (!appProvider.searchFocusNode.hasFocus) {
+      appProvider.shortcutFocusNode.requestFocus();
+    }
+  }
+
   static void focusSearch() {
     appProvider.searchFocusNode.requestFocus();
-    appProvider.searchFocusNode.addListener(() {
-      if (!appProvider.searchFocusNode.hasFocus) {
-        appProvider.shortcutFocusNode.requestFocus();
-      }
-    });
+    if (!_searchListenerAdded) {
+      _searchListenerAdded = true;
+      appProvider.searchFocusNode.addListener(_onSearchFocusChanged);
+    }
   }
 
   static void lock(BuildContext context) {
@@ -316,21 +329,25 @@ class ShortcutsUtil {
           style: ChewieTheme.titleLarge,
         ),
       ),
+      onThen: (_) => restoreFocus(),
     );
   }
 
   static void jumpToSetting(BuildContext context) {
-    RouteUtil.pushDialogRoute(context, const SettingNavigationScreen());
+    RouteUtil.pushDialogRoute(context, const SettingNavigationScreen(),
+        onThen: (_) => restoreFocus());
   }
 
   static void jumpToSetLock(BuildContext context) {
     RouteUtil.pushDialogRoute(
-        context, const SettingNavigationScreen(initPageIndex: 4));
+        context, const SettingNavigationScreen(initPageIndex: 4),
+        onThen: (_) => restoreFocus());
   }
 
   static void jumpToAbout(BuildContext context) {
     RouteUtil.pushDialogRoute(
-        context, const SettingNavigationScreen(initPageIndex: 5));
+        context, const SettingNavigationScreen(initPageIndex: 5),
+        onThen: (_) => restoreFocus());
   }
 
   static void jumpToMain() {

@@ -18,6 +18,7 @@ import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:biometric_storage/biometric_storage.dart';
+import 'package:cloudotp/Utils/constant.dart';
 import 'package:cloudotp/Utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -183,7 +184,8 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
               ? ResponsiveAppBar(
                   title: appLocalizations.verifyGestureLock,
                   showBack: false,
-                  titleLeftMargin: ResponsiveUtil.isMacOS() ? 78 : 15,
+                  titleLeftMargin:
+                      ResponsiveUtil.isMacOS() ? macosTitleBarLeftMargin : 15,
                   actions: const [
                     BlankIconButton(),
                   ],

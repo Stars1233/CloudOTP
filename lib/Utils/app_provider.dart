@@ -614,4 +614,10 @@ class AppProvider with ChangeNotifier {
       ChewieHiveUtil.setLocale(value);
     }
   }
+
+  void refreshSystemLocale() {
+    if (_locale == null) {
+      notifyListeners();
+    }
+  }
 }

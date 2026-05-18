@@ -4,6 +4,7 @@ import LaunchAtLogin
 
 class MainFlutterWindow: NSWindow {
   private let trafficLightVerticalOffset: CGFloat = 18.0
+  private let trafficLightHorizontalOffset: CGFloat = 4.0
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -15,6 +16,13 @@ class MainFlutterWindow: NSWindow {
     self.titlebarAppearsTransparent = true
     self.styleMask.insert(.fullSizeContentView)
     self.isOpaque = false
+
+    let toolbar = NSToolbar(identifier: "main")
+    toolbar.showsBaselineSeparator = false
+    self.toolbar = toolbar
+    if #available(macOS 11.0, *) {
+      self.toolbarStyle = .unified
+    }
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     LocalNotifierOverride.register(with: flutterViewController.registrar(forPlugin: "LocalNotifierOverride"))

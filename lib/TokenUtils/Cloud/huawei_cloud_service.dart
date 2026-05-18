@@ -129,7 +129,8 @@ class HuaweiCloudService extends CloudService {
     String path, {
     Function(int p1, int p2)? onProgress,
   }) async {
-    HuaweiCloudResponse response = await huaweiCloud.pullById(path);
+    HuaweiCloudResponse response =
+        await huaweiCloud.pullById(path, onProgress: onProgress);
     return response.isSuccess ? response.bodyBytes ?? Uint8List(0) : null;
   }
 
@@ -171,6 +172,7 @@ class HuaweiCloudService extends CloudService {
       fileData,
       _huaweiCloudPath,
       fileName,
+      onProgress: onProgress,
     );
     deleteOldBackup();
     return response.isSuccess;

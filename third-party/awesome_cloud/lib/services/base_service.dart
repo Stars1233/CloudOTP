@@ -303,6 +303,40 @@ abstract class BaseCloudService with ChangeNotifier {
     ));
   }
 
+  Future<Uint8List> getStreamed(
+    Uri url, {
+    dynamic headers,
+    Function(int current, int total)? onProgress,
+  }) async {
+    final accessToken = await checkToken();
+    var tmpHeaders = {"Authorization": "Bearer $accessToken"};
+    if (headers != null) {
+      tmpHeaders.addAll(headers);
+    }
+    final request = http.Request('GET', url);
+    request.headers.addAll(tmpHeaders);
+    final client = http.Client();
+    try {
+      final streamedResponse = await client.send(request);
+      if (streamedResponse.statusCode == 401) {
+        disconnect();
+      }
+      if (!isStreamSuccess(streamedResponse)) {
+        throw Exception(
+            'Download failed: ${streamedResponse.statusCode} ${streamedResponse.reasonPhrase}');
+      }
+      final total = streamedResponse.contentLength ?? -1;
+      final bytes = <int>[];
+      await for (final chunk in streamedResponse.stream) {
+        bytes.addAll(chunk);
+        onProgress?.call(bytes.length, total);
+      }
+      return Uint8List.fromList(bytes);
+    } finally {
+      client.close();
+    }
+  }
+
   Future<http.Response> delete(
     Uri url, {
     dynamic headers,
@@ -322,11 +356,40 @@ abstract class BaseCloudService with ChangeNotifier {
 
   Future<dynamic> list(String remotePath);
 
-  Future<dynamic> pullById(String id);
+  Future<dynamic> pullById(String id, {Function(int, int)? onProgress});
 
   Future<dynamic> deleteById(String id);
 
   Future<dynamic> push(Uint8List bytes, String remotePath, String fileName);
 
   Future<void> checkFolder(String remotePath);
+
+  static Future<Uint8List> downloadFromUrl(
+    Uri url, {
+    Map<String, String>? headers,
+    Function(int current, int total)? onProgress,
+  }) async {
+    final request = http.Request('GET', url);
+    if (headers != null) {
+      request.headers.addAll(headers);
+    }
+    final client = http.Client();
+    try {
+      final streamedResponse = await client.send(request);
+      if (streamedResponse.statusCode != 200 &&
+          streamedResponse.statusCode != 201) {
+        throw Exception(
+            'Download failed: ${streamedResponse.statusCode} ${streamedResponse.reasonPhrase}');
+      }
+      final total = streamedResponse.contentLength ?? -1;
+      final bytes = <int>[];
+      await for (final chunk in streamedResponse.stream) {
+        bytes.addAll(chunk);
+        onProgress?.call(bytes.length, total);
+      }
+      return Uint8List.fromList(bytes);
+    } finally {
+      client.close();
+    }
+  }
 }

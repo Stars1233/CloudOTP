@@ -240,18 +240,13 @@ class FileUtil {
   }
 
   static Future<void> migrationDataToSupportDirectory() async {
-    try {
-      Hive.defaultDirectory = await FileUtil.getHiveDir();
-      bool haveMigratedToSupportDirectoryFromHive = ChewieHiveUtil.getBool(
-          ChewieHiveUtil.haveMigratedToSupportDirectoryKey,
-          defaultValue: false);
-      if (haveMigratedToSupportDirectoryFromHive) {
-        ILogger.info("Have migrated data to support directory");
-        return;
-      }
-      Hive.box(name: ChewieHiveUtil.settingsBox).close();
-    } catch (e, t) {
-      ILogger.error("Failed to close all hive boxes", e, t);
+    var newDirPath = (await getApplicationSupportDirectory()).path;
+    if (kDebugMode) newDirPath += "-Debug";
+    File marker = File(join(newDirPath, '.migration_done'));
+    if (await marker.exists()) {
+      ILogger.info("Have migrated data to support directory");
+      haveMigratedToSupportDirectory = true;
+      return;
     }
     Directory oldDir = Directory(await getOldApplicationDir());
     Directory newDir = Directory(await getApplicationDir());
@@ -288,6 +283,9 @@ class FileUtil {
       ILogger.info(
           "Finish to migrate data from old application directory $oldDir to new application directory $newDir");
     }
+    try {
+      await marker.create(recursive: true);
+    } catch (_) {}
     await Future.delayed(const Duration(milliseconds: 200));
   }
 

@@ -162,6 +162,7 @@ class AliyunDriveCloud extends BaseCloudService {
     String id, {
     String remotePath = "",
     String driveId = "",
+    Function(int, int)? onProgress,
   }) async {
     try {
       final resp = await post(
@@ -173,18 +174,16 @@ class AliyunDriveCloud extends BaseCloudService {
       if (isSuccess(resp)) {
         CloudLogger.infoResponse(serviceName, "Get download url", resp);
         final url = jsonDecode(resp.body)["url"];
-        final binary = await http.get(Uri.parse(url));
+        final bodyBytes = await BaseCloudService.downloadFromUrl(
+          Uri.parse(url),
+          onProgress: onProgress,
+        );
 
-        if (binary.statusCode == 200) {
-          CloudLogger.info(serviceName, "Downloaded file successfully.");
-          return AliyunDriveResponse.success(
-            bodyBytes: binary.bodyBytes,
-            message: "Downloaded file successfully.",
-          );
-        } else {
-          CloudLogger.error(serviceName, "Failed to download file.");
-          return AliyunDriveResponse.error(message: "Failed to download file.");
-        }
+        CloudLogger.info(serviceName, "Downloaded file successfully.");
+        return AliyunDriveResponse.success(
+          bodyBytes: bodyBytes,
+          message: "Downloaded file successfully.",
+        );
       }
 
       CloudLogger.errorResponse(

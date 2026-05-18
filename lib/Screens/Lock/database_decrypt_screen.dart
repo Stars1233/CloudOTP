@@ -31,7 +31,9 @@ import '../../Utils/utils.dart';
 import '../../l10n/l10n.dart';
 
 class DatabaseDecryptScreen extends StatefulWidget {
-  const DatabaseDecryptScreen({super.key});
+  final bool autoAuth;
+
+  const DatabaseDecryptScreen({super.key, this.autoAuth = false});
 
   @override
   DatabaseDecryptScreenState createState() => DatabaseDecryptScreenState();
@@ -109,7 +111,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
     canAuthenticateResponseString =
         await BiometricUtil.getCanAuthenticateResponseString();
     setState(() {});
-    if (_biometricAvailable && _allowDatabaseBiometric) {
+    if (_biometricAvailable && _allowDatabaseBiometric && widget.autoAuth) {
       auth();
     }
     FocusScope.of(context).requestFocus(_focusNode);
@@ -131,7 +133,6 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
     chewieProvider.loadingWidgetBuilder = (size, forceDark) => LottieFiles.load(
         LottieFiles.getLoadingPath(chewieProvider.rootContext),
         scale: 1.5);
-    initBiometricAuthentication();
     trayManager.addListener(this);
     windowManager.addListener(this);
     Utils.initSimpleTray();
@@ -154,6 +155,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
       },
       controller: TextEditingController(),
     );
+    initBiometricAuthentication();
   }
 
   @override
@@ -173,7 +175,8 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
               ? ResponsiveAppBar(
                   title: appLocalizations.decryptDatabasePassword,
                   showBack: false,
-                  titleLeftMargin: ResponsiveUtil.isMacOS() ? 78 : 15,
+                  titleLeftMargin:
+                      ResponsiveUtil.isMacOS() ? macosTitleBarLeftMargin : 15,
                   actions: const [
                     BlankIconButton(),
                   ],

@@ -132,7 +132,8 @@ class GoogleDriveCloudService extends CloudService {
     String path, {
     Function(int p1, int p2)? onProgress,
   }) async {
-    GoogleDriveResponse response = await googledrive.pullById(path);
+    GoogleDriveResponse response =
+        await googledrive.pullById(path, onProgress: onProgress);
     return response.isSuccess ? response.bodyBytes ?? Uint8List(0) : null;
   }
 
@@ -174,6 +175,7 @@ class GoogleDriveCloudService extends CloudService {
       fileData,
       _googledrivePathName,
       fileName,
+      onProgress: onProgress,
     );
     deleteOldBackup();
     return response.isSuccess;

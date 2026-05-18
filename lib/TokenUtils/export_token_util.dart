@@ -253,7 +253,7 @@ class ExportTokenUtil {
     ProgressDialog? dialog;
     if (showLoading) {
       dialog = showProgressDialog(
-        appLocalizations.backuping,
+        appLocalizations.encryptingBackupFileShort,
         showProgress: false,
       );
     }
@@ -270,6 +270,12 @@ class ExportTokenUtil {
         if (canLocalBackup) {
           try {
             log.addStatus(AutoBackupStatus.saving);
+            if (showLoading && dialog != null) {
+              dialog.updateMessage(
+                msg: appLocalizations.savingBackupFileShort,
+                showProgress: false,
+              );
+            }
             String backupPath = await CloudOTPHiveUtil.getBackupPath();
             Directory directory = Directory(backupPath);
             if (!directory.existsSync()) {
@@ -291,14 +297,19 @@ class ExportTokenUtil {
         if (canCloudBackup) {
           if (cloudServices != null && cloudServices.isNotEmpty) {
             bool uploadStatus = false;
-            for (CloudService cloudService in cloudServices) {
+            final count = cloudServices.length;
+            for (int i = 0; i < count; i++) {
+              final cloudService = cloudServices[i];
               try {
                 log.addStatus(AutoBackupStatus.uploading,
                     type: cloudService.type);
                 if (showLoading && dialog != null) {
+                  final serviceMsg = count > 1
+                      ? "${appLocalizations.cloudPushingTo(cloudService.type.label)} (${i + 1}/$count)"
+                      : appLocalizations
+                          .cloudPushingTo(cloudService.type.label);
                   dialog.updateMessage(
-                    msg: appLocalizations
-                        .cloudPushingTo(cloudService.type.label),
+                    msg: serviceMsg,
                     showProgress: true,
                   );
                   dialog.updateProgress(progress: 0);
@@ -411,7 +422,7 @@ class ExportTokenUtil {
     ProgressDialog? dialog;
     if (showLoading) {
       dialog = showProgressDialog(
-        appLocalizations.backuping,
+        appLocalizations.encryptingBackupFileShort,
         showProgress: false,
       );
     }
@@ -424,6 +435,7 @@ class ExportTokenUtil {
         if (showLoading && dialog != null) {
           dialog.updateMessage(
               msg: appLocalizations.cloudPushing, showProgress: true);
+          dialog.updateProgress(progress: 0);
         }
         bool uploadStatus = await cloudService.uploadFile(
           ExportTokenUtil.getExportFileName("bin"),

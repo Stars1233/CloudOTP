@@ -108,7 +108,8 @@ class MainScreenState extends BaseWindowState<MainScreen>
 
   @override
   void onProtocolUrlReceived(String url) {
-    ILogger.info("Received protocol url: ${Uri.parse(url).replace(queryParameters: {}).toString()}");
+    ILogger.info(
+        "Received protocol url: ${Uri.parse(url).replace(queryParameters: {}).toString()}");
   }
 
   Future<void> fetchReleases() async {
@@ -375,6 +376,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
               onSelected: () => RouteUtil.pushDialogRoute(
                 chewieProvider.rootContext,
                 const AddTokenScreen(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
               ),
             ),
             PlatformMenuItem(
@@ -387,6 +389,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
               onSelected: () => RouteUtil.pushDialogRoute(
                 chewieProvider.rootContext,
                 const CategoryScreen(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
               ),
             ),
             PlatformMenu(
@@ -451,6 +454,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
               onSelected: () => RouteUtil.pushDialogRoute(
                 chewieProvider.rootContext,
                 const ImportExportTokenScreen(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
               ),
             ),
             PlatformMenuItem(
@@ -458,6 +462,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
               onSelected: () => RouteUtil.pushDialogRoute(
                 chewieProvider.rootContext,
                 const ImportFromThirdPartyBottomSheet(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
               ),
             ),
           ]),
@@ -467,6 +472,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
               onSelected: () => RouteUtil.pushDialogRoute(
                 chewieProvider.rootContext,
                 const CloudServiceScreen(showBack: false),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
               ),
             ),
           ]),
@@ -1257,7 +1263,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
           });
         },
         leftWidgets: [
-          const SizedBox(width: 78),
+          const SizedBox(width: macosTitleBarLeftMargin),
           Container(
             constraints: const BoxConstraints(
                 maxWidth: 300, minWidth: 200, maxHeight: 36),
@@ -1312,6 +1318,11 @@ class MainScreenState extends BaseWindowState<MainScreen>
       case AppLifecycleState.hidden:
         break;
     }
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    appProvider.refreshSystemLocale();
   }
 
   @override

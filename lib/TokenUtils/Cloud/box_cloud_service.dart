@@ -135,7 +135,7 @@ class BoxCloudService extends CloudService {
     String path, {
     Function(int p1, int p2)? onProgress,
   }) async {
-    final response = await box.pullById(path);
+    final response = await box.pullById(path, onProgress: onProgress);
     return response.isSuccess ? response.bodyBytes : null;
   }
 
@@ -175,6 +175,7 @@ class BoxCloudService extends CloudService {
       fileData,
       _boxPath,
       fileName,
+      onProgress: onProgress,
     );
     deleteOldBackup();
     return response.isSuccess;

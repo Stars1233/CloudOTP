@@ -339,12 +339,6 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
     canAuthenticateResponse = await BiometricUtil.canAuthenticate();
     canAuthenticateResponseString =
         await BiometricUtil.getCanAuthenticateResponseString();
-    bool exist = await BiometricUtil.exists();
-    if (!exist) {
-      _allowDatabaseBiometric = false;
-      ChewieHiveUtil.put(
-          CloudOTPHiveUtil.allowDatabaseBiometricKey, _allowDatabaseBiometric);
-    }
     setState(() {});
   }
 

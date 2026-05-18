@@ -184,32 +184,28 @@ class Dropbox extends BaseCloudService {
   }
 
   @override
-  Future<DropboxResponse> pullById(String id) async {
+  Future<DropboxResponse> pullById(
+    String id, {
+    Function(int, int)? onProgress,
+  }) async {
     try {
       final url = Uri.parse("$apiContentEndpoint/files/download");
 
-      final resp = await get(
+      final bodyBytes = await getStreamed(
         url,
         headers: {
           "Dropbox-API-Arg": jsonEncode({
             "path": id,
           }),
         },
+        onProgress: onProgress,
       );
 
-      if (resp.statusCode == 200 || resp.statusCode == 201) {
-        CloudLogger.infoResponse(serviceName, "pull successfully", resp);
-        return DropboxResponse.fromResponse(
-          response: resp,
-          message: "Download successfully.",
-        );
-      } else {
-        CloudLogger.errorResponse(serviceName, "pull failed", resp);
-        return DropboxResponse.fromResponse(
-          response: resp,
-          message: "Error while downloading file.",
-        );
-      }
+      CloudLogger.info(serviceName, "pull successfully");
+      return DropboxResponse.success(
+        bodyBytes: bodyBytes,
+        message: "Download successfully.",
+      );
     } catch (err, trace) {
       CloudLogger.error(serviceName, "pull error", err, trace);
       return DropboxResponse.error(message: "Unexpected exception: $err");

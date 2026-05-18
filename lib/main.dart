@@ -15,6 +15,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:awesome_cloud/awesome_cloud.dart';
@@ -125,6 +126,7 @@ Future<void> initHive() async {
     await DatabaseManager.initDataBase(
         await CloudOTPHiveUtil.getDatabasePassword());
   } catch (e) {
+    await DatabaseManager.resetDatabase();
     if (DatabaseManager.lib != null) {
       CloudOTPHiveUtil.setEncryptDatabaseStatus(
           EncryptDatabaseStatus.customPassword);
@@ -265,6 +267,22 @@ class MyApp extends StatelessWidget {
     }
   }
 
+  static Locale _resolveSystemLocale(Iterable<Locale> supportedLocales) {
+    final systemLocale = ui.PlatformDispatcher.instance.locale;
+    for (final supported in supportedLocales) {
+      if (supported.languageCode == systemLocale.languageCode &&
+          supported.countryCode == systemLocale.countryCode) {
+        return supported;
+      }
+    }
+    for (final supported in supportedLocales) {
+      if (supported.languageCode == systemLocale.languageCode) {
+        return supported;
+      }
+    }
+    return supportedLocales.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     moveToCenter(context);
@@ -289,27 +307,16 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          locale: context.watch<AppProvider>().locale,
+          locale: context.watch<AppProvider>().locale ??
+              _resolveSystemLocale(AppLocalizations.supportedLocales),
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: (locale, supportedLocales) {
             ILogger.debug(
                 "Locale: $locale, Supported: $supportedLocales, appProvider.locale: ${appProvider.locale}");
             if (appProvider.locale != null) {
               return appProvider.locale;
-            } else if (locale != null && supportedLocales.contains(locale)) {
-              return locale;
-            } else {
-              try {
-                return Localizations.localeOf(context);
-              } catch (e, t) {
-                ILogger.error(
-                  "Failed to get locale by Localizations.localeOf(context)",
-                  e,
-                  t,
-                );
-                return const Locale("en", "US");
-              }
             }
+            return _resolveSystemLocale(supportedLocales);
           },
           home: home,
           builder: (context, widget) {

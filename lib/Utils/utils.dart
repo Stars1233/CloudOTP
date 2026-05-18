@@ -253,7 +253,8 @@ class Utils {
       try {
         lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
       } catch (e, t) {
-        ILogger.error("Failed to check LaunchAtStartup in initSimpleTray", e, t);
+        ILogger.error(
+            "Failed to check LaunchAtStartup in initSimpleTray", e, t);
       }
       if (!ResponsiveUtil.isLinux()) {
         await trayManager.setToolTip(ResponsiveUtil.appName);
@@ -313,7 +314,7 @@ class Utils {
       ChewieUtils.displayApp();
       ShortcutsUtil.jumpToAbout(context);
     } else if (menuItem.key == TrayKey.officialWebsite.key) {
-      UriUtil.launchUrlUri(context, officialWebsite);
+      UriUtil.launchUrlUri(context, cloudotpOfficialWebsite);
     } else if (menuItem.key.notNullOrEmpty &&
         menuItem.key!.startsWith(TrayKey.copyTokenCode.key) &&
         !isSimple) {

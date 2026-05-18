@@ -53,3 +53,5 @@ RegExp cloudotpauthMigrationReg =
     RegExp(r"^cloudotpauth-migration://offline\?tokens=(.*)$");
 RegExp cloudotpauthCategoryMigrationReg =
     RegExp(r"^cloudotpauth-migration://offline\?categories=(.*)$");
+
+const double macosTitleBarLeftMargin = 92;

@@ -160,12 +160,31 @@ class ProgressDialog {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         LoadingDialogIndicator(
-                          complete: _data.value.complete,
-                          error: _data.value.error,
+                          complete: value.complete,
+                          error: value.error,
                         ),
+                        if (value.showProgress) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: 200,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: value.progress,
+                                minHeight: 4,
+                                backgroundColor: ChewieTheme.canvasColor,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  value.error
+                                      ? Colors.red
+                                      : ChewieTheme.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         Text(
-                          '${_data.value.msg}${showProgress ? (_data.value.progress * 100).toStringAsFixed(1) : ''}%',
+                          '${value.msg}${value.showProgress ? " ${(value.progress * 100).toStringAsFixed(1)}%" : ""}',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: ChewieTheme.labelLarge,
@@ -183,7 +202,7 @@ class ProgressDialog {
   }
 }
 
-class LoadingDialogIndicator extends StatefulWidget {
+class LoadingDialogIndicator extends StatelessWidget {
   final bool complete;
   final bool error;
 
@@ -194,27 +213,14 @@ class LoadingDialogIndicator extends StatefulWidget {
   });
 
   @override
-  State<LoadingDialogIndicator> createState() => _LoadingDialogIndicatorState();
-}
-
-class _LoadingDialogIndicatorState extends State<LoadingDialogIndicator>
-    with TickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    _controller = AnimationController(vsync: this);
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    if (complete) {
+      return Icon(Icons.check_circle_rounded,
+          size: 40, color: ChewieTheme.primaryColor);
+    }
+    if (error) {
+      return const Icon(Icons.error_rounded, size: 40, color: Colors.red);
+    }
     return chewieProvider.loadingWidgetBuilder(40, false);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }

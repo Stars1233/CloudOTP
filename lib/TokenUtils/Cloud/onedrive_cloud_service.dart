@@ -113,7 +113,8 @@ class OneDriveCloudService extends CloudService {
     String path, {
     Function(int p1, int p2)? onProgress,
   }) async {
-    OneDriveResponse response = await onedrive.pullById(path);
+    OneDriveResponse response =
+        await onedrive.pullById(path, onProgress: onProgress);
     return response.isSuccess ? response.bodyBytes ?? Uint8List(0) : null;
   }
 
@@ -155,6 +156,7 @@ class OneDriveCloudService extends CloudService {
       fileData,
       _onedrivePath,
       fileName,
+      onProgress: onProgress,
     );
     deleteOldBackup();
     return response.isSuccess;

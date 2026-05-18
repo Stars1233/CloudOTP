@@ -237,25 +237,20 @@ class HuaweiCloud extends BaseCloudService {
   }
 
   @override
-  Future<HuaweiCloudResponse> pullById(String id) async {
+  Future<HuaweiCloudResponse> pullById(
+    String id, {
+    Function(int, int)? onProgress,
+  }) async {
     CloudLogger.info(serviceName, "Start pull file by ID: $id");
     try {
       final pullUri = Uri.parse("$apiEndpoint/files/$id?form=content");
-      final resp = await get(pullUri);
 
-      if (isSuccess(resp)) {
-        CloudLogger.infoResponse(serviceName, "Pull file success", resp);
-        return HuaweiCloudResponse.fromResponse(
-          message: "Download successfully.",
-          response: resp,
-        );
-      } else {
-        CloudLogger.errorResponse(serviceName, "Pull file failed", resp);
-        return HuaweiCloudResponse.fromResponse(
-          response: resp,
-          message: "Error when pulling file.",
-        );
-      }
+      final bodyBytes = await getStreamed(pullUri, onProgress: onProgress);
+      CloudLogger.info(serviceName, "Pull file success");
+      return HuaweiCloudResponse.success(
+        bodyBytes: bodyBytes,
+        message: "Download successfully.",
+      );
     } catch (err) {
       CloudLogger.error(serviceName, "Pull file error: $err", err);
       return HuaweiCloudResponse.error(message: "Unexpected exception: $err");

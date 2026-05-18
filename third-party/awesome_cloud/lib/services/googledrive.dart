@@ -202,7 +202,10 @@ class GoogleDrive extends BaseCloudService {
   }
 
   @override
-  Future<GoogleDriveResponse> pullById(String id) async {
+  Future<GoogleDriveResponse> pullById(
+    String id, {
+    Function(int, int)? onProgress,
+  }) async {
     try {
       drive.DriveApi driveApi = await getClient();
 
@@ -217,10 +220,18 @@ class GoogleDrive extends BaseCloudService {
         CloudLogger.error(serviceName, "Media stream is null for file ID: $id");
         return GoogleDriveResponse.error(message: "File not found or empty.");
       }
+
+      final total = media.length ?? -1;
+      final bytes = <int>[];
+      await for (final chunk in media.stream) {
+        bytes.addAll(chunk);
+        onProgress?.call(bytes.length, total);
+      }
+
       CloudLogger.info(serviceName, "Download successfully for file ID: $id");
       return GoogleDriveResponse.success(
         message: "Download successfully.",
-        bodyBytes: await (media.stream as http.ByteStream).toBytes(),
+        bodyBytes: Uint8List.fromList(bytes),
       );
     } catch (err) {
       CloudLogger.error(serviceName, "Exception while downloading file: $err");
