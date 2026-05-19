@@ -157,6 +157,7 @@
   "autoBackupTip": "当令牌或分类发生更改时自动备份至指定位置；设置备份密码后生效",
   "autoBackupPath": "本地备份位置",
   "backupLogs": "备份日志",
+  "backupLogSubtitle": "查看自动备份历史记录",
   "noBackupLogs": "暂无备份日志",
   "haveNotSetBackupPassword": "尚未设置备份密码，无法备份",
   "notSetBackupPasswordTip": "请设置备份密码后使用备份功能",
@@ -672,6 +673,15 @@
   "createTimeDESCOrder": "创建时间降序",
   "lastCopyTimeASCOrder": "最后复制时间升序",
   "lastCopyTimeDESCOrder": "最后复制时间降序",
+  "layoutType": "布局",
+  "layoutTypeSubtitle": "选择令牌的展示方式",
+  "sortType": "排序方式",
+  "sortTypeSubtitle": "选择令牌的排列顺序",
+  "sortGroupDefault": "默认",
+  "sortGroupAlphabetical": "按名称",
+  "sortGroupCopyTimes": "按复制次数",
+  "sortGroupLastCopy": "按最近复制时间",
+  "sortGroupCreate": "按创建时间",
   "simpleLayoutType": "简洁",
   "compactLayoutType": "紧凑",
   "tileLayoutType": "平铺",
@@ -824,5 +834,137 @@
   "accentColor": "强调色",
   "resetToDefault": "默认",
   "customColor": "自定义",
-  "webDavHttpWarning": "警告：HTTP 连接未加密，您的凭据可能被截获，请使用 HTTPS。"
+  "webDavHttpWarning": "警告：HTTP 连接未加密，您的凭据可能被截获，请使用 HTTPS。",
+  "shareTokenUri": "分享令牌URI",
+  "toggleCodeVisibility": "切换验证码可见性",
+  "tokenProgressLabel": "验证码剩余时间",
+  "multiSelectCount": "已选择 {count} 个",
+  "@multiSelectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deselectAll": "取消全选",
+  "batchDeleteTitle": "删除选中的令牌",
+  "batchDeleteMessage": "确定要删除 {count} 个令牌吗？此操作不可撤销。",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchDeleteSuccess": "成功删除 {count} 个令牌",
+  "@batchDeleteSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "setCategoryForTokens": "为 {count} 个令牌设置分类",
+  "@setCategoryForTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachMarkSkip": "跳过",
+  "coachMarkSearchTitle": "点击搜索",
+  "coachMarkSearchDescription": "点击应用标题即可打开搜索栏，快速查找令牌。",
+  "coachMarkSwipeTitle": "滑动操作",
+  "coachMarkSwipeDescription": "向左滑动令牌可置顶/取消置顶，向右滑动可查看二维码、编辑等更多操作。",
+  "coachMarkCategoryTitle": "管理分类令牌",
+  "coachMarkCategoryDescription": "长按分类标签可选择该分类中包含的令牌。",
+  "coachMarkMultiSelectTitle": "多选模式",
+  "coachMarkMultiSelectDescription": "点击更多菜单中的「选择」进入多选模式，进行批量删除、导出、分类等操作。",
+  "showGuidedTour": "功能引导",
+  "showGuidedTourDescription": "重新显示功能引导教程",
+  "coachMarkNext": "下一步",
+  "coachMarkGotIt": "知道了",
+  "alreadyPinnedSelectedTokens": "已置顶 {count} 个令牌",
+  "@alreadyPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyUnPinnedSelectedTokens": "已取消置顶 {count} 个令牌",
+  "@alreadyUnPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureShowcase": "功能特色",
+  "featureShowcaseTitle": "探索 CloudOTP",
+  "featureShowcaseStartTour": "开始功能引导",
+  "featureTokenTitle": "多种令牌支持",
+  "featureTokenDescription": "支持 5 种 OTP 令牌类型，SHA1、SHA256、SHA512 算法及 5-8 位验证码。",
+  "featureTokenTOTPDesc": "基于时间",
+  "featureTokenHOTPDesc": "基于计数",
+  "featureTokenMOTPDesc": "移动 OTP",
+  "featureTokenSteamDesc": "Steam 令牌",
+  "featureTokenYandexDesc": "Yandex",
+  "featureCloudTitle": "云端备份",
+  "featureCloudDescription": "支持 8 种云服务备份，自动备份、加密保护、备份历史记录一应俱全。",
+  "featureCloudAuto": "自动备份",
+  "featureCloudEncrypted": "加密存储",
+  "featureCloudLog": "备份日志",
+  "featureIconTitle": "智能图标",
+  "featureIconDescription": "从 {count}+ 品牌图标中自动匹配令牌图标，也可手动搜索选择。",
+  "@featureIconDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureSecurityTitle": "安全优先",
+  "featureSecurityDescription": "多重安全防护，采用业界标准加密算法保障令牌安全。",
+  "featureSecurityEncryption": "数据库加密",
+  "featureSecurityBiometric": "生物识别",
+  "featureSecurityGesture": "手势锁",
+  "featureSecurityAutoLock": "自动锁定",
+  "featureSecuritySafeMode": "安全模式",
+  "featureSecurityBackupEncrypt": "备份加密",
+  "featureSecurityOpenSource": "开源透明，代码可审计",
+  "featurePlatformTitle": "全平台支持",
+  "featurePlatformDescription": "在所有设备上运行 — Android、iOS、Windows、macOS、Linux。",
+  "featurePlatformSync": "跨设备同步",
+  "featurePlatformResponsive": "响应式布局",
+  "featureImportSection": "导入",
+  "featureExportSection": "导出",
+  "featureImportScan": "扫码导入",
+  "featureImportClipboard": "剪贴板导入",
+  "featureExportEncrypted": "加密文件",
+  "featureExportUri": "URI 文件",
+  "featureExportCloudOTPQR": "CloudOTP 二维码",
+  "featureExportGoogleQR": "Google 二维码",
+  "featureImportExportTitle": "轻松迁移",
+  "featureImportExportDescription": "支持从 9 种以上认证器导入，多种格式导出。",
+  "featureConvenienceTitle": "智能高效",
+  "featureConvenienceDescription": "丰富的便捷功能，带来最佳使用体验。",
+  "featureQuickSearch": "快速搜索",
+  "featureSort": "排序筛选",
+  "featureCategories": "智能分类",
+  "featureMultiSelect": "多选操作",
+  "featurePinTop": "置顶令牌",
+  "featureSwipe": "滑动操作",
+  "featureDragReorder": "拖拽排序",
+  "featureAutoCopy": "自动复制",
+  "featureQRScanner": "二维码扫描",
+  "featureCustomizeTitle": "个性定制",
+  "featureCustomizeDescription": "提供多种布局、主题、字体和图标包选择，打造专属的 CloudOTP。",
+  "featureGlassEffect": "毛玻璃效果",
+  "featureCustomFont": "自定义字体",
+  "featureMultiLang": "4 种语言",
+  "featureThemeColors": "主题色",
+  "featureLayoutStyles": "布局样式",
+  "featureCustomThemeEditor": "自定义主题编辑器"
 }

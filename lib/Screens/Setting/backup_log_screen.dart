@@ -27,12 +27,27 @@ import '../../Database/config_dao.dart';
 import '../../l10n/l10n.dart';
 
 class BackupLogScreen extends StatefulWidget {
+  final bool isOverlay;
+
   const BackupLogScreen({
     super.key,
     this.isOverlay = false,
   });
 
-  final bool isOverlay;
+  static void show(BuildContext context) {
+    if (ResponsiveUtil.isLandscapeLayout()) {
+      BottomSheetBuilder.showGenericContextMenu(
+        context,
+        const BackupLogScreen(isOverlay: true),
+      );
+    } else {
+      BottomSheetBuilder.showBottomSheet(
+        context,
+        (ctx) => const BackupLogScreen(),
+        responsive: true,
+      );
+    }
+  }
 
   @override
   BackupLogScreenState createState() => BackupLogScreenState();
@@ -42,6 +57,10 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
   String _autoBackupPassword = "";
 
   bool get canBackup => _autoBackupPassword.isNotEmpty;
+
+  Color get _accent => ChewieTheme.primaryColor;
+
+  Radius get _radius => ChewieDimens.defaultRadius;
 
   @override
   void initState() {
@@ -60,143 +79,177 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.isOverlay
-        ? _buildDesktopBody()
-        : Scaffold(
-            appBar: ResponsiveAppBar(
-              backgroundColor: ResponsiveUtil.isLandscapeLayout()
-                  ? ChewieTheme.appBarBackgroundColor
-                  : Colors.transparent,
-              title: appLocalizations.backupLogs,
-              showBack: true,
-              showBorder: true,
-              onTapBack: () {
-                Navigator.pop(context);
-              },
-              actions: [
-                canBackup && appProvider.autoBackupLogs.isNotEmpty
-                    ? CircleIconButton(
-                        icon: Icon(
-                          LucideIcons.trash2,
-                          color: ChewieTheme.iconColor,
-                          size: 20,
-                        ),
-                        padding: const EdgeInsets.all(10),
-                        onTap: clear,
-                      )
-                    : const BlankIconButton(),
-                const SizedBox(width: 5),
-                if (ResponsiveUtil.isLandscapeLayout())
-                  Container(
-                    margin: const EdgeInsets.only(right: 5),
-                    child: const BlankIconButton(),
-                  ),
-              ],
+    Widget header = Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      child: _buildHeader(),
+    );
+
+    Widget body = _buildLogList();
+
+    if (widget.isOverlay) {
+      final overlayHeight = appProvider.autoBackupLogs.isEmpty || !canBackup
+          ? 200.0
+          : 400.0;
+      return Container(
+        width: min(300, MediaQuery.sizeOf(context).width - 80),
+        height: min(overlayHeight, MediaQuery.sizeOf(context).height - 80),
+        decoration: BoxDecoration(
+          color: ChewieTheme.scaffoldBackgroundColor,
+          borderRadius: ChewieDimens.borderRadius8,
+          border: ChewieTheme.border,
+          boxShadow: ChewieTheme.defaultBoxShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            header,
+            Expanded(child: body),
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      runAlignment: WrapAlignment.center,
+      children: [
+        Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.vertical(
+              top: _radius,
+              bottom: ResponsiveUtil.isWideDevice() ? _radius : Radius.zero,
             ),
-            body: _buildBody(),
-          );
+            color: ChewieTheme.scaffoldBackgroundColor,
+            border: ChewieTheme.border,
+            boxShadow: ChewieTheme.defaultBoxShadow,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              header,
+              Flexible(child: body),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
-  _buildDesktopBody() {
-    return Container(
-      decoration: BoxDecoration(
-        color: ChewieTheme.scaffoldBackgroundColor,
-        borderRadius: ChewieDimens.borderRadius8,
-        border: ChewieTheme.border,
-        boxShadow: ChewieTheme.defaultBoxShadow,
-      ),
-      width: !ResponsiveUtil.isLandscapeLayout()
-          ? null
-          : min(300, MediaQuery.sizeOf(context).width - 80),
-      height: !ResponsiveUtil.isLandscapeLayout()
-          ? null
-          : min(appProvider.autoBackupLogs.isEmpty ? 200 : 400,
-              MediaQuery.sizeOf(context).height - 80),
-      child: _buildBody(),
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: _accent.withAlpha(30),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(LucideIcons.history, color: _accent, size: 17),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                appLocalizations.backupLogs,
+                style: ChewieTheme.titleMedium
+                    .copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                appLocalizations.backupLogSubtitle,
+                style: ChewieTheme.bodySmall.copyWith(
+                  color: ChewieTheme.bodyMedium.color?.withAlpha(150),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (canBackup && appProvider.autoBackupLogs.isNotEmpty)
+          CircleIconButton(
+            icon: Icon(LucideIcons.trash2, size: 16, color: _accent),
+            onTap: clear,
+          ),
+      ],
     );
   }
 
   clear() {
     appProvider.clearAutoBackupLogs();
     appProvider.autoBackupLoadingStatus = LoadingStatus.none;
+    setState(() {});
   }
 
-  _buildBody() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      physics: widget.isOverlay
-          ? null
-          : const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics()),
-      children: [
-        if (widget.isOverlay)
-          Row(
-            children: [
-              const SizedBox(width: 5),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  appLocalizations.backupLogs,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.apply(fontWeightDelta: 2),
-                ),
-              ),
-              const Spacer(),
-              if (canBackup && appProvider.autoBackupLogs.isNotEmpty)
-                CircleIconButton(
-                  icon: const Icon(
-                    LucideIcons.trash2,
-                    size: 16,
-                  ),
-                  onTap: clear,
-                ),
-            ],
-          ),
-        if (widget.isOverlay && appProvider.autoBackupLogs.isNotEmpty)
-          const SizedBox(height: 10),
-        ...List.generate(
-          appProvider.autoBackupLogs.length,
-          (index) {
-            return BackupLogItem(
-              log: appProvider.autoBackupLogs[index],
-              isOverlay: widget.isOverlay,
-            );
-          },
+  Widget _buildLogList() {
+    if (!canBackup) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              appLocalizations.haveNotSetBackupPassword,
+              style: ChewieTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
+            RoundIconTextButton(
+              height: 36,
+              text: appLocalizations.goToSetBackupPassword,
+              background: _accent,
+              onPressed: () {
+                if (widget.isOverlay) {
+                  RouteUtil.pushDialogRoute(context,
+                      const SettingNavigationScreen(initPageIndex: 3));
+                } else {
+                  Navigator.pop(context);
+                  RouteUtil.pushCupertinoRoute(
+                      context,
+                      const BackupSettingScreen(
+                          jumpToAutoBackupPassword: true));
+                }
+              },
+            ),
+          ],
         ),
-        if (!canBackup)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                appLocalizations.haveNotSetBackupPassword,
-                style: ChewieTheme.bodyMedium,
-              ),
-              const SizedBox(height: 10),
-              RoundIconTextButton(
-                height: 36,
-                text: appLocalizations.goToSetBackupPassword,
-                background: ChewieTheme.primaryColor,
-                onPressed: () {
-                  if (widget.isOverlay) {
-                    RouteUtil.pushDialogRoute(context,
-                        const SettingNavigationScreen(initPageIndex: 3));
-                  } else {
-                    RouteUtil.pushCupertinoRoute(
-                        context,
-                        const BackupSettingScreen(
-                            jumpToAutoBackupPassword: true));
-                  }
-                },
-              ),
-            ],
+      );
+    }
+
+    if (appProvider.autoBackupLogs.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child:
+            EmptyPlaceholder(text: appLocalizations.noBackupLogs, topPadding: 10),
+      );
+    }
+
+    if (widget.isOverlay) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(
+            appProvider.autoBackupLogs.length,
+            (index) => BackupLogItem(
+              log: appProvider.autoBackupLogs[index],
+            ),
           ),
-        if (canBackup && appProvider.autoBackupLogs.isEmpty)
-          EmptyPlaceholder(text: appLocalizations.noBackupLogs, topPadding: 30),
-      ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+      shrinkWrap: true,
+      itemCount: appProvider.autoBackupLogs.length,
+      itemBuilder: (context, index) {
+        return BackupLogItem(
+          log: appProvider.autoBackupLogs[index],
+        );
+      },
     );
   }
 }
@@ -204,9 +257,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 class BackupLogItem extends StatefulWidget {
   final AutoBackupLog log;
 
-  final bool isOverlay;
-
-  const BackupLogItem({super.key, required this.log, required this.isOverlay});
+  const BackupLogItem({super.key, required this.log});
 
   @override
   BackupLogItemState createState() => BackupLogItemState();
@@ -232,7 +283,7 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
                 }
               : null,
           child: Container(
-            padding: EdgeInsets.all(widget.isOverlay ? 8 : 12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: ChewieDimens.borderRadius8,
             ),
@@ -244,9 +295,7 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
                   children: [
                     Text(
                       widget.log.triggerType.label,
-                      style: ChewieTheme.bodyMedium.apply(
-                        fontSizeDelta: widget.isOverlay ? 0 : 1,
-                      ),
+                      style: ChewieTheme.bodyMedium,
                     ),
                     const Spacer(),
                     RoundIconTextButton(
@@ -255,9 +304,8 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       text: widget.log.lastStatusItem.labelShort,
-                      textStyle: ChewieTheme.labelSmall?.apply(
-                          color: Colors.white,
-                          fontSizeDelta: widget.isOverlay ? 0 : 1),
+                      textStyle: ChewieTheme.labelSmall
+                          ?.apply(color: Colors.white),
                       background: widget.log.lastStatus.color,
                     ),
                     const SizedBox(width: 5),
@@ -296,10 +344,7 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
           return '[${TimeUtil.timestampToDateString(statusItem.timestamp)}]: ${statusItem.label(widget.log)}';
         },
       ).join('<br>'),
-      style: Theme.of(context)
-          .textTheme
-          .labelSmall
-          ?.apply(fontSizeDelta: widget.isOverlay ? 0 : 1),
+      style: ChewieTheme.labelSmall,
     );
   }
 }

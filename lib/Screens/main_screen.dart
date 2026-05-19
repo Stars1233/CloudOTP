@@ -21,6 +21,8 @@ import 'package:cloudotp/Database/database_manager.dart';
 import 'package:cloudotp/Screens/Token/add_token_screen.dart';
 import 'package:cloudotp/Screens/Token/import_export_token_screen.dart';
 import 'package:cloudotp/Screens/home_screen.dart';
+import 'package:cloudotp/Screens/layout_select_screen.dart';
+import 'package:cloudotp/Screens/sort_select_screen.dart';
 import 'package:cloudotp/Utils/shortcuts_util.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -1138,8 +1140,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                       ),
                     ),
                     onPressed: () {
-                      BottomSheetBuilder.showGenericContextMenu(
-                          context, const BackupLogScreen(isOverlay: true));
+                      BackupLogScreen.show(context);
                     },
                   ),
                   const SizedBox(height: 4),
@@ -1154,8 +1155,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                     padding: const EdgeInsets.all(8),
                     iconSize: 22,
                     onPressed: () {
-                      BottomSheetBuilder.showContextMenu(
-                          context, buildSortContextMenuButtons());
+                      SortSelectScreen.show(context);
                     },
                   ),
                   const SizedBox(height: 4),
@@ -1170,8 +1170,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                     padding: const EdgeInsets.all(8),
                     iconSize: 22,
                     onPressed: () {
-                      BottomSheetBuilder.showContextMenu(
-                          context, buildLayoutContextMenuButtons());
+                      LayoutSelectScreen.show(context);
                     },
                   ),
                   const SizedBox(height: 4),

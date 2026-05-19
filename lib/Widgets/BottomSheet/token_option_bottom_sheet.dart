@@ -346,6 +346,22 @@ class TokenOptionBottomSheetState
           },
         ),
         _buildItem(
+          leading: LucideIcons.share2,
+          title: appLocalizations.shareTokenUri,
+          onTap: () {
+            DialogBuilder.showConfirmDialog(
+              context,
+              title: appLocalizations.copyUriClearWarningTitle,
+              message: appLocalizations.copyUriClearWarningTip,
+              onTapConfirm: () {
+                Navigator.pop(context);
+                UriUtil.share(OtpTokenParser.toUri(widget.token).toString());
+              },
+              onTapCancel: () {},
+            );
+          },
+        ),
+        _buildItem(
           leading: LucideIcons.shapes,
           title: appLocalizations.editTokenCategory,
           onTap: () {
@@ -440,35 +456,39 @@ class TokenOptionBottomSheetState
     Color? backgroundColor,
     Function()? onTap,
   }) {
-    return PressableAnimation(
-      child: Material(
-        color: backgroundColor ?? ChewieTheme.cardColor,
-        borderRadius: ChewieDimens.defaultBorderRadius,
-        child: InkWell(
-          onTap: onTap,
+    return Semantics(
+      button: true,
+      label: title,
+      child: PressableAnimation(
+        child: Material(
+          color: backgroundColor ?? ChewieTheme.cardColor,
           borderRadius: ChewieDimens.defaultBorderRadius,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-                borderRadius: ChewieDimens.defaultBorderRadius),
-            child: Column(
-              children: [
-                Icon(
-                  leading,
-                  size: 24,
-                  color: leadingColor ?? ChewieTheme.bodyMedium.color,
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 20,
-                  child: AutoSizeText(
-                    title,
-                    maxLines: 1,
-                    style: ChewieTheme.bodyMedium.copyWith(
-                        color: titleColor ?? ChewieTheme.bodyMedium.color),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: ChewieDimens.defaultBorderRadius,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                  borderRadius: ChewieDimens.defaultBorderRadius),
+              child: Column(
+                children: [
+                  Icon(
+                    leading,
+                    size: 24,
+                    color: leadingColor ?? ChewieTheme.bodyMedium.color,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 20,
+                    child: AutoSizeText(
+                      title,
+                      maxLines: 1,
+                      style: ChewieTheme.bodyMedium.copyWith(
+                          color: titleColor ?? ChewieTheme.bodyMedium.color),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

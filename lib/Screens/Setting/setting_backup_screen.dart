@@ -345,7 +345,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             title: appLocalizations.backupLogs,
             trailing: Icons.history_rounded,
             onTap: () async {
-              RouteUtil.pushCupertinoRoute(context, const BackupLogScreen());
+              BackupLogScreen.show(context);
             },
           ),
         ],

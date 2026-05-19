@@ -105,6 +105,39 @@ class ExportTokenUtil {
     }
   }
 
+  static exportSelectedTokensUri(List<OtpToken> tokens) async {
+    if (tokens.isEmpty) return;
+    CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
+    String content = await compute((_) async {
+      List<String> uris =
+          tokens.map((e) => OtpTokenParser.toUri(e).toString()).toList();
+      return uris.join("\n");
+    }, null);
+    String? filePath = await FileUtil.saveFile(
+      dialogTitle: appLocalizations.exportUriFileTitle,
+      fileName: ExportTokenUtil.getExportFileName("txt"),
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+    );
+    if (filePath != null) {
+      File(filePath).writeAsStringSync(content);
+    }
+    CustomLoadingDialog.dismissLoading();
+    if (filePath != null) {
+      IToast.showTop(appLocalizations.exportSuccess);
+    }
+  }
+
+  static String getTokensUriString(List<OtpToken> tokens) {
+    return tokens.map((e) => OtpTokenParser.toUri(e).toString()).join("\n");
+  }
+
+  static shareSelectedTokensUri(List<OtpToken> tokens) {
+    if (tokens.isEmpty) return;
+    String content = getTokensUriString(tokens);
+    UriUtil.share(content);
+  }
+
   static Future<Uint8List?> getUint8List({
     String? password,
   }) async {
@@ -515,6 +548,7 @@ class ExportTokenUtil {
 
   static Future<List<dynamic>?> exportToGoogleAuthentcatorQrcodes({
     bool showLoading = true,
+    List<OtpToken>? selectedTokens,
   }) async {
     if (showLoading) {
       CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
@@ -523,7 +557,7 @@ class ExportTokenUtil {
     int passCount = 0;
     List<OtpMigrationPayload> payloads = [];
     try {
-      List<OtpToken> tokens = await TokenDao.listTokens();
+      List<OtpToken> tokens = selectedTokens ?? await TokenDao.listTokens();
       OtpMigrationPayload payload = OtpMigrationPayload.create();
       String preRes = "";
       for (OtpToken token in tokens) {
@@ -568,6 +602,7 @@ class ExportTokenUtil {
 
   static Future<List<String>?> exportToQrcodes({
     bool showLoading = true,
+    List<OtpToken>? selectedTokens,
   }) async {
     if (showLoading) {
       CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
@@ -578,7 +613,7 @@ class ExportTokenUtil {
     int batchId = Random().nextInt(1000000000) * -1;
     try {
       //Tokens
-      List<OtpToken> tokens = await TokenDao.listTokens();
+      List<OtpToken> tokens = selectedTokens ?? await TokenDao.listTokens();
       CloudOtpTokenPayload payload = CloudOtpTokenPayload.create();
       String preRes = "";
       for (OtpToken token in tokens) {
@@ -593,24 +628,26 @@ class ExportTokenUtil {
         }
       }
       if (preRes.isNotEmpty) payloads.add(payload);
-      //Categories
-      List<TokenCategory> categories = await CategoryDao.listCategories();
-      TokenCategoryPayload categoryPayload = TokenCategoryPayload.create();
-      preRes = "";
-      for (TokenCategory category in categories) {
-        TokenCategoryParameters parameters =
-            await category.toCategoryParameters();
-        categoryPayload.categoryParameters.add(parameters);
-        String currentRes = base64Encode(categoryPayload.writeToBuffer());
-        if (currentRes.bytesLength > maxBytesLength) {
-          categoryPayloads.add(categoryPayload);
-          preRes = currentRes = "";
-          categoryPayload = TokenCategoryPayload.create();
-        } else {
-          preRes = currentRes;
+      //Categories (skip when exporting selected tokens only)
+      if (selectedTokens == null) {
+        List<TokenCategory> categories = await CategoryDao.listCategories();
+        TokenCategoryPayload categoryPayload = TokenCategoryPayload.create();
+        preRes = "";
+        for (TokenCategory category in categories) {
+          TokenCategoryParameters parameters =
+              await category.toCategoryParameters();
+          categoryPayload.categoryParameters.add(parameters);
+          String currentRes = base64Encode(categoryPayload.writeToBuffer());
+          if (currentRes.bytesLength > maxBytesLength) {
+            categoryPayloads.add(categoryPayload);
+            preRes = currentRes = "";
+            categoryPayload = TokenCategoryPayload.create();
+          } else {
+            preRes = currentRes;
+          }
         }
+        if (preRes.isNotEmpty) categoryPayloads.add(categoryPayload);
       }
-      if (preRes.isNotEmpty) categoryPayloads.add(categoryPayload);
       for (CloudOtpTokenPayload payload in payloads) {
         payload.version = 1;
         payload.batchSize = payloads.length + categoryPayloads.length;

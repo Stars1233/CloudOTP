@@ -199,6 +199,22 @@ class TokenDao {
     return id;
   }
 
+  static Future<int> deleteTokens(List<OtpToken> tokens) async {
+    if (tokens.isEmpty) return 0;
+    final db = await DatabaseManager.getDataBase();
+    for (OtpToken token in tokens) {
+      await BindingDao.removeTokenBindings(token.uid);
+    }
+    Batch batch = db.batch();
+    for (OtpToken token in tokens) {
+      batch.delete(tableName, where: 'id = ?', whereArgs: [token.id]);
+    }
+    List<dynamic> results = await batch.commit();
+    ExportTokenUtil.autoBackup(triggerType: AutoBackupTriggerType.tokenDeleted);
+    Utils.initTray();
+    return results.length;
+  }
+
   static Future<List<OtpToken>> listTokens({
     String searchKey = "",
     String orderBy = "",
@@ -208,8 +224,12 @@ class TokenDao {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       orderBy: "pinned DESC, seq DESC${orderBy.isEmpty ? "" : ", $orderBy"}",
-      where: searchKey.isEmpty ? null : 'issuer LIKE ?',
-      whereArgs: searchKey.isEmpty ? null : ["%$searchKey%"],
+      where: searchKey.isEmpty
+          ? null
+          : '(issuer LIKE ? OR account LIKE ? OR description LIKE ?)',
+      whereArgs: searchKey.isEmpty
+          ? null
+          : ["%$searchKey%", "%$searchKey%", "%$searchKey%"],
     );
     return List.generate(maps.length, (i) {
       return OtpToken.fromMap(maps[i]);
@@ -224,8 +244,12 @@ class TokenDao {
       final db = await DatabaseManager.getDataBase();
       List<Map<String, dynamic>> maps = await db.query(
         tableName,
-        where: searchKey.isEmpty ? 'id = ?' : 'id = ? AND issuer LIKE ?',
-        whereArgs: searchKey.isEmpty ? [id] : [id, "%$searchKey%"],
+        where: searchKey.isEmpty
+            ? 'id = ?'
+            : 'id = ? AND (issuer LIKE ? OR account LIKE ? OR description LIKE ?)',
+        whereArgs: searchKey.isEmpty
+            ? [id]
+            : [id, "%$searchKey%", "%$searchKey%", "%$searchKey%"],
       );
       return OtpToken.fromMap(maps[0]);
     } catch (e, t) {
@@ -243,8 +267,12 @@ class TokenDao {
       final db = await DatabaseManager.getDataBase();
       List<Map<String, dynamic>> maps = await db.query(
         tableName,
-        where: searchKey.isEmpty ? 'uid = ?' : 'uid = ? AND issuer LIKE ?',
-        whereArgs: searchKey.isEmpty ? [uid] : [uid, "%$searchKey%"],
+        where: searchKey.isEmpty
+            ? 'uid = ?'
+            : 'uid = ? AND (issuer LIKE ? OR account LIKE ? OR description LIKE ?)',
+        whereArgs: searchKey.isEmpty
+            ? [uid]
+            : [uid, "%$searchKey%", "%$searchKey%", "%$searchKey%"],
       );
       return maps.isNotEmpty ? OtpToken.fromMap(maps[0]) : null;
     } catch (e, t) {

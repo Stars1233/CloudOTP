@@ -46,11 +46,23 @@ class TokenLayout extends StatefulWidget {
     super.key,
     required this.token,
     required this.layoutType,
+    this.multiSelectMode = false,
+    this.isSelected = false,
+    this.onToggleSelect,
+    this.onEnterMultiSelect,
   });
 
   final OtpToken token;
 
   final LayoutType layoutType;
+
+  final bool multiSelectMode;
+
+  final bool isSelected;
+
+  final VoidCallback? onToggleSelect;
+
+  final VoidCallback? onEnterMultiSelect;
 
   @override
   State<TokenLayout> createState() => TokenLayoutState();
@@ -92,6 +104,46 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   TokenLayoutNotifier tokenLayoutNotifier = TokenLayoutNotifier();
 
+  AnimationController? _wobbleController;
+  late Animation<double> _wobbleAnimation;
+
+  SlidableController? _slidableController;
+
+  Future<void> openEndActionPane() async {
+    await _slidableController?.openEndActionPane();
+  }
+
+  Future<void> closeSlidable() async {
+    await _slidableController?.close();
+  }
+
+  void _startWobble() {
+    if (_wobbleController != null) return;
+    _wobbleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    final phase = (widget.token.uid.hashCode % 1000) / 1000.0;
+    _wobbleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: 0.008), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.008, end: -0.008), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -0.008, end: 0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _wobbleController!,
+      curve: Curves.easeInOut,
+    ));
+    Future.delayed(Duration(milliseconds: (phase * 300).toInt()), () {
+      if (_wobbleController != null && mounted) {
+        _wobbleController!.repeat();
+      }
+    });
+  }
+
+  void _stopWobble() {
+    _wobbleController?.dispose();
+    _wobbleController = null;
+  }
+
   final ValueNotifier<double> progressNotifier = ValueNotifier(0);
 
   int get remainingMilliseconds => widget.token.period == 0
@@ -111,8 +163,26 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   @override
   void dispose() {
     _tickerSubscription?.cancel();
+    _stopWobble();
+    final sc = _slidableController;
+    _slidableController = null;
+    if (sc != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        sc.dispose();
+      });
+    }
     tokenLayoutNotifier.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant TokenLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.multiSelectMode && !oldWidget.multiSelectMode) {
+      _startWobble();
+    } else if (!widget.multiSelectMode && oldWidget.multiSelectMode) {
+      _stopWobble();
+    }
   }
 
   updateInfo({
@@ -168,6 +238,14 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   FlutterContextMenu _buildContextMenuButtons() {
     return FlutterContextMenu(
       entries: [
+        if (widget.onEnterMultiSelect != null) ...[
+          FlutterContextMenuItem(
+            iconData: LucideIcons.listChecks,
+            appLocalizations.select,
+            onPressed: () => widget.onEnterMultiSelect?.call(),
+          ),
+          FlutterContextMenuItem.divider(),
+        ],
         FlutterContextMenuItem(
           iconData: LucideIcons.copy,
           appLocalizations.copyTokenCode,
@@ -216,6 +294,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
               onPressed: _processCopyUri,
             ),
             FlutterContextMenuItem(
+              iconData: LucideIcons.share2,
+              appLocalizations.shareTokenUri,
+              onPressed: _processShareUri,
+            ),
+            FlutterContextMenuItem(
               iconData: LucideIcons.copySlash,
               appLocalizations.copyNextTokenCode,
               onPressed: _processCopyNextCode,
@@ -246,31 +329,18 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       button: true,
       child: ContextMenuRegion(
         key: ValueKey("contextMenuRegion${widget.token.keyString}"),
-        enable: ResponsiveUtil.isDesktop(),
+        enable: ResponsiveUtil.isDesktop() && !widget.multiSelectMode,
         enableOnLongPress: false,
         contextMenu: _buildContextMenuButtons(),
-        child: Selector<AppProvider, bool>(
-          selector: (context, provider) => provider.dragToReorder,
-          builder: (context, dragToReorder, child) =>
-              Selector<AppProvider, IssuerAndAccountShowOption>(
-            selector: (context, provider) =>
-                provider.issuerAndAccountShowOption,
-            builder: (context, issuerAndAccountShowOption, child) {
-              return GestureDetector(
-                onLongPress: dragToReorder && !ResponsiveUtil.isDesktop()
-                    ? () {
-                        showContextMenu();
-                        HapticFeedback.lightImpact();
-                      }
-                    : null,
-                child: PressableAnimation(
-                  child: _buildBody(
-                    issuerAndAccountShowOption: issuerAndAccountShowOption,
-                  ),
-                ),
-              );
-            },
-          ),
+        child: Selector<AppProvider, IssuerAndAccountShowOption>(
+          selector: (context, provider) => provider.issuerAndAccountShowOption,
+          builder: (context, issuerAndAccountShowOption, child) {
+            return PressableAnimation(
+              child: _buildBody(
+                issuerAndAccountShowOption: issuerAndAccountShowOption,
+              ),
+            );
+          },
         ),
       ),
     );
@@ -282,9 +352,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     double startExtentRatio = 0.16,
     double endExtentRatio = 0.64,
   }) {
+    _slidableController ??= SlidableController(this);
     return Slidable(
+      controller: _slidableController,
       groupTag: "TokenLayout",
-      enabled: !ResponsiveUtil.isWideDevice(),
+      enabled: !widget.multiSelectMode && !ResponsiveUtil.isWideDevice(),
       startActionPane: ActionPane(
         extentRatio: startExtentRatio,
         motion: const ScrollMotion(),
@@ -372,13 +444,14 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   _buildBody({
     required IssuerAndAccountShowOption issuerAndAccountShowOption,
   }) {
+    Widget body;
     switch (widget.layoutType) {
       case LayoutType.Simple:
-        return _buildSimpleLayout(
+        body = _buildSimpleLayout(
           issuerAndAccountShowOption: issuerAndAccountShowOption,
         );
       case LayoutType.Compact:
-        return _buildCompactLayout(
+        body = _buildCompactLayout(
           issuerAndAccountShowOption: issuerAndAccountShowOption,
         );
       // case LayoutType.Tile:
@@ -388,14 +461,14 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       //     child: _buildTileLayout(),
       //   );
       case LayoutType.List:
-        return _buildSlidable(
+        body = _buildSlidable(
           simple: true,
           child: _buildListLayout(
             issuerAndAccountShowOption: issuerAndAccountShowOption,
           ),
         );
       case LayoutType.Spotlight:
-        return _buildSlidable(
+        body = _buildSlidable(
           startExtentRatio: 0.21,
           endExtentRatio: 0.8,
           child: _buildSpotlightLayout(
@@ -403,6 +476,51 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
           ),
         );
     }
+    if (widget.multiSelectMode) {
+      Widget result = Stack(
+        children: [
+          body,
+          Positioned(
+            top: 6,
+            right: 6,
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? ChewieTheme.primaryColor
+                      : ChewieTheme.cardColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.isSelected
+                        ? ChewieTheme.primaryColor
+                        : Colors.grey,
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(2),
+                child: Icon(
+                  Icons.check,
+                  size: 14,
+                  color: widget.isSelected ? Colors.white : Colors.transparent,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      if (_wobbleController != null) {
+        return AnimatedBuilder(
+          animation: _wobbleAnimation,
+          builder: (context, child) => Transform.rotate(
+            angle: _wobbleAnimation.value,
+            child: child,
+          ),
+          child: result,
+        );
+      }
+      return result;
+    }
+    return body;
   }
 
   showContextMenu() {
@@ -486,6 +604,18 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
+  _processShareUri() {
+    DialogBuilder.showConfirmDialog(
+      context,
+      title: appLocalizations.copyUriClearWarningTitle,
+      message: appLocalizations.copyUriClearWarningTip,
+      onTapConfirm: () {
+        UriUtil.share(OtpTokenParser.toUri(widget.token).toString());
+      },
+      onTapCancel: () {},
+    );
+  }
+
   _processResetCopyTimes() {
     DialogBuilder.showConfirmDialog(
       context,
@@ -546,6 +676,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
           selector: (context, provider) => provider.showEye,
           builder: (context, showEye, child) => showEye
               ? CircleIconButton(
+                  tooltip: appLocalizations.toggleCodeVisibility,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     tokenLayoutNotifier.codeVisiable =
@@ -576,6 +707,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             tokenLayoutNotifier.haveToResetHOTP,
         builder: (context, haveToResetHOTP, child) => haveToResetHOTP
             ? CircleIconButton(
+                tooltip: appLocalizations.refreshHOTP,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   widget.token.counterString =
@@ -640,6 +772,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 constraints: const BoxConstraints(minHeight: 2, maxHeight: 2),
                 child: LinearProgressIndicator(
                   value: progress,
+                  semanticsLabel: appLocalizations.tokenProgressLabel,
                   minHeight: 2,
                   color: progress > autoCopyNextCodeProgressThrehold
                       ? ChewieTheme.primaryColor
@@ -668,6 +801,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                     builder: (context, value, child) {
                       return CircularProgressIndicator(
                         value: progressNotifier.value,
+                        semanticsLabel: appLocalizations.tokenProgressLabel,
                         color: progressNotifier.value >
                                 autoCopyNextCodeProgressThrehold
                             ? ChewieTheme.primaryColor
@@ -710,6 +844,10 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   }
 
   _processTap() {
+    if (widget.multiSelectMode) {
+      widget.onToggleSelect?.call();
+      return;
+    }
     if (!appProvider.showEye) {
       tokenLayoutNotifier.codeVisiable = true;
     }
@@ -888,13 +1026,15 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                           if (isHOTP) _buildHOTPRefreshButton(padding: 4),
                           if (!isHOTP) _buildEyeButton(padding: 4),
                           CircleIconButton(
+                            tooltip: appLocalizations.moreOptionShort,
                             padding: const EdgeInsets.all(4),
                             icon: Icon(
                               LucideIcons.ellipsisVertical,
                               color: ChewieTheme.labelSmall.color,
                               size: 20,
                             ),
-                            onTap: showContextMenu,
+                            onTap:
+                                widget.multiSelectMode ? null : showContextMenu,
                           ),
                         ],
                       ),

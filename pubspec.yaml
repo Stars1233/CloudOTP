@@ -15,6 +15,7 @@ dependencies:
   awesome_chewie:
     path: third-party/chewie
   animations: ^2.0.11 # 动画
+  tutorial_coach_mark: ^1.2.11 # 引导教程
   fluttertoast: ^9.0.0 # 吐司
   lottie: ^3.1.2 # Lottie动画
   modal_bottom_sheet: ^3.0.0 # 底部弹窗

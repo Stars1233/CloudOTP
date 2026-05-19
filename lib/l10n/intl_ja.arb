@@ -157,6 +157,7 @@
   "autoBackupTip": "トークンやカテゴリが変更されたときに指定の場所に自動バックアップします。バックアップパスワード設定後に有効",
   "autoBackupPath": "ローカルバックアップ位置",
   "backupLogs": "バックアップログ",
+  "backupLogSubtitle": "自動バックアップの履歴を表示",
   "noBackupLogs": "バックアップログはありません",
   "haveNotSetBackupPassword": "バックアップパスワードが設定されていないため、バックアップできません",
   "notSetBackupPasswordTip": "バックアップ機能を使用する前に、バックアップパスワードを設定してください。",
@@ -672,6 +673,15 @@
   "createTimeDESCOrder": "作成時間降順",
   "lastCopyTimeASCOrder": "最終コピー時間昇順",
   "lastCopyTimeDESCOrder": "最終コピー時間降順",
+  "layoutType": "レイアウト",
+  "layoutTypeSubtitle": "トークンの表示方法を選択",
+  "sortType": "並び順",
+  "sortTypeSubtitle": "トークンの並び順を選択",
+  "sortGroupDefault": "デフォルト",
+  "sortGroupAlphabetical": "名前順",
+  "sortGroupCopyTimes": "コピー回数順",
+  "sortGroupLastCopy": "最終コピー時間順",
+  "sortGroupCreate": "作成時間順",
   "simpleLayoutType": "シンプル",
   "compactLayoutType": "コンパクト",
   "tileLayoutType": "タイル",
@@ -824,5 +834,137 @@
   "accentColor": "アクセントカラー",
   "resetToDefault": "デフォルト",
   "customColor": "カスタム",
-  "webDavHttpWarning": "警告：HTTP接続は暗号化されていません。資格情報が傍受される可能性があります。HTTPSを使用してください。"
+  "webDavHttpWarning": "警告：HTTP接続は暗号化されていません。資格情報が傍受される可能性があります。HTTPSを使用してください。",
+  "shareTokenUri": "トークンURIを共有",
+  "toggleCodeVisibility": "コードの表示切替",
+  "tokenProgressLabel": "コードの残り時間",
+  "multiSelectCount": "{count}件選択中",
+  "@multiSelectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deselectAll": "すべて解除",
+  "batchDeleteTitle": "選択したトークンを削除",
+  "batchDeleteMessage": "{count}件のトークンを削除しますか？この操作は取り消せません。",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchDeleteSuccess": "{count}件のトークンを削除しました",
+  "@batchDeleteSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "setCategoryForTokens": "{count}件のトークンのカテゴリを設定",
+  "@setCategoryForTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachMarkSkip": "スキップ",
+  "coachMarkSearchTitle": "タップして検索",
+  "coachMarkSearchDescription": "アプリのタイトルをタップすると検索バーが開き、トークンをすばやく検索できます。",
+  "coachMarkSwipeTitle": "スワイプ操作",
+  "coachMarkSwipeDescription": "トークンを左にスワイプでピン留め/解除、右にスワイプで QR コード表示、編集などの操作ができます。",
+  "coachMarkCategoryTitle": "カテゴリトークンの管理",
+  "coachMarkCategoryDescription": "カテゴリタブを長押しすると、そのカテゴリに含まれるトークンを選択できます。",
+  "coachMarkMultiSelectTitle": "複数選択モード",
+  "coachMarkMultiSelectDescription": "その他メニューから「選択」をタップすると、複数選択モードで一括操作ができます。",
+  "showGuidedTour": "機能ガイド",
+  "showGuidedTourDescription": "機能ガイドツアーを再表示する",
+  "coachMarkNext": "次へ",
+  "coachMarkGotIt": "わかった",
+  "alreadyPinnedSelectedTokens": "{count} 件のトークンをピン留めしました",
+  "@alreadyPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyUnPinnedSelectedTokens": "{count} 件のトークンのピン留めを解除しました",
+  "@alreadyUnPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureShowcase": "機能紹介",
+  "featureShowcaseTitle": "CloudOTP を探索",
+  "featureShowcaseStartTour": "機能ガイドを開始",
+  "featureTokenTitle": "多様なトークン対応",
+  "featureTokenDescription": "5種類のOTPに対応。SHA1/SHA256/SHA512アルゴリズムと5〜8桁のコードに対応。",
+  "featureTokenTOTPDesc": "時刻ベース",
+  "featureTokenHOTPDesc": "カウンタベース",
+  "featureTokenMOTPDesc": "モバイルOTP",
+  "featureTokenSteamDesc": "Steamガード",
+  "featureTokenYandexDesc": "Yandex",
+  "featureCloudTitle": "クラウドバックアップ",
+  "featureCloudDescription": "8種類のクラウドサービスへの自動バックアップ、暗号化保護、バックアップ履歴に対応。",
+  "featureCloudAuto": "自動バックアップ",
+  "featureCloudEncrypted": "暗号化",
+  "featureCloudLog": "バックアップログ",
+  "featureIconTitle": "スマートアイコン",
+  "featureIconDescription": "{count}個以上のブランドアイコンから自動で一致。手動検索も可能。",
+  "@featureIconDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureSecurityTitle": "セキュリティ重視",
+  "featureSecurityDescription": "業界標準の暗号化と多層的な保護でトークンを守ります。",
+  "featureSecurityEncryption": "DB暗号化",
+  "featureSecurityBiometric": "生体認証",
+  "featureSecurityGesture": "ジェスチャーロック",
+  "featureSecurityAutoLock": "自動ロック",
+  "featureSecuritySafeMode": "セーフモード",
+  "featureSecurityBackupEncrypt": "バックアップ暗号化",
+  "featureSecurityOpenSource": "オープンソースで監査可能",
+  "featurePlatformTitle": "マルチプラットフォーム",
+  "featurePlatformDescription": "Android、iOS、Windows、macOS、Linux のすべてのデバイスで動作。",
+  "featurePlatformSync": "デバイス間同期",
+  "featurePlatformResponsive": "レスポンシブレイアウト",
+  "featureImportSection": "インポート",
+  "featureExportSection": "エクスポート",
+  "featureImportScan": "QRスキャン",
+  "featureImportClipboard": "クリップボード",
+  "featureExportEncrypted": "暗号化ファイル",
+  "featureExportUri": "URIファイル",
+  "featureExportCloudOTPQR": "CloudOTP QR",
+  "featureExportGoogleQR": "Google認証QR",
+  "featureImportExportTitle": "簡単移行",
+  "featureImportExportDescription": "9種類以上の認証アプリからのインポートと、複数フォーマットでのエクスポートに対応。",
+  "featureConvenienceTitle": "スマートで効率的",
+  "featureConvenienceDescription": "便利な機能を満載し、最高の体験を提供します。",
+  "featureQuickSearch": "クイック検索",
+  "featureSort": "並べ替え",
+  "featureCategories": "カテゴリ",
+  "featureMultiSelect": "複数選択",
+  "featurePinTop": "ピン留め",
+  "featureSwipe": "スワイプ操作",
+  "featureDragReorder": "ドラッグ並べ替え",
+  "featureAutoCopy": "自動コピー",
+  "featureQRScanner": "QRスキャナ",
+  "featureCustomizeTitle": "カスタマイズ",
+  "featureCustomizeDescription": "複数のレイアウト、テーマ、フォント、アイコンパックから選んで、自分だけの CloudOTP に。",
+  "featureGlassEffect": "グラス効果",
+  "featureCustomFont": "カスタムフォント",
+  "featureMultiLang": "4言語対応",
+  "featureThemeColors": "テーマカラー",
+  "featureLayoutStyles": "レイアウト",
+  "featureCustomThemeEditor": "カスタムテーマエディタ"
 }
