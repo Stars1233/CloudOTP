@@ -15,6 +15,7 @@
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class LottieFiles {
@@ -25,6 +26,17 @@ class LottieFiles {
   static const String moonLight = "assets/lottie/moon_light.json";
   static const String sunLight = "assets/lottie/sun_light.json";
 
+  static LottieDelegates loadingDelegates(Color color) {
+    return LottieDelegates(
+      values: [
+        ValueDelegate.strokeColor(
+          const ['**'],
+          value: color,
+        ),
+      ],
+    );
+  }
+
   static Transform load(
     String path, {
     double size = 40,
@@ -33,6 +45,7 @@ class LottieFiles {
     Function()? onLoaded,
     BoxFit? fit,
     double scale = 1.0,
+    LottieDelegates? delegates,
   }) {
     return Transform.scale(
       scale: scale,
@@ -42,6 +55,7 @@ class LottieFiles {
         height: size,
         fit: fit,
         controller: controller,
+        delegates: delegates,
         alignment: Alignment.bottomCenter,
         addRepaintBoundary: true,
         renderCache:

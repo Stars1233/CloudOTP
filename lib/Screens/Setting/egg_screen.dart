@@ -79,8 +79,10 @@ class _EggScreenState extends BaseDynamicState<EggScreen>
                   showBorder: true,
                   showBack: true,
                 ),
-          body: EasyRefresh(
-            child: ListView(
+          body: SafeArea(
+            top: false,
+            child: EasyRefresh(
+              child: ListView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
               children: [
@@ -124,6 +126,7 @@ class _EggScreenState extends BaseDynamicState<EggScreen>
                 ),
               ],
             ),
+          ),
           ),
         ),
         Visibility(

@@ -56,8 +56,11 @@ class _ImportExportTokenScreenState
         actions:
             ResponsiveUtil.isLandscapeLayout() ? [] : [const BlankIconButton()],
       ),
-      body: EasyRefresh(
-        child: _buildBody(),
+      body: SafeArea(
+        top: false,
+        child: EasyRefresh(
+          child: _buildBody(),
+        ),
       ),
     );
   }

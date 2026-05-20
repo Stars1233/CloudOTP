@@ -1338,8 +1338,10 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
     if (_multiSelectMode) {
       return const SizedBox.shrink();
     }
+    double bottomInset = MediaQuery.of(context).viewPadding.bottom;
     double height = kToolbarHeight +
         verticalPadding * 2 +
+        bottomInset +
         (ResponsiveUtil.isLandscapeTablet() ? 24 : 0);
     return Selector<AppProvider, bool>(
       selector: (context, provider) => provider.hideBottombarWhenScrolling,
@@ -1363,7 +1365,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
               // border: ChewieTheme.topDivider,
             ),
             padding: EdgeInsets.symmetric(vertical: 5 + verticalPadding)
-                .copyWith(right: 70),
+                .copyWith(right: 70, bottom: 5 + verticalPadding + bottomInset),
             child: _buildTabBar(const EdgeInsets.only(left: 10, right: 10)),
           );
           return ScrollToHide(
@@ -1402,7 +1404,9 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         hideBottombar: provider.hideBottombarWhenScrolling,
         hideProgress: provider.hideProgressBar,
       ),
-      builder: (context, settings, child) => ReorderableGridView.builder(
+      builder: (context, settings, child) {
+        double bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+        return ReorderableGridView.builder(
         // controller: _scrollController,
         gridItemsNotifier: gridItemsNotifier,
         autoScroll: true,
@@ -1412,10 +1416,10 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
             right: 10,
             top: 10,
             bottom: _multiSelectMode
-                ? 80
+                ? 80 + bottomPadding
                 : settings.hideBottombar || categories.isEmpty
-                    ? 10
-                    : 85),
+                    ? 10 + bottomPadding
+                    : 85 + bottomPadding),
         gridDelegate: SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: layoutType.maxCrossAxisExtent,
           crossAxisSpacing: 8,
@@ -1476,7 +1480,8 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
             onEnterMultiSelect: () => enterMultiSelectMode(tokens[index].uid),
           );
         },
-      ),
+      );
+      },
     );
     Widget body = tokens.isEmpty
         ? ListView(

@@ -153,17 +153,23 @@ class MainScreenState extends BaseWindowState<MainScreen>
       EasyRefresh.defaultHeaderBuilder = () => LottieCupertinoHeader(
             backgroundColor: ChewieTheme.canvasColor,
             indicator: LottieFiles.load(LottieFiles.getLoadingPath(context),
-                scale: 1.5),
+                scale: 1.5,
+                delegates:
+                    LottieFiles.loadingDelegates(ChewieTheme.primaryColor)),
             hapticFeedback: true,
             triggerOffset: 40,
           );
       EasyRefresh.defaultFooterBuilder = () => LottieCupertinoFooter(
-            indicator: LottieFiles.load(LottieFiles.getLoadingPath(context)),
+            indicator: LottieFiles.load(LottieFiles.getLoadingPath(context),
+                delegates:
+                    LottieFiles.loadingDelegates(ChewieTheme.primaryColor)),
           );
       chewieProvider.loadingWidgetBuilder =
           (size, forceDark) => LottieFiles.load(
                 LottieFiles.getLoadingPath(chewieProvider.rootContext),
                 scale: 1.5,
+                delegates:
+                    LottieFiles.loadingDelegates(ChewieTheme.primaryColor),
               );
     });
     initGlobalConfig();

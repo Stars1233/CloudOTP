@@ -132,7 +132,8 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
     }
     chewieProvider.loadingWidgetBuilder = (size, forceDark) => LottieFiles.load(
         LottieFiles.getLoadingPath(chewieProvider.rootContext),
-        scale: 1.5);
+        scale: 1.5,
+        delegates: LottieFiles.loadingDelegates(ChewieTheme.primaryColor));
     trayManager.addListener(this);
     windowManager.addListener(this);
     Utils.initSimpleTray();

@@ -195,8 +195,11 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
           ),
         ],
       ),
-      body: EasyRefresh(
-        child: _buildBody(),
+      body: SafeArea(
+        top: false,
+        child: EasyRefresh(
+          child: _buildBody(),
+        ),
       ),
     );
   }
@@ -434,6 +437,7 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
             ? Wrap(
                 spacing: 5,
                 runSpacing: 5,
+                alignment: WrapAlignment.end,
                 children: selectedCategoryUids
                     .map(
                       (e) => RoundIconTextButton(

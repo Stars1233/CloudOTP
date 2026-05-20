@@ -142,7 +142,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 
     if (widget.isOverlay) {
       final overlayHeight =
-          _mergedLogs.isEmpty || !canBackup ? 200.0 : 400.0;
+          _mergedLogs.isEmpty || !canBackup ? 300.0 : 400.0;
       return Container(
         width: min(400, MediaQuery.sizeOf(context).width - 80),
         height: min(overlayHeight, MediaQuery.sizeOf(context).height - 80),
@@ -168,6 +168,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
         Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+            minHeight: MediaQuery.sizeOf(context).height * 0.3,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.vertical(

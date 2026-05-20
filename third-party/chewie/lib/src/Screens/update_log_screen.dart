@@ -106,7 +106,7 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
         },
         child: ListView.builder(
           padding: widget.padding
-              .add(const EdgeInsets.symmetric(horizontal: 8, vertical: 20)),
+              .add(const EdgeInsets.symmetric(horizontal: 4, vertical: 10)),
           itemBuilder: (context, index) => _buildItem(
             releaseItems[index],
             index,
@@ -122,81 +122,126 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
     final isCurrent = ChewieUtils.compareVersion(
             item.tagName.replaceAll(RegExp(r'[a-zA-Z]'), ''), currentVersion) ==
         0;
+    final isLatest = index == 0;
 
     final releaseDate =
         item.publishedAt != null ? TimeUtil.formatDate(item.publishedAt!) : "";
 
-    final color = HSLColor.fromAHSL(
-      1.0,
-      140 + (index * 220 / (releaseItems.length + 1)),
-      0.6,
-      isCurrent ? 0.5 : 0.4,
-    ).toColor();
+    final accent = isCurrent ? ChewieTheme.primaryColor : ChewieTheme.iconColor;
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 14,
-                height: 14,
+    return Stack(
+      children: [
+        if (!isLast)
+          Positioned(
+            left: 9,
+            top: 26,
+            bottom: 0,
+            child: Container(
+              width: 1.5,
+              color: ChewieTheme.dividerColor,
+            ),
+          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(left: 5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isCurrent ? ChewieTheme.primaryColor : color,
-                  border: Border.all(color: Colors.grey.shade300, width: 2),
-                ),
-              ).animate().fadeIn(duration: 400.ms).scale(delay: 50.ms),
-              if (!isLast)
-                Expanded(
-                  child: Container(
+                  color: isCurrent ? accent : accent.withAlpha(60),
+                  border: Border.all(
+                    color: isCurrent ? accent : ChewieTheme.dividerColor,
                     width: 2,
-                    margin: const EdgeInsets.only(top: 2),
-                    color: Colors.grey.shade300,
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
+              ).animate().fadeIn(duration: 300.ms).scale(delay: 30.ms),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ChewieTheme.canvasColor,
+                borderRadius: ChewieDimens.borderRadius12,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        "${item.tagName}  $releaseDate",
-                        style: ChewieTheme.bodyMedium,
-                      ),
-                      const SizedBox(width: 6),
-                      if (isCurrent)
-                        RoundIconTextButton(
-                          height: 20,
-                          text: chewieLocalizations.currentVersion,
-                          background: ChewieTheme.primaryColor,
-                          textStyle: ChewieTheme.labelMedium.apply(
-                            color: ChewieTheme.primaryButtonColor,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          radius: 4,
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: accent.withAlpha(30),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      const Spacer(),
-                      ClickableGestureDetector(
-                        // padding: const EdgeInsets.symmetric(
-                        //   horizontal: 6,
-                        //   vertical: 2,
-                        // ),
                         child: Icon(
-                          LucideIcons.chevronRight,
-                          size: 16,
-                          color: ChewieTheme.labelMedium.color,
+                          isLatest
+                              ? LucideIcons.sparkles
+                              : LucideIcons.tag,
+                          size: 15,
+                          color: accent,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  item.tagName,
+                                  style: ChewieTheme.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (isCurrent) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: accent.withAlpha(25),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      chewieLocalizations.currentVersion,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: accent,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (releaseDate.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                releaseDate,
+                                style: ChewieTheme.bodySmall.copyWith(
+                                  color: ChewieTheme.bodyMedium.color
+                                      ?.withAlpha(120),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      CircleIconButton(
+                        icon: Icon(
+                          LucideIcons.externalLink,
+                          size: 14,
+                          color: ChewieTheme.iconColor,
                         ),
                         onTap: () {
                           UriUtil.launchUrlUri(context, item.htmlUrl);
@@ -205,18 +250,22 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
                     ],
                   ),
                   if ((item.body ?? "").isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: ChewieTheme.cardColor,
-                        borderRadius: ChewieDimens.borderRadius8,
-                      ),
-                      child: SelectableAreaWrapper(
-                        focusNode: FocusNode(),
-                        child: CustomMarkdownWidget(
-                          item.body ?? "",
-                          baseStyle: ChewieTheme.bodyMedium,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: ChewieTheme.scaffoldBackgroundColor,
+                          borderRadius: ChewieDimens.borderRadius8,
+                        ),
+                        child: SelectableAreaWrapper(
+                          focusNode: FocusNode(),
+                          child: CustomMarkdownWidget(
+                            item.body ?? "",
+                            baseStyle: ChewieTheme.bodySmall,
+                          ),
                         ),
                       ),
                     ),
@@ -225,8 +274,9 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
               ),
             ),
           ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }

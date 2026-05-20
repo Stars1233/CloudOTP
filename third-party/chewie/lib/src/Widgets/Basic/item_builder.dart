@@ -49,10 +49,13 @@ class ItemBuilder {
             )
           : null,
       body: overrideBody ??
-          EasyRefresh(
-            child: ListView(
-              padding: padding,
-              children: children,
+          SafeArea(
+            top: false,
+            child: EasyRefresh(
+              child: ListView(
+                padding: padding,
+                children: children,
+              ),
             ),
           ),
     );
@@ -251,7 +254,7 @@ class ItemBuilder {
         mainGroupAlignment: mainGroupAlignment,
       ),
       onSelected: onSelected,
-      maxSelected: 1,
+      maxSelected: isRadio ? 1 : null,
       controller: controller,
       buttons: buttons,
       buttonBuilder: (selected, label, context, onTap, __) {

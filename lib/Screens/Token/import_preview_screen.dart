@@ -462,12 +462,13 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
   }
 
   Widget _buildBottomBar() {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
-      padding: const EdgeInsets.only(
+      padding: EdgeInsets.only(
         left: 16,
         right: 16,
         top: 12,
-        bottom: 12,
+        bottom: 12 + bottomInset,
       ),
       decoration: BoxDecoration(
         color: ChewieTheme.scaffoldBackgroundColor,

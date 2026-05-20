@@ -29,9 +29,11 @@ class SelectTokenBottomSheet extends StatefulWidget {
   const SelectTokenBottomSheet({
     super.key,
     required this.category,
+    this.onChanged,
   });
 
   final TokenCategory category;
+  final VoidCallback? onChanged;
 
   @override
   SelectTokenBottomSheetState createState() => SelectTokenBottomSheetState();
@@ -156,6 +158,7 @@ class SelectTokenBottomSheetState
                     widget.category.uid, unSelectedUids);
                 await CategoryDao.updateCategory(widget.category);
                 homeScreenState?.changeTokensForCategory(widget.category);
+                widget.onChanged?.call();
                 IToast.showTop(appLocalizations.saveSuccess);
                 Navigator.of(context).pop();
               },

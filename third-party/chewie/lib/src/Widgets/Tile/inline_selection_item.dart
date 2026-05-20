@@ -296,7 +296,7 @@ class InlineSelectionItemState<T extends DropdownMixin>
         splashColor: ChewieTheme.splashColor,
         highlightColor: ChewieTheme.highlightColor,
         selectedColor: ChewieTheme.hoverColor,
-        selectedIconColor: ChewieTheme.successColor,
+        selectedIconColor: ChewieTheme.primaryColor,
       ),
       closedFillColor: ChewieTheme.canvasColor,
       expandedFillColor: ChewieTheme.scaffoldBackgroundColor,

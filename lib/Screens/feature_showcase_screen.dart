@@ -440,42 +440,48 @@ class _FeatureShowcaseScreenState
       ),
       content: Column(
         children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: services
-                .map((s) => _buildChip(
-                      label: s,
-                      color: _cloudColor,
-                      icon: LucideIcons.cloud,
-                    ))
-                .toList(),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: services
+                  .map((s) => _buildChip(
+                        label: s,
+                        color: _cloudColor,
+                        icon: LucideIcons.cloud,
+                      ))
+                  .toList(),
+            ),
           ),
           const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            decoration: BoxDecoration(
-              color: _cloudColor.withAlpha(20),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _cloudColor.withAlpha(50)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildBadge(
-                    LucideIcons.refreshCw,
-                    appLocalizations.featureCloudAuto,
-                    _cloudColor),
-                _buildBadge(
-                    LucideIcons.lock,
-                    appLocalizations.featureCloudEncrypted,
-                    _cloudColor),
-                _buildBadge(
-                    LucideIcons.fileText,
-                    appLocalizations.featureCloudLog,
-                    _cloudColor),
-              ],
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              decoration: BoxDecoration(
+                color: _cloudColor.withAlpha(20),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _cloudColor.withAlpha(50)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildBadge(
+                      LucideIcons.refreshCw,
+                      appLocalizations.featureCloudAuto,
+                      _cloudColor),
+                  _buildBadge(
+                      LucideIcons.lock,
+                      appLocalizations.featureCloudEncrypted,
+                      _cloudColor),
+                  _buildBadge(
+                      LucideIcons.fileText,
+                      appLocalizations.featureCloudLog,
+                      _cloudColor),
+                ],
+              ),
             ),
           ),
         ],

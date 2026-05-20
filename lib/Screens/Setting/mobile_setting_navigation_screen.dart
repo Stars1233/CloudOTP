@@ -57,11 +57,13 @@ class _MobileSettingNavigationScreenState
             SizedBox(width: 5),
           ],
         ),
-        body: EasyRefresh(
-          child: ListView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            children: [
+        body: SafeArea(
+          top: false,
+          child: EasyRefresh(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              children: [
               EntryItem(
                 title: appLocalizations.generalSetting,
                 leading: LucideIcons.settings2,
@@ -112,6 +114,7 @@ class _MobileSettingNavigationScreenState
               const SizedBox(height: 30),
             ],
           ),
+        ),
         ),
       ),
     );

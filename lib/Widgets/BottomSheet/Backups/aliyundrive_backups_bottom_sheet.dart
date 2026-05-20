@@ -81,16 +81,29 @@ class AliyunDriveBackupsBottomSheetState
   }
 
   _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: radius),
-        color: ChewieTheme.canvasColor,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-      alignment: Alignment.center,
-      child: Text(
-        appLocalizations.cloudBackupFiles(widget.files.length),
-        style: ChewieTheme.titleMedium.apply(fontWeightDelta: 2),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: ChewieTheme.primaryColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(LucideIcons.cloud,
+                color: ChewieTheme.primaryColor, size: 17),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              appLocalizations.cloudBackupFiles(widget.files.length),
+              style: ChewieTheme.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -98,7 +111,7 @@ class AliyunDriveBackupsBottomSheetState
   _buildButtons() {
     return ListView.builder(
       shrinkWrap: true,
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
       itemBuilder: (context, index) => _buildItem(files[index]),
       itemCount: files.length,
     );
@@ -107,69 +120,79 @@ class AliyunDriveBackupsBottomSheetState
   _buildItem(AliyunDriveFileInfo file) {
     String size = CacheUtil.renderSize(file.size.toDouble(), fractionDigits: 0);
     String time = TimeUtil.formatTimestamp(file.lastModifiedDateTime);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {},
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(
-                width: 0.5,
-                color: Theme.of(context).dividerColor,
-              ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ChewieTheme.canvasColor,
+        borderRadius: ChewieDimens.borderRadius12,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: ChewieTheme.primaryColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(LucideIcons.fileArchive,
+                size: 17, color: ChewieTheme.primaryColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  file.name,
+                  style: ChewieTheme.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "$time  ·  $size",
+                  style: ChewieTheme.bodySmall.copyWith(
+                    color: ChewieTheme.bodyMedium.color?.withAlpha(120),
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      file.name,
-                      style: ChewieTheme.titleMedium,
-                    ),
-                    Text(
-                      "$time    $size",
-                      style: ChewieTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              CircleIconButton(
-                icon: const Icon(LucideIcons.import, size: 20),
-                onTap: () async {
-                  Navigator.pop(context);
-                  widget.onSelected(file);
-                },
-              ),
-              const SizedBox(width: 5),
-              CircleIconButton(
-                icon:
-                    const Icon(LucideIcons.trash, color: Colors.red, size: 20),
-                onTap: () async {
-                  CustomLoadingDialog.showLoading(
-                      title: appLocalizations.deleting);
-                  try {
-                    await widget.cloudService.deleteFile(file.id);
-                    setState(() {
-                      files.remove(file);
-                    });
-                    IToast.showTop(appLocalizations.deleteSuccess);
-                  } catch (e, t) {
-                    ILogger.error(
-                        "Failed to delete backup file from aliyunDrive", e, t);
-                    IToast.showTop(appLocalizations.deleteFailed);
-                  }
-                  CustomLoadingDialog.dismissLoading();
-                },
-              ),
-            ],
+          const SizedBox(width: 6),
+          CircleIconButton(
+            icon: Icon(LucideIcons.import, size: 18,
+                color: ChewieTheme.primaryColor),
+            onTap: () async {
+              Navigator.pop(context);
+              widget.onSelected(file);
+            },
           ),
-        ),
+          CircleIconButton(
+            icon:
+                const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
+            onTap: () async {
+              CustomLoadingDialog.showLoading(
+                  title: appLocalizations.deleting);
+              try {
+                await widget.cloudService.deleteFile(file.id);
+                setState(() {
+                  files.remove(file);
+                });
+                IToast.showTop(appLocalizations.deleteSuccess);
+              } catch (e, t) {
+                ILogger.error(
+                    "Failed to delete backup file from aliyunDrive", e, t);
+                IToast.showTop(appLocalizations.deleteFailed);
+              }
+              CustomLoadingDialog.dismissLoading();
+            },
+          ),
+        ],
       ),
     );
   }

@@ -146,7 +146,9 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
         chewieProvider.loadingWidgetBuilder = (size, forceDark) =>
             LottieFiles.load(
                 LottieFiles.getLoadingPath(chewieProvider.rootContext),
-                scale: 1.5);
+                scale: 1.5,
+                delegates:
+                    LottieFiles.loadingDelegates(ChewieTheme.primaryColor));
       }
     });
     _restoreLockoutState();
