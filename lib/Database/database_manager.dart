@@ -39,7 +39,7 @@ enum EncryptDatabaseStatus { defaultPassword, customPassword }
 class DatabaseManager {
   static const _dbName = "cloudotp.db";
   static const _unencrypedFileHeader = "SQLite format 3";
-  static const _dbVersion = 6;
+  static const _dbVersion = 7;
   static Database? _database;
   static final dbFactory = createDatabaseFactoryFfi();
   static DynamicLibrary? lib = loadSqlcipher();
@@ -205,6 +205,10 @@ class DatabaseManager {
         await db.execute("drop table token_category");
         await db.execute("alter table temp rename to token_category");
       }
+    }
+    if (oldVersion < 7) {
+      await db.execute(
+          "alter table otp_token add column tags TEXT NOT NULL DEFAULT ''");
     }
   }
 

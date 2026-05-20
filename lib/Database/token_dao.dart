@@ -215,21 +215,59 @@ class TokenDao {
     return results.length;
   }
 
+  static ({String? where, List<Object>? whereArgs}) _buildSearchWhere({
+    String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
+    String? uidCondition,
+    Object? uidArg,
+  }) {
+    final conditions = <String>[];
+    final args = <Object>[];
+
+    if (uidCondition != null) {
+      conditions.add(uidCondition);
+      if (uidArg != null) args.add(uidArg);
+    }
+
+    if (searchKey.isNotEmpty) {
+      conditions
+          .add('(issuer LIKE ? OR account LIKE ? OR description LIKE ?)');
+      args.addAll(["%$searchKey%", "%$searchKey%", "%$searchKey%"]);
+    }
+
+    for (final tag in tags) {
+      conditions.add('tags LIKE ?');
+      args.add('%$tag%');
+    }
+
+    if (tokenType != null) {
+      try {
+        final typeIndex = OtpTokenType.fromString(tokenType).index;
+        conditions.add('token_type = ?');
+        args.add(typeIndex);
+      } catch (_) {}
+    }
+
+    if (conditions.isEmpty) return (where: null, whereArgs: null);
+    return (where: conditions.join(' AND '), whereArgs: args);
+  }
+
   static Future<List<OtpToken>> listTokens({
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
     String orderBy = "",
     Database? overrideDb,
   }) async {
     final db = overrideDb ?? await DatabaseManager.getDataBase();
+    final search = _buildSearchWhere(
+        searchKey: searchKey, tags: tags, tokenType: tokenType);
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       orderBy: "pinned DESC, seq DESC${orderBy.isEmpty ? "" : ", $orderBy"}",
-      where: searchKey.isEmpty
-          ? null
-          : '(issuer LIKE ? OR account LIKE ? OR description LIKE ?)',
-      whereArgs: searchKey.isEmpty
-          ? null
-          : ["%$searchKey%", "%$searchKey%", "%$searchKey%"],
+      where: search.where,
+      whereArgs: search.whereArgs,
     );
     return List.generate(maps.length, (i) {
       return OtpToken.fromMap(maps[i]);
@@ -239,17 +277,22 @@ class TokenDao {
   static Future<OtpToken?> getTokenById(
     int id, {
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
   }) async {
     try {
       final db = await DatabaseManager.getDataBase();
+      final search = _buildSearchWhere(
+        searchKey: searchKey,
+        tags: tags,
+        tokenType: tokenType,
+        uidCondition: 'id = ?',
+        uidArg: id,
+      );
       List<Map<String, dynamic>> maps = await db.query(
         tableName,
-        where: searchKey.isEmpty
-            ? 'id = ?'
-            : 'id = ? AND (issuer LIKE ? OR account LIKE ? OR description LIKE ?)',
-        whereArgs: searchKey.isEmpty
-            ? [id]
-            : [id, "%$searchKey%", "%$searchKey%", "%$searchKey%"],
+        where: search.where,
+        whereArgs: search.whereArgs,
       );
       return OtpToken.fromMap(maps[0]);
     } catch (e, t) {
@@ -262,17 +305,22 @@ class TokenDao {
   static Future<OtpToken?> getTokenByUid(
     String uid, {
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
   }) async {
     try {
       final db = await DatabaseManager.getDataBase();
+      final search = _buildSearchWhere(
+        searchKey: searchKey,
+        tags: tags,
+        tokenType: tokenType,
+        uidCondition: 'uid = ?',
+        uidArg: uid,
+      );
       List<Map<String, dynamic>> maps = await db.query(
         tableName,
-        where: searchKey.isEmpty
-            ? 'uid = ?'
-            : 'uid = ? AND (issuer LIKE ? OR account LIKE ? OR description LIKE ?)',
-        whereArgs: searchKey.isEmpty
-            ? [uid]
-            : [uid, "%$searchKey%", "%$searchKey%", "%$searchKey%"],
+        where: search.where,
+        whereArgs: search.whereArgs,
       );
       return maps.isNotEmpty ? OtpToken.fromMap(maps[0]) : null;
     } catch (e, t) {

@@ -189,12 +189,28 @@ class CategoryDao {
   static Future<List<OtpToken>> getTokensByCategoryUid(
     String uid, {
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
   }) async {
-    if (uid.isEmpty) return await TokenDao.listTokens(searchKey: searchKey);
+    if (uid.isEmpty) {
+      return await TokenDao.listTokens(
+          searchKey: searchKey, tags: tags, tokenType: tokenType);
+    }
     TokenCategory category = await getCategoryByUid(uid);
-    List<OtpToken> tokens =
-        await BindingDao.getTokens(category.uid, searchKey: searchKey);
+    List<OtpToken> tokens = await BindingDao.getTokens(category.uid,
+        searchKey: searchKey, tags: tags, tokenType: tokenType);
     tokens.sort((a, b) => -a.pinnedInt.compareTo(b.pinnedInt));
     return tokens;
+  }
+
+  static Future<List<String>> getCategoryUidsByName(String name) async {
+    final db = await DatabaseManager.getDataBase();
+    final maps = await db.query(
+      tableName,
+      columns: ['uid'],
+      where: 'title LIKE ?',
+      whereArgs: ['%$name%'],
+    );
+    return maps.map((m) => m['uid'] as String).toList();
   }
 }

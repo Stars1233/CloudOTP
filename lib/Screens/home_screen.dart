@@ -29,6 +29,7 @@ import 'package:cloudotp/Screens/Setting/backup_log_screen.dart';
 import 'package:cloudotp/Screens/Setting/mobile_setting_navigation_screen.dart';
 import 'package:cloudotp/Screens/main_screen.dart';
 import 'package:cloudotp/Utils/hive_util.dart';
+import 'package:cloudotp/Utils/search_query_parser.dart';
 import 'package:cloudotp/Widgets/BottomSheet/add_bottom_sheet.dart';
 import 'package:cloudotp/Widgets/cloudotp/cloudotp_item_builder.dart';
 import 'package:flutter/material.dart';
@@ -844,12 +845,28 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   getTokens() async {
+    final query = SearchQueryParser.parse(_searchKey);
+
+    Set<String>? categoryTokenUids;
+    if (query.categoryName != null) {
+      final catUids =
+          await CategoryDao.getCategoryUidsByName(query.categoryName!);
+      categoryTokenUids = await BindingDao.getTokenUidsByCategoryUids(catUids);
+    }
+
     await CategoryDao.getTokensByCategoryUid(
       currentCategoryUid,
-      searchKey: _searchKey,
+      searchKey: query.text,
+      tags: query.tags,
+      tokenType: query.tokenType,
     ).then((value) {
       final seen = <String>{};
-      tokens = value.where((t) => seen.add(t.uid)).toList();
+      tokens = value.where((t) {
+        if (!seen.add(t.uid)) return false;
+        if (categoryTokenUids != null && !categoryTokenUids.contains(t.uid))
+          return false;
+        return true;
+      }).toList();
       final currentUids = seen;
       tokenKeyMap.removeWhere((uid, _) => !currentUids.contains(uid));
       performSort();
@@ -1111,6 +1128,20 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
 
   getActions(AppProvider provider) {
     return [
+      if (provider.canShowCloudBackupButton && provider.showCloudBackupButton)
+        Container(
+          margin: const EdgeInsets.only(right: 5),
+          child: CircleIconButton(
+            tooltip: appLocalizations.cloudBackupServiceSetting,
+            icon: Icon(
+              LucideIcons.cloud,
+              color: ChewieTheme.iconColor,
+            ),
+            onTap: () {
+              RouteUtil.pushCupertinoRoute(context, const CloudServiceScreen());
+            },
+          ),
+        ),
       if (provider.showBackupLogButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
@@ -1128,20 +1159,6 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
             ),
             onTap: () {
               BackupLogScreen.show(context);
-            },
-          ),
-        ),
-      if (provider.canShowCloudBackupButton && provider.showCloudBackupButton)
-        Container(
-          margin: const EdgeInsets.only(right: 5),
-          child: CircleIconButton(
-            tooltip: appLocalizations.cloudBackupServiceSetting,
-            icon: Icon(
-              LucideIcons.cloud,
-              color: ChewieTheme.iconColor,
-            ),
-            onTap: () {
-              RouteUtil.pushCupertinoRoute(context, const CloudServiceScreen());
             },
           ),
         ),
@@ -1407,80 +1424,82 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       builder: (context, settings, child) {
         double bottomPadding = MediaQuery.of(context).viewPadding.bottom;
         return ReorderableGridView.builder(
-        // controller: _scrollController,
-        gridItemsNotifier: gridItemsNotifier,
-        autoScroll: true,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.only(
-            left: 10,
-            right: 10,
-            top: 10,
-            bottom: _multiSelectMode
-                ? 80 + bottomPadding
-                : settings.hideBottombar || categories.isEmpty
-                    ? 10 + bottomPadding
-                    : 85 + bottomPadding),
-        gridDelegate: SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: layoutType.maxCrossAxisExtent,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          preferredHeight: layoutType.getHeight(settings.hideProgress),
-        ),
-        dragToReorder: _multiSelectMode ? false : settings.dragToReorder,
-        cacheExtent: 9999,
-        onReorderStart: (_) {
-          _fabScrollToHideController.hide();
-          _bottombarScrollToHideController.hide();
-        },
-        onReorderEnd: (_, __) {
-          _fabScrollToHideController.show();
-          _bottombarScrollToHideController.show();
-        },
-        onReorder: (int oldIndex, int newIndex) async {
-          final selectedToken = tokens[oldIndex];
-          int pinnedCount = tokens.where((e) => e.pinned).length;
-          if (selectedToken.pinned) {
-            if (newIndex >= pinnedCount) newIndex = pinnedCount - 1;
-          } else {
-            if (newIndex < pinnedCount) newIndex = pinnedCount;
-          }
-          final item = tokens.removeAt(oldIndex);
-          tokens.insert(newIndex, item);
-          for (int i = 0; i < tokens.length; i++) {
-            tokens[i].seq = tokens.length - i;
-          }
-          await TokenDao.updateTokens(tokens, autoBackup: false);
-          changeOrderType(type: OrderType.Default, doPerformSort: false);
-        },
-        proxyDecorator: (Widget child, int index, Animation<double> animation) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: ChewieTheme.shadowColor,
-                  offset: const Offset(0, 4),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ).scale(2)
-              ],
-            ),
-            child: child,
-          );
-        },
-        itemCount: tokens.length,
-        itemBuilder: (context, index) {
-          return TokenLayout(
-            key: tokenKeyMap.putIfAbsent(tokens[index].uid, () => GlobalKey()),
-            token: tokens[index],
-            layoutType: layoutType,
-            multiSelectMode: _multiSelectMode,
-            isSelected: _selectedTokenUids.contains(tokens[index].uid),
-            onToggleSelect: () => toggleTokenSelection(tokens[index].uid),
-            onEnterMultiSelect: () => enterMultiSelectMode(tokens[index].uid),
-          );
-        },
-      );
+          // controller: _scrollController,
+          gridItemsNotifier: gridItemsNotifier,
+          autoScroll: true,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.only(
+              left: 10,
+              right: 10,
+              top: 10,
+              bottom: _multiSelectMode
+                  ? 80 + bottomPadding
+                  : settings.hideBottombar || categories.isEmpty
+                      ? 10 + bottomPadding
+                      : 85 + bottomPadding),
+          gridDelegate: SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: layoutType.maxCrossAxisExtent,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            preferredHeight: layoutType.getHeight(settings.hideProgress),
+          ),
+          dragToReorder: _multiSelectMode ? false : settings.dragToReorder,
+          cacheExtent: 9999,
+          onReorderStart: (_) {
+            _fabScrollToHideController.hide();
+            _bottombarScrollToHideController.hide();
+          },
+          onReorderEnd: (_, __) {
+            _fabScrollToHideController.show();
+            _bottombarScrollToHideController.show();
+          },
+          onReorder: (int oldIndex, int newIndex) async {
+            final selectedToken = tokens[oldIndex];
+            int pinnedCount = tokens.where((e) => e.pinned).length;
+            if (selectedToken.pinned) {
+              if (newIndex >= pinnedCount) newIndex = pinnedCount - 1;
+            } else {
+              if (newIndex < pinnedCount) newIndex = pinnedCount;
+            }
+            final item = tokens.removeAt(oldIndex);
+            tokens.insert(newIndex, item);
+            for (int i = 0; i < tokens.length; i++) {
+              tokens[i].seq = tokens.length - i;
+            }
+            await TokenDao.updateTokens(tokens, autoBackup: false);
+            changeOrderType(type: OrderType.Default, doPerformSort: false);
+          },
+          proxyDecorator:
+              (Widget child, int index, Animation<double> animation) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: ChewieTheme.shadowColor,
+                    offset: const Offset(0, 4),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ).scale(2)
+                ],
+              ),
+              child: child,
+            );
+          },
+          itemCount: tokens.length,
+          itemBuilder: (context, index) {
+            return TokenLayout(
+              key:
+                  tokenKeyMap.putIfAbsent(tokens[index].uid, () => GlobalKey()),
+              token: tokens[index],
+              layoutType: layoutType,
+              multiSelectMode: _multiSelectMode,
+              isSelected: _selectedTokenUids.contains(tokens[index].uid),
+              onToggleSelect: () => toggleTokenSelection(tokens[index].uid),
+              onEnterMultiSelect: () => enterMultiSelectMode(tokens[index].uid),
+            );
+          },
+        );
       },
     );
     Widget body = tokens.isEmpty

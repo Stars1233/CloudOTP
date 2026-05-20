@@ -142,6 +142,8 @@ class BindingDao {
   static Future<List<OtpToken>> getTokens(
     String categoryUid, {
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
   }) async {
     final db = await DatabaseManager.getDataBase();
     List<Map<String, dynamic>> maps = await db.query(
@@ -155,12 +157,27 @@ class BindingDao {
     uids.removeWhere((e) => !StringUtil.isUid(e));
     List<OtpToken> tokens = [];
     for (String uid in uids) {
-      OtpToken? token = await TokenDao.getTokenByUid(uid, searchKey: searchKey);
+      OtpToken? token = await TokenDao.getTokenByUid(uid,
+          searchKey: searchKey, tags: tags, tokenType: tokenType);
       if (token != null) {
         tokens.add(token);
       }
     }
     return tokens;
+  }
+
+  static Future<Set<String>> getTokenUidsByCategoryUids(
+      List<String> categoryUids) async {
+    if (categoryUids.isEmpty) return {};
+    final db = await DatabaseManager.getDataBase();
+    final placeholders = categoryUids.map((_) => '?').join(',');
+    final maps = await db.query(
+      tableName,
+      columns: ["token_uid"],
+      where: "category_uid IN ($placeholders)",
+      whereArgs: categoryUids,
+    );
+    return maps.map((m) => m["token_uid"] as String).toSet();
   }
 
   static Future<List<String>> getTokenUids(String categoryUid) async {

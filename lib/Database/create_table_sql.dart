@@ -36,7 +36,8 @@ enum Sql {
         copy_times INTEGER NOT NULL,
         last_copy_timestamp INTEGER NOT NULL,
         pin TEXT NOT NULL,
-        description TEXT NOT NULL DEFAULT ''
+        description TEXT NOT NULL DEFAULT '',
+        tags TEXT NOT NULL DEFAULT ''
       );
     ''',
   ),
