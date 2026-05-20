@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../l10n/l10n.dart';
 import 'cloud_service_config.dart';
@@ -59,20 +60,24 @@ enum AutoBackupStatus {
         return ChewieTheme.primaryColor;
       case AutoBackupStatus.encryptFailed:
         return Colors.red;
+      case AutoBackupStatus.encrpytSuccess:
+        return Colors.green;
       case AutoBackupStatus.saving:
         return ChewieTheme.primaryColor;
       case AutoBackupStatus.saveFailed:
         return Colors.red;
+      case AutoBackupStatus.saveSuccess:
+        return Colors.green;
       case AutoBackupStatus.uploading:
         return ChewieTheme.primaryColor;
       case AutoBackupStatus.uploadFailed:
         return Colors.red;
+      case AutoBackupStatus.uploadSuccess:
+        return Colors.green;
       case AutoBackupStatus.complete:
         return Colors.green;
       case AutoBackupStatus.failed:
         return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 }
@@ -154,6 +159,35 @@ enum AutoBackupTriggerType {
         return appLocalizations.triggerAutoBackupByCloudServiceConfigDeleted;
       default:
         return appLocalizations.triggerAutoBackupByOther;
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case AutoBackupTriggerType.manual:
+        return LucideIcons.hand;
+      case AutoBackupTriggerType.configInited:
+      case AutoBackupTriggerType.configUpdated:
+        return LucideIcons.settings;
+      case AutoBackupTriggerType.tokenInserted:
+      case AutoBackupTriggerType.tokensInserted:
+      case AutoBackupTriggerType.tokenUpdated:
+      case AutoBackupTriggerType.tokensUpdated:
+      case AutoBackupTriggerType.tokenDeleted:
+        return LucideIcons.keyRound;
+      case AutoBackupTriggerType.categoryInserted:
+      case AutoBackupTriggerType.categoriesInserted:
+      case AutoBackupTriggerType.categoryUpdated:
+      case AutoBackupTriggerType.categoriesUpdated:
+      case AutoBackupTriggerType.categoryDeleted:
+      case AutoBackupTriggerType.categoriesUpdatedForToken:
+        return LucideIcons.folderOpen;
+      case AutoBackupTriggerType.cloudServiceConfigInserted:
+      case AutoBackupTriggerType.cloudServiceConfigUpdated:
+      case AutoBackupTriggerType.cloudServiceConfigDeleted:
+        return LucideIcons.cloud;
+      case AutoBackupTriggerType.other:
+        return LucideIcons.circleHelp;
     }
   }
 }

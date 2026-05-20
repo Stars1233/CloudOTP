@@ -38,7 +38,7 @@ class AutoBackupLogDao {
     List<Map<String, dynamic>> maps = await db.rawQuery(
       "SELECT MAX(id) as id FROM $tableName",
     );
-    return maps[0]["id"] ?? -1;
+    return maps[0]["id"] ?? 0;
   }
 
   static Future<List<AutoBackupLog>> getLogs({
@@ -48,12 +48,31 @@ class AutoBackupLogDao {
     final db = await DatabaseManager.getDataBase();
     List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      orderBy: "create_timestamp DESC",
+      orderBy: "start_timestamp DESC",
       limit: limit,
       offset: offset,
     );
     return List.generate(maps.length, (i) {
       return AutoBackupLog.fromMap(maps[i]);
     });
+  }
+
+  static Future<void> deleteCompletedLogs(List<int> ids) async {
+    if (ids.isEmpty) return;
+    final db = await DatabaseManager.getDataBase();
+    final placeholders = ids.map((_) => '?').join(',');
+    await db.delete(
+      tableName,
+      where: 'id IN ($placeholders)',
+      whereArgs: ids,
+    );
+  }
+
+  static Future<int> getLogCount() async {
+    final db = await DatabaseManager.getDataBase();
+    List<Map<String, dynamic>> maps = await db.rawQuery(
+      "SELECT COUNT(*) as count FROM $tableName",
+    );
+    return maps[0]["count"] as int? ?? 0;
   }
 }

@@ -16,11 +16,13 @@
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:cloudotp/Database/auto_backup_log_dao.dart';
 import 'package:cloudotp/Models/auto_backup_log.dart';
 import 'package:cloudotp/Screens/Setting/setting_backup_screen.dart';
 import 'package:cloudotp/Screens/Setting/setting_navigation_screen.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../Database/config_dao.dart';
@@ -34,8 +36,15 @@ class BackupLogScreen extends StatefulWidget {
     this.isOverlay = false,
   });
 
+  static bool _hasContextMenuOverlay(BuildContext context) {
+    return context
+            .findAncestorStateOfType<GenericContextMenuOverlayState>() !=
+        null;
+  }
+
   static void show(BuildContext context) {
-    if (ResponsiveUtil.isLandscapeLayout()) {
+    if (ResponsiveUtil.isLandscapeLayout() &&
+        _hasContextMenuOverlay(context)) {
       BottomSheetBuilder.showGenericContextMenu(
         context,
         const BackupLogScreen(isOverlay: true),
@@ -55,6 +64,9 @@ class BackupLogScreen extends StatefulWidget {
 
 class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
   String _autoBackupPassword = "";
+  List<AutoBackupLog> _mergedLogs = [];
+  bool _isLoadingHistory = false;
+  bool _hasLoadedHistory = false;
 
   bool get canBackup => _autoBackupPassword.isNotEmpty;
 
@@ -69,12 +81,54 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
       setState(() {
         _autoBackupPassword = config.backupPassword;
       });
+      if (_autoBackupPassword.isNotEmpty) {
+        _loadHistoricalLogs();
+      }
     });
     Future.delayed(const Duration(milliseconds: 500), () {
       if (appProvider.autoBackupLoadingStatus == LoadingStatus.failed) {
         appProvider.autoBackupLoadingStatus = LoadingStatus.none;
       }
     });
+  }
+
+  Future<void> _loadHistoricalLogs() async {
+    if (_isLoadingHistory || _hasLoadedHistory) return;
+    setState(() {
+      _isLoadingHistory = true;
+    });
+
+    try {
+      final dbLogs = await AutoBackupLogDao.getLogs(limit: 50);
+      _mergeLogs(dbLogs);
+    } catch (_) {
+      _mergedLogs = List.from(appProvider.autoBackupLogs);
+    }
+
+    setState(() {
+      _isLoadingHistory = false;
+      _hasLoadedHistory = true;
+    });
+  }
+
+  void _mergeLogs(List<AutoBackupLog> dbLogs) {
+    final inMemoryLogs = appProvider.autoBackupLogs;
+    final List<AutoBackupLog> result = [];
+    final Set<int> seenDbIds = {};
+
+    for (final log in inMemoryLogs) {
+      result.add(log);
+      if (log.id > 0) seenDbIds.add(log.id);
+    }
+
+    for (final log in dbLogs) {
+      if (!seenDbIds.contains(log.id)) {
+        result.add(log);
+      }
+    }
+
+    result.sort((a, b) => b.startTimestamp.compareTo(a.startTimestamp));
+    _mergedLogs = result;
   }
 
   @override
@@ -87,11 +141,10 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
     Widget body = _buildLogList();
 
     if (widget.isOverlay) {
-      final overlayHeight = appProvider.autoBackupLogs.isEmpty || !canBackup
-          ? 200.0
-          : 400.0;
+      final overlayHeight =
+          _mergedLogs.isEmpty || !canBackup ? 200.0 : 400.0;
       return Container(
-        width: min(300, MediaQuery.sizeOf(context).width - 80),
+        width: min(400, MediaQuery.sizeOf(context).width - 80),
         height: min(overlayHeight, MediaQuery.sizeOf(context).height - 80),
         decoration: BoxDecoration(
           color: ChewieTheme.scaffoldBackgroundColor,
@@ -169,7 +222,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
             ],
           ),
         ),
-        if (canBackup && appProvider.autoBackupLogs.isNotEmpty)
+        if (canBackup && _mergedLogs.isNotEmpty)
           CircleIconButton(
             icon: Icon(LucideIcons.trash2, size: 16, color: _accent),
             onTap: clear,
@@ -178,9 +231,21 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
     );
   }
 
-  clear() {
+  clear() async {
+    final completedIds = _mergedLogs
+        .where((log) => log.lastStatus.isCompleted && log.id >= 0)
+        .map((log) => log.id)
+        .toList();
+
     appProvider.clearAutoBackupLogs();
     appProvider.autoBackupLoadingStatus = LoadingStatus.none;
+
+    if (completedIds.isNotEmpty) {
+      await AutoBackupLogDao.deleteCompletedLogs(completedIds);
+    }
+
+    final remainingDbLogs = await AutoBackupLogDao.getLogs(limit: 50);
+    _mergeLogs(remainingDbLogs);
     setState(() {});
   }
 
@@ -218,11 +283,18 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
       );
     }
 
-    if (appProvider.autoBackupLogs.isEmpty) {
+    if (_isLoadingHistory) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 30),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    if (_mergedLogs.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        child:
-            EmptyPlaceholder(text: appLocalizations.noBackupLogs, topPadding: 10),
+        child: EmptyPlaceholder(
+            text: appLocalizations.noBackupLogs, topPadding: 10),
       );
     }
 
@@ -232,9 +304,9 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(
-            appProvider.autoBackupLogs.length,
+            _mergedLogs.length,
             (index) => BackupLogItem(
-              log: appProvider.autoBackupLogs[index],
+              log: _mergedLogs[index],
             ),
           ),
         ),
@@ -244,10 +316,10 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
       shrinkWrap: true,
-      itemCount: appProvider.autoBackupLogs.length,
+      itemCount: _mergedLogs.length,
       itemBuilder: (context, index) {
         return BackupLogItem(
-          log: appProvider.autoBackupLogs[index],
+          log: _mergedLogs[index],
         );
       },
     );
@@ -266,49 +338,83 @@ class BackupLogItem extends StatefulWidget {
 class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
   bool expanded = false;
 
+  static final DateFormat _timeFormat = DateFormat("HH:mm:ss");
+  static final DateFormat _dateTimeFormat = DateFormat("yyyy-MM-dd HH:mm");
+
   @override
   Widget build(BuildContext context) {
+    final statusColor = widget.log.lastStatus.color;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: ChewieTheme.canvasColor,
-        borderRadius: ChewieDimens.borderRadius8,
-        child: InkWell(
-          borderRadius: ChewieDimens.borderRadius8,
-          onTap: !expanded
-              ? () {
-                  setState(() {
-                    expanded = true;
-                  });
-                }
-              : null,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: ChewieDimens.borderRadius8,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            expanded = !expanded;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: ChewieTheme.canvasColor,
+            borderRadius: ChewieDimens.borderRadius12,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      widget.log.triggerType.label,
-                      style: ChewieTheme.bodyMedium,
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: statusColor.withAlpha(30),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        widget.log.triggerType.icon,
+                        size: 15,
+                        color: statusColor,
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.log.triggerType.label,
+                            style: ChewieTheme.bodyMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_dateTimeFormat.format(DateTime.fromMillisecondsSinceEpoch(widget.log.startTimestamp))}  ·  ${widget.log.type.label}',
+                            style: ChewieTheme.bodySmall.copyWith(
+                              color: ChewieTheme.bodyMedium.color
+                                  ?.withAlpha(120),
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     RoundIconTextButton(
                       radius: 5,
                       height: 24,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       text: widget.log.lastStatusItem.labelShort,
-                      textStyle: ChewieTheme.labelSmall
-                          ?.apply(color: Colors.white),
-                      background: widget.log.lastStatus.color,
+                      textStyle:
+                          ChewieTheme.labelSmall.apply(color: Colors.white),
+                      background: statusColor,
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 4),
                     CircleIconButton(
                       padding: const EdgeInsets.all(4),
                       icon: Icon(
@@ -316,7 +422,7 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
                           size: 16,
-                          color: ChewieTheme.labelSmall?.color),
+                          color: ChewieTheme.labelSmall.color),
                       onTap: () {
                         setState(() {
                           expanded = !expanded;
@@ -325,26 +431,83 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
                     ),
                   ],
                 ),
-                if (expanded) const SizedBox(height: 5),
-                if (expanded) _buildList(),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.topCenter,
+                  child: expanded
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 10, left: 4),
+                          child: _buildStatusTimeline(),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
         ),
-      ),
     );
   }
 
-  _buildList() {
-    return CustomHtmlWidget(
-      content: List.generate(
-        widget.log.status.length,
-        (i) {
-          AutoBackupLogStatusItem statusItem = widget.log.status[i];
-          return '[${TimeUtil.timestampToDateString(statusItem.timestamp)}]: ${statusItem.label(widget.log)}';
-        },
-      ).join('<br>'),
-      style: ChewieTheme.labelSmall,
+  Widget _buildStatusTimeline() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(widget.log.status.length, (i) {
+        final statusItem = widget.log.status[i];
+        final isLast = i == widget.log.status.length - 1;
+        final dotColor = statusItem.status.color;
+        final timeStr = _timeFormat.format(
+            DateTime.fromMillisecondsSinceEpoch(statusItem.timestamp));
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 16,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(top: 5),
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 1,
+                          color: ChewieTheme.dividerColor,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                timeStr,
+                style: ChewieTheme.labelSmall.copyWith(
+                  color: ChewieTheme.bodyMedium.color?.withAlpha(120),
+                  fontFeatures: [const FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
+                  child: Text(
+                    statusItem.label(widget.log),
+                    style: ChewieTheme.labelSmall,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
