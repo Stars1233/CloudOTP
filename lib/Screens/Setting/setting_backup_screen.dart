@@ -73,6 +73,15 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableCloudBackupKey);
   CloudServiceConfig? _cloudServiceConfig;
   int _maxBackupsCount = CloudOTPHiveUtil.getMaxBackupsCount();
+  bool _enableBackupOnLaunch =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBackupOnLaunchKey,
+          defaultValue: false);
+  bool _enablePeriodicBackup =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enablePeriodicBackupKey,
+          defaultValue: false);
+  int _periodicBackupInterval = ChewieHiveUtil.getInt(
+      CloudOTPHiveUtil.periodicBackupIntervalKey,
+      defaultValue: defaultPeriodicBackupIntervalHours * 60);
   final GlobalKey _setAutoBackupPasswordKey = GlobalKey();
   String validConfigs = "";
 
@@ -246,6 +255,55 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                     CloudOTPHiveUtil.enableAutoBackupKey, _enableAutoBackup);
               });
             },
+          ),
+          Visibility(
+            visible: _enableAutoBackup,
+            child: CheckboxItem(
+              value: _enableBackupOnLaunch,
+              title: appLocalizations.backupOnLaunch,
+              description: appLocalizations.backupOnLaunchTip,
+              onTap: () {
+                setState(() {
+                  _enableBackupOnLaunch = !_enableBackupOnLaunch;
+                  ChewieHiveUtil.put(CloudOTPHiveUtil.enableBackupOnLaunchKey,
+                      _enableBackupOnLaunch);
+                });
+              },
+            ),
+          ),
+          Visibility(
+            visible: _enableAutoBackup,
+            child: CheckboxItem(
+              value: _enablePeriodicBackup,
+              title: appLocalizations.periodicBackup,
+              description: appLocalizations.periodicBackupTip,
+              onTap: () {
+                setState(() {
+                  _enablePeriodicBackup = !_enablePeriodicBackup;
+                  ChewieHiveUtil.put(CloudOTPHiveUtil.enablePeriodicBackupKey,
+                      _enablePeriodicBackup);
+                });
+              },
+            ),
+          ),
+          Visibility(
+            visible: _enableAutoBackup && _enablePeriodicBackup,
+            child: InlineSelectionItem<BackupIntervalOption>(
+              title: appLocalizations.periodicBackupInterval,
+              hint: appLocalizations.periodicBackupInterval,
+              selections: BackupIntervalOption.getOptions(),
+              selected: BackupIntervalOption.fromMinutes(
+                  _periodicBackupInterval),
+              onChanged: (option) {
+                if (option == null) return;
+                setState(() {
+                  _periodicBackupInterval = option.minutes;
+                  ChewieHiveUtil.put(
+                      CloudOTPHiveUtil.periodicBackupIntervalKey,
+                      _periodicBackupInterval);
+                });
+              },
+            ),
           ),
           Visibility(
             visible: canImmediateBackup,
@@ -447,4 +505,43 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
       ),
     ];
   }
+}
+
+class BackupIntervalOption implements DropdownMixin {
+  final String label;
+  final int minutes;
+
+  const BackupIntervalOption(this.label, this.minutes);
+
+  static List<BackupIntervalOption> getOptions() {
+    return const [
+      BackupIntervalOption("1h", 60),
+      BackupIntervalOption("6h", 360),
+      BackupIntervalOption("12h", 720),
+      BackupIntervalOption("24h", 1440),
+      BackupIntervalOption("48h", 2880),
+      BackupIntervalOption("7d", 10080),
+    ];
+  }
+
+  static BackupIntervalOption? fromMinutes(int minutes) {
+    return getOptions().firstWhere(
+      (option) => option.minutes == minutes,
+      orElse: () => getOptions()[3],
+    );
+  }
+
+  @override
+  String get display => label;
+
+  @override
+  String get selection => display;
+
+  @override
+  bool operator ==(Object other) {
+    return other is BackupIntervalOption && minutes == other.minutes;
+  }
+
+  @override
+  int get hashCode => minutes.hashCode;
 }

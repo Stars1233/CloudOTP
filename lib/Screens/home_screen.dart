@@ -1131,13 +1131,11 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       if (provider.canShowCloudBackupButton && provider.showCloudBackupButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
-          child: CircleIconButton(
+          child: ToolButton(
+            context: context,
             tooltip: appLocalizations.cloudBackupServiceSetting,
-            icon: Icon(
-              LucideIcons.cloud,
-              color: ChewieTheme.iconColor,
-            ),
-            onTap: () {
+            icon: LucideIcons.cloud,
+            onPressed: () {
               RouteUtil.pushCupertinoRoute(context, const CloudServiceScreen());
             },
           ),

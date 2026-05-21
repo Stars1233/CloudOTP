@@ -117,7 +117,9 @@ enum AutoBackupTriggerType {
   categoriesUpdatedForToken,
   cloudServiceConfigInserted,
   cloudServiceConfigUpdated,
-  cloudServiceConfigDeleted;
+  cloudServiceConfigDeleted,
+  appStartup,
+  scheduled;
 
   String get label {
     switch (this) {
@@ -157,6 +159,10 @@ enum AutoBackupTriggerType {
         return appLocalizations.triggerAutoBackupByCloudServiceConfigUpdated;
       case AutoBackupTriggerType.cloudServiceConfigDeleted:
         return appLocalizations.triggerAutoBackupByCloudServiceConfigDeleted;
+      case AutoBackupTriggerType.appStartup:
+        return appLocalizations.triggerAutoBackupByAppStartup;
+      case AutoBackupTriggerType.scheduled:
+        return appLocalizations.triggerAutoBackupByScheduled;
       default:
         return appLocalizations.triggerAutoBackupByOther;
     }
@@ -186,6 +192,10 @@ enum AutoBackupTriggerType {
       case AutoBackupTriggerType.cloudServiceConfigUpdated:
       case AutoBackupTriggerType.cloudServiceConfigDeleted:
         return LucideIcons.cloud;
+      case AutoBackupTriggerType.appStartup:
+        return LucideIcons.power;
+      case AutoBackupTriggerType.scheduled:
+        return LucideIcons.clock;
       case AutoBackupTriggerType.other:
         return LucideIcons.circleHelp;
     }

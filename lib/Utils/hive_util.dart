@@ -75,6 +75,9 @@ class CloudOTPHiveUtil {
   static const String backupPathKey = "backupPath";
   static const String useBackupPasswordToExportImportKey =
       "useBackupPasswordToExportImport";
+  static const String enableBackupOnLaunchKey = "enableBackupOnLaunch";
+  static const String enablePeriodicBackupKey = "enablePeriodicBackup";
+  static const String periodicBackupIntervalKey = "periodicBackupInterval";
 
   //Encrypt
   static const String encryptDatabaseStatusKey = "encryptDatabaseStatus";
