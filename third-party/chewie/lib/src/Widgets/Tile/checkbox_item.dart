@@ -80,35 +80,48 @@ class CheckboxItemState extends SearchableState<CheckboxItem> {
     if (!shouldShow) return const SizedBox.shrink();
     return InkAnimation(
       borderRadius: _borderRadius,
-      ink: false,
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              top: _effectivePadding,
-              bottom: _effectivePadding,
-              left: 6,
-              right: 4,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: _buildRowChildren(),
-            ),
-          ),
-          // _buildBottomDivider(),
-        ],
+      ink: true,
+      color: Colors.transparent,
+      onTap: widget.disabled ? null : () {
+        HapticFeedback.lightImpact();
+        widget.onTap?.call();
+      },
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: _effectivePadding,
+          bottom: _effectivePadding,
+          left: 6,
+          right: 4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _buildRowChildren(),
+        ),
       ),
     );
   }
 
   List<Widget> _buildRowChildren() {
     return [
-      if (widget.showLeading) Icon(widget.leading, size: 20),
+      if (widget.showLeading) _buildLeadingIcon(),
       const SizedBox(width: 5),
       Expanded(child: _buildTextContent()),
       SizedBox(width: widget.trailingLeftMargin),
       _buildSwitch(),
     ];
+  }
+
+  Widget _buildLeadingIcon() {
+    final color = ChewieTheme.primaryColor;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Icon(widget.leading, size: 15, color: color),
+    );
   }
 
   Widget _buildTextContent() {
@@ -170,13 +183,4 @@ class CheckboxItemState extends SearchableState<CheckboxItem> {
     );
   }
 
-// Widget _buildBottomDivider() {
-//   return Container(
-//     height: 0,
-//     margin: const EdgeInsets.symmetric(horizontal: 10),
-//     decoration: BoxDecoration(
-//       border: widget.roundBottom ? null : ChewieTheme.bottomDivider,
-//     ),
-//   );
-// }
 }

@@ -92,7 +92,7 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
     final groups = _groups();
 
     Widget header = Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
       child: _buildHeader(),
     );
 
@@ -112,7 +112,7 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
           children: [
             header,
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -133,10 +133,10 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
       children: [
         for (final g in groups)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
             child: _buildGroup(g),
           ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
       ],
     );
 
@@ -244,8 +244,7 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
                     indent: 44,
                     color: ChewieTheme.borderColor.withAlpha(120),
                   ),
-                _buildSortItem(
-                    group.types[i], group.types[i] == currentType),
+                _buildSortItem(group.types[i], group.types[i] == currentType),
               ],
             ],
           ),
@@ -288,13 +287,11 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
                 type.title,
                 style: ChewieTheme.bodyMedium.copyWith(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color:
-                      selected ? _accent : ChewieTheme.titleLarge.color,
+                  color: selected ? _accent : ChewieTheme.titleLarge.color,
                 ),
               ),
             ),
-            if (selected)
-              Icon(LucideIcons.check, size: 16, color: _accent),
+            if (selected) Icon(LucideIcons.check, size: 16, color: _accent),
           ],
         ),
       ),

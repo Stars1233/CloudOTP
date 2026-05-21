@@ -204,7 +204,7 @@ class BindingDao {
     List<String> uids =
         List.generate(maps.length, (i) => maps[i]["category_uid"]);
     uids.removeWhere((e) => !StringUtil.isUid(e));
-    return uids;
+    return uids.toSet().toList();
   }
 
   static Future<List<TokenCategoryBinding>> listBindings() async {

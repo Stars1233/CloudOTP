@@ -72,7 +72,7 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                margin: const EdgeInsets.only(top: 10),
+                margin: const EdgeInsets.only(top: 10, bottom: 10),
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
                   scrollDirection: Axis.horizontal,
@@ -93,7 +93,7 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                margin: const EdgeInsets.only(top: 10),
+                margin: const EdgeInsets.only(top: 10, bottom: 10),
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
                   scrollDirection: Axis.horizontal,

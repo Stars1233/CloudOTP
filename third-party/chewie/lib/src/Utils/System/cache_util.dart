@@ -12,14 +12,12 @@ class CacheUtil {
 
   static Future<double> _getTotalSizeOfFilesInDir(
       final FileSystemEntity file) async {
-    if (file is File) {
-      int length = await file.length();
-      return double.parse(length.toString());
+    if (file is File && file.existsSync()) {
+      return (await file.length()).toDouble();
     }
-    if (file is Directory) {
-      final List<FileSystemEntity> children = file.listSync();
+    if (file is Directory && file.existsSync()) {
       double total = 0;
-      for (final FileSystemEntity child in children) {
+      for (final FileSystemEntity child in file.listSync()) {
         total += await _getTotalSizeOfFilesInDir(child);
       }
       return total;
@@ -28,13 +26,12 @@ class CacheUtil {
   }
 
   static Future<void> delDir(FileSystemEntity file) async {
-    if (file is Directory) {
-      final List<FileSystemEntity> children = file.listSync();
-      for (final FileSystemEntity child in children) {
+    if (file is Directory && file.existsSync()) {
+      for (final FileSystemEntity child in file.listSync()) {
         await delDir(child);
       }
     }
-    await file.delete();
+    if (file.existsSync()) await file.delete();
   }
 
   static String renderSize(

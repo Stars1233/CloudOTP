@@ -21,16 +21,14 @@ import 'package:cloudotp/Database/category_dao.dart';
 import 'package:cloudotp/Database/token_category_binding_dao.dart';
 import 'package:cloudotp/Models/opt_token.dart';
 import 'package:cloudotp/Screens/Backup/cloud_service_screen.dart';
-import 'package:cloudotp/Screens/Setting/about_setting_screen.dart';
-import 'package:cloudotp/Screens/feature_showcase_screen.dart';
 import 'package:cloudotp/Screens/layout_select_screen.dart';
 import 'package:cloudotp/Screens/sort_select_screen.dart';
 import 'package:cloudotp/Screens/Setting/backup_log_screen.dart';
-import 'package:cloudotp/Screens/Setting/mobile_setting_navigation_screen.dart';
 import 'package:cloudotp/Screens/main_screen.dart';
 import 'package:cloudotp/Utils/hive_util.dart';
 import 'package:cloudotp/Utils/search_query_parser.dart';
 import 'package:cloudotp/Widgets/BottomSheet/add_bottom_sheet.dart';
+import 'package:cloudotp/Widgets/BottomSheet/more_bottom_sheet.dart';
 import 'package:cloudotp/Widgets/cloudotp/cloudotp_item_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +46,6 @@ import '../Widgets/BottomSheet/select_category_for_tokens_bottom_sheet.dart';
 import '../Widgets/BottomSheet/select_token_bottom_sheet.dart';
 import '../Widgets/CoachMark/coach_mark_manager.dart';
 import '../l10n/l10n.dart';
-import 'Token/category_screen.dart';
 import 'Token/token_layout.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -870,20 +867,6 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       final currentUids = seen;
       tokenKeyMap.removeWhere((uid, _) => !currentUids.contains(uid));
       performSort();
-      _maybeShowCoachMark();
-    });
-  }
-
-  void _maybeShowCoachMark() {
-    if (!ResponsiveUtil.isMobile()) return;
-    if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.haveShownCoachMarkKey,
-        defaultValue: false)) return;
-    if (tokens.isEmpty) return;
-    if (_multiSelectMode || _shownSearchbarNotifier.value) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _showCoachMarkInternal(force: false);
     });
   }
 
@@ -1187,55 +1170,12 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         context: context,
         icon: LucideIcons.ellipsisVertical,
         onPressed: () {
-          BottomSheetBuilder.showContextMenu(
+          BottomSheetBuilder.showBottomSheet(
             context,
-            FlutterContextMenu(
-              entries: [
-                if (tokens.length > 1)
-                  FlutterContextMenuItem(
-                    appLocalizations.select,
-                    iconData: LucideIcons.listChecks,
-                    onPressed: () {
-                      enterMultiSelectMode(tokens.first.uid);
-                    },
-                  ),
-                FlutterContextMenuItem(
-                  appLocalizations.category,
-                  iconData: LucideIcons.shapes,
-                  onPressed: () {
-                    RouteUtil.pushCupertinoRoute(
-                        context, const CategoryScreen());
-                  },
-                ),
-                FlutterContextMenuItem(
-                  appLocalizations.setting,
-                  iconData: LucideIcons.bolt,
-                  onPressed: () {
-                    RouteUtil.pushCupertinoRoute(
-                        context, const MobileSettingNavigationScreen());
-                  },
-                ),
-                FlutterContextMenuItem(
-                  appLocalizations.about,
-                  iconData: LucideIcons.info,
-                  onPressed: () {
-                    RouteUtil.pushCupertinoRoute(
-                        context, const AboutSettingScreen());
-                  },
-                ),
-                FlutterContextMenuItem(
-                  appLocalizations.featureShowcase,
-                  iconData: LucideIcons.telescope,
-                  onPressed: () {
-                    if (ResponsiveUtil.isLandscapeLayout()) {
-                      FeatureShowcaseScreen.showAsDialog(context);
-                    } else {
-                      RouteUtil.pushCupertinoRoute(
-                          context, const FeatureShowcaseScreen());
-                    }
-                  },
-                ),
-              ],
+            responsive: true,
+            (ctx) => MoreBottomSheet(
+              showSelect: tokens.length > 1,
+              onSelect: () => enterMultiSelectMode(tokens.first.uid),
             ),
           );
         },

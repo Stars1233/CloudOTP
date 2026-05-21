@@ -68,6 +68,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
   bool _useBackupPasswordToExportImport = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.useBackupPasswordToExportImportKey);
   String _autoBackupPath = "";
+  String _defaultBackupPath = "";
   String _autoBackupPassword = "";
   bool _enableCloudBackup =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableCloudBackupKey);
@@ -76,12 +77,6 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
   bool _enableBackupOnLaunch =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBackupOnLaunchKey,
           defaultValue: false);
-  bool _enablePeriodicBackup =
-      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enablePeriodicBackupKey,
-          defaultValue: false);
-  int _periodicBackupInterval = ChewieHiveUtil.getInt(
-      CloudOTPHiveUtil.periodicBackupIntervalKey,
-      defaultValue: defaultPeriodicBackupIntervalHours * 60);
   final GlobalKey _setAutoBackupPasswordKey = GlobalKey();
   String validConfigs = "";
 
@@ -99,11 +94,15 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
         _autoBackupPath = path;
       });
     });
+    FileUtil.getBackupDir().then((path) {
+      _defaultBackupPath = path;
+    });
     loadWebDavConfig();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.jumpToAutoBackupPassword) {
         scrollToSetAutoBackupPassword();
       }
+      _checkBackupMethodsEnabled();
     });
   }
 
@@ -116,7 +115,20 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
     }
   }
 
-  @override
+  void _checkBackupMethodsEnabled() {
+    if (!_enableLocalBackup && !_enableCloudBackup) {
+      setState(() {
+        _enableLocalBackup = true;
+        ChewieHiveUtil.put(
+            CloudOTPHiveUtil.enableLocalBackupKey, true);
+      });
+      DialogBuilder.showInfoDialog(
+        context,
+        message: appLocalizations.bothBackupDisabledWarning,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ItemBuilder.buildSettingScreen(
@@ -144,9 +156,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
   bool get canCloudBackup => _autoBackupPassword.isNotEmpty;
 
   bool get canImmediateBackup =>
-      canBackup &&
-      ((canLocalBackup && _enableLocalBackup) ||
-          (canCloudBackup && _enableCloudBackup));
+      canBackup && (_enableLocalBackup || _enableCloudBackup);
 
   loadWebDavConfig() async {
     List<CloudServiceConfig> configs =
@@ -156,9 +166,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
     });
   }
 
-  getBackupsCount() async {
-    int currentLocalBackupsCount = await ExportTokenUtil.getBackupsCount();
-    return [currentLocalBackupsCount];
+  Future<int> getBackupsCount() async {
+    return await ExportTokenUtil.getBackupsCount();
   }
 
   deleteOldBackups(int maxBackupsCount) async {
@@ -256,9 +265,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          Visibility(
-            visible: _enableAutoBackup,
-            child: CheckboxItem(
+          if (_enableAutoBackup)
+            CheckboxItem(
               value: _enableBackupOnLaunch,
               title: appLocalizations.backupOnLaunch,
               description: appLocalizations.backupOnLaunchTip,
@@ -270,44 +278,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 });
               },
             ),
-          ),
-          Visibility(
-            visible: _enableAutoBackup,
-            child: CheckboxItem(
-              value: _enablePeriodicBackup,
-              title: appLocalizations.periodicBackup,
-              description: appLocalizations.periodicBackupTip,
-              onTap: () {
-                setState(() {
-                  _enablePeriodicBackup = !_enablePeriodicBackup;
-                  ChewieHiveUtil.put(CloudOTPHiveUtil.enablePeriodicBackupKey,
-                      _enablePeriodicBackup);
-                });
-              },
-            ),
-          ),
-          Visibility(
-            visible: _enableAutoBackup && _enablePeriodicBackup,
-            child: InlineSelectionItem<BackupIntervalOption>(
-              title: appLocalizations.periodicBackupInterval,
-              hint: appLocalizations.periodicBackupInterval,
-              selections: BackupIntervalOption.getOptions(),
-              selected: BackupIntervalOption.fromMinutes(
-                  _periodicBackupInterval),
-              onChanged: (option) {
-                if (option == null) return;
-                setState(() {
-                  _periodicBackupInterval = option.minutes;
-                  ChewieHiveUtil.put(
-                      CloudOTPHiveUtil.periodicBackupIntervalKey,
-                      _periodicBackupInterval);
-                });
-              },
-            ),
-          ),
-          Visibility(
-            visible: canImmediateBackup,
-            child: EntryItem(
+          if (canImmediateBackup)
+            EntryItem(
               title: appLocalizations.immediatelyBackup,
               description: appLocalizations.immediatelyBackupTip,
               trailing: LucideIcons.cloudUpload,
@@ -316,18 +288,17 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                     showToast: true, showLoading: true, force: true);
               },
             ),
-          ),
-          Visibility(
-            visible: canImmediateBackup,
-            child: EntryItem(
+          if (canImmediateBackup)
+            EntryItem(
               title: appLocalizations.maxBackupCount,
               description: appLocalizations.maxBackupCountTip,
               tip: _maxBackupsCount.toString(),
               onTap: () async {
                 CustomLoadingDialog.showLoading(
                     title: appLocalizations.loading);
-                List<int> counts = await getBackupsCount();
+                int currentCount = await getBackupsCount();
                 CustomLoadingDialog.dismissLoading();
+                if (!mounted) return;
                 InputValidateAsyncController validateAsyncController =
                     InputValidateAsyncController(
                   controller:
@@ -343,7 +314,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                     title: appLocalizations.maxBackupCount,
                     text: _maxBackupsCount.toString(),
                     message:
-                        '${appLocalizations.maxBackupCountTip}\n${appLocalizations.currentBackupCountTip(counts[0])}',
+                        '${appLocalizations.maxBackupCountTip}\n${appLocalizations.currentBackupCountTip(currentCount)}',
                     hint: appLocalizations.inputMaxBackupCount,
                     inputFormatters: [RegexInputFormatter.onlyNumber],
                     preventPop: true,
@@ -376,12 +347,12 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                           validateAsyncController.doPop?.call();
                         }
 
-                        if (count > 0 && (counts[0] > count)) {
+                        if (count > 0 && (currentCount > count)) {
                           DialogBuilder.showConfirmDialog(
                             context,
                             title: appLocalizations.maxBackupCountWarning,
                             message: appLocalizations
-                                .maxBackupCountWarningMessage(counts[0]),
+                                .maxBackupCountWarningMessage(currentCount),
                             onTapConfirm: () {
                               onValid();
                             },
@@ -398,10 +369,9 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          ),
           EntryItem(
             title: appLocalizations.backupLogs,
-            trailing: Icons.history_rounded,
+            trailing: LucideIcons.history,
             onTap: () async {
               BackupLogScreen.show(context);
             },
@@ -415,7 +385,9 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableLocalBackup : false,
             title: appLocalizations.enableLocalBackup,
             description: appLocalizations.enableLocalBackupTip,
-            disabled: !canLocalBackup,
+            disabled: !canLocalBackup ||
+                (_enableLocalBackup &&
+                    (!_enableCloudBackup || validConfigs.isEmpty)),
             onTap: () {
               setState(() {
                 _enableLocalBackup = !_enableLocalBackup;
@@ -424,9 +396,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          Visibility(
-            visible: canBackup && _enableLocalBackup,
-            child: EntryItem(
+          if (canBackup && _enableLocalBackup)
+            EntryItem(
               title: appLocalizations.autoBackupPath,
               description: _autoBackupPath,
               trailing: LucideIcons.ellipsis,
@@ -444,10 +415,24 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 }
               },
             ),
-          ),
-          Visibility(
-            visible: canBackup && _enableLocalBackup,
-            child: EntryItem(
+          if (canBackup &&
+              _enableLocalBackup &&
+              _defaultBackupPath.isNotEmpty &&
+              _autoBackupPath != _defaultBackupPath)
+            EntryItem(
+              title: appLocalizations.restoreDefaultBackupPath,
+              description: appLocalizations.restoreDefaultBackupPathTip,
+              trailing: LucideIcons.rotateCcw,
+              onTap: () {
+                setState(() {
+                  _autoBackupPath = _defaultBackupPath;
+                  ChewieHiveUtil.put(
+                      CloudOTPHiveUtil.backupPathKey, "");
+                });
+              },
+            ),
+          if (canBackup && _enableLocalBackup)
+            EntryItem(
               title: appLocalizations.viewLocalBackup,
               trailing: LucideIcons.squareArrowOutUpRight,
               onTap: () async {
@@ -463,7 +448,6 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          ),
         ],
       ),
       CaptionItem(
@@ -473,7 +457,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableCloudBackup : false,
             title: appLocalizations.enableCloudBackup,
             description: appLocalizations.enableCloudBackupTip,
-            disabled: !canCloudBackup,
+            disabled: !canCloudBackup ||
+                (_enableCloudBackup && !_enableLocalBackup),
             onTap: () {
               setState(() {
                 _enableCloudBackup = !_enableCloudBackup;
@@ -483,9 +468,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          Visibility(
-            visible: canBackup && _enableCloudBackup,
-            child: EntryItem(
+          if (canBackup && _enableCloudBackup)
+            EntryItem(
               title: appLocalizations.cloudBackupServiceSetting,
               description: validConfigs.isNotEmpty
                   ? appLocalizations.haveSetCloudBackupService(validConfigs)
@@ -500,48 +484,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          ),
         ],
       ),
     ];
   }
-}
-
-class BackupIntervalOption implements DropdownMixin {
-  final String label;
-  final int minutes;
-
-  const BackupIntervalOption(this.label, this.minutes);
-
-  static List<BackupIntervalOption> getOptions() {
-    return const [
-      BackupIntervalOption("1h", 60),
-      BackupIntervalOption("6h", 360),
-      BackupIntervalOption("12h", 720),
-      BackupIntervalOption("24h", 1440),
-      BackupIntervalOption("48h", 2880),
-      BackupIntervalOption("7d", 10080),
-    ];
-  }
-
-  static BackupIntervalOption? fromMinutes(int minutes) {
-    return getOptions().firstWhere(
-      (option) => option.minutes == minutes,
-      orElse: () => getOptions()[3],
-    );
-  }
-
-  @override
-  String get display => label;
-
-  @override
-  String get selection => display;
-
-  @override
-  bool operator ==(Object other) {
-    return other is BackupIntervalOption && minutes == other.minutes;
-  }
-
-  @override
-  int get hashCode => minutes.hashCode;
 }

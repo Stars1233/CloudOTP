@@ -82,7 +82,7 @@ class HuaweiCloudBackupsBottomSheetState
 
   _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
       child: Row(
         children: [
           Container(
@@ -99,8 +99,8 @@ class HuaweiCloudBackupsBottomSheetState
           Expanded(
             child: Text(
               appLocalizations.cloudBackupFiles(widget.files.length),
-              style: ChewieTheme.titleMedium
-                  .copyWith(fontWeight: FontWeight.bold),
+              style:
+                  ChewieTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -111,7 +111,7 @@ class HuaweiCloudBackupsBottomSheetState
   _buildButtons() {
     return ListView.builder(
       shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       itemBuilder: (context, index) => _buildItem(files[index]),
       itemCount: files.length,
     );
@@ -165,22 +165,19 @@ class HuaweiCloudBackupsBottomSheetState
           ),
           const SizedBox(width: 6),
           CircleIconButton(
-            icon: Icon(LucideIcons.import, size: 18,
-                color: ChewieTheme.primaryColor),
+            icon: Icon(LucideIcons.import,
+                size: 18, color: ChewieTheme.primaryColor),
             onTap: () async {
               Navigator.pop(context);
               widget.onSelected(file);
             },
           ),
           CircleIconButton(
-            icon:
-                const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
+            icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
             onTap: () async {
-              CustomLoadingDialog.showLoading(
-                  title: appLocalizations.deleting);
+              CustomLoadingDialog.showLoading(title: appLocalizations.deleting);
               try {
-                bool success =
-                    await widget.cloudService.deleteFile(file.id);
+                bool success = await widget.cloudService.deleteFile(file.id);
                 if (success) {
                   setState(() {
                     files.remove(file);
@@ -190,8 +187,7 @@ class HuaweiCloudBackupsBottomSheetState
                   IToast.showTop(appLocalizations.deleteFailed);
                 }
               } catch (e, t) {
-                ILogger.error(
-                    "Failed to delete file from huawei cloud", e, t);
+                ILogger.error("Failed to delete file from huawei cloud", e, t);
                 IToast.showTop(appLocalizations.deleteFailed);
               }
               CustomLoadingDialog.dismissLoading();

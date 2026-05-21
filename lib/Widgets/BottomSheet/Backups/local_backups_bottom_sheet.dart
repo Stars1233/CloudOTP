@@ -88,7 +88,7 @@ class LocalBackupsBottomSheetState
 
   _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
       child: Row(
         children: [
           Container(
@@ -123,7 +123,7 @@ class LocalBackupsBottomSheetState
   _buildButtons() {
     return ListView.builder(
       shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       itemBuilder: (context, index) => _buildItem(
         index < files.length
             ? files[index]
@@ -171,7 +171,7 @@ class LocalBackupsBottomSheetState
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  "$time  ·  $size${isDefaultPath ? "  ·  ${appLocalizations.fromInternalBackupPath}" : ""}",
+                  "$time  ·  $size",
                   style: ChewieTheme.bodySmall.copyWith(
                     color: ChewieTheme.bodyMedium.color?.withAlpha(120),
                     fontSize: 11,
@@ -179,24 +179,32 @@ class LocalBackupsBottomSheetState
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (isDefaultPath)
+                  Text(
+                    appLocalizations.fromInternalBackupPath,
+                    style: ChewieTheme.bodySmall.copyWith(
+                      color: ChewieTheme.bodyMedium.color?.withAlpha(120),
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
               ],
             ),
           ),
           const SizedBox(width: 6),
           CircleIconButton(
-            icon: Icon(LucideIcons.import, size: 18,
-                color: ChewieTheme.primaryColor),
+            icon: Icon(LucideIcons.import,
+                size: 18, color: ChewieTheme.primaryColor),
             onTap: () async {
               Navigator.pop(context);
               widget.onSelected(file);
             },
           ),
           CircleIconButton(
-            icon:
-                const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
+            icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
             onTap: () async {
-              CustomLoadingDialog.showLoading(
-                  title: appLocalizations.deleting);
+              CustomLoadingDialog.showLoading(title: appLocalizations.deleting);
               try {
                 await file.delete();
                 setState(() {
@@ -204,8 +212,7 @@ class LocalBackupsBottomSheetState
                 });
                 IToast.showTop(appLocalizations.deleteSuccess);
               } catch (e, t) {
-                ILogger.error(
-                    "Failed to delete backup file from local", e, t);
+                ILogger.error("Failed to delete backup file from local", e, t);
                 IToast.showTop(appLocalizations.deleteFailed);
               }
               CustomLoadingDialog.dismissLoading();

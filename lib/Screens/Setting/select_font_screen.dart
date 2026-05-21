@@ -51,7 +51,7 @@ class _SelectFontScreenState extends BaseDynamicState<SelectFontScreen>
           title: appLocalizations.defaultFontFamily,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+              margin: const EdgeInsets.all(10),
               child: Wrap(
                 runSpacing: 10,
                 spacing: 10,
@@ -64,7 +64,7 @@ class _SelectFontScreenState extends BaseDynamicState<SelectFontScreen>
           title: appLocalizations.customFontFamily,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+              margin: const EdgeInsets.all(10),
               child: Wrap(
                 runSpacing: 10,
                 spacing: 10,

@@ -80,7 +80,6 @@ class MainScreenState extends BaseWindowState<MainScreen>
         ProtocolListener,
         AutomaticKeepAliveClientMixin {
   Timer? _timer;
-  Timer? _periodicBackupTimer;
   TextEditingController searchController = TextEditingController();
   List<OtpToken> _menuTokens = [];
   List<TokenCategory> _menuCategories = [];
@@ -180,7 +179,6 @@ class MainScreenState extends BaseWindowState<MainScreen>
       homeScreenState?.performSearch(searchController.text);
     });
     _startAutoBackupOnLaunch();
-    _startPeriodicBackupTimer();
   }
 
   static const _notifierChannel = MethodChannel('local_notifier');
@@ -1319,22 +1317,6 @@ class MainScreenState extends BaseWindowState<MainScreen>
     }
   }
 
-  void _startPeriodicBackupTimer() {
-    _periodicBackupTimer?.cancel();
-    if (!ChewieHiveUtil.getBool(CloudOTPHiveUtil.enablePeriodicBackupKey)) {
-      return;
-    }
-    final minutes = ChewieHiveUtil.getInt(
-      CloudOTPHiveUtil.periodicBackupIntervalKey,
-      defaultValue: defaultPeriodicBackupIntervalHours * 60,
-    );
-    _periodicBackupTimer = Timer.periodic(
-      Duration(minutes: minutes),
-      (_) => ExportTokenUtil.autoBackup(
-          triggerType: AutoBackupTriggerType.scheduled),
-    );
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
@@ -1360,7 +1342,6 @@ class MainScreenState extends BaseWindowState<MainScreen>
 
   @override
   void dispose() {
-    _periodicBackupTimer?.cancel();
     protocolHandler.removeListener(this);
     trayManager.removeListener(this);
     WidgetsBinding.instance.removeObserver(this);

@@ -250,7 +250,7 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
                 Expanded(
                   child: ListView(
                     padding:
-                        const EdgeInsets.only(left: 6, right: 6, bottom: 10),
+                        const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                     children: [
                       const SizedBox(height: 10),
                       InlineSelectionItem<SelectionItemModel<bool>>(
@@ -293,78 +293,66 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
 
   Widget _buildTokenItem(ImportTokenItem item) {
     final isError = item.status == ImportTokenStatus.error;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
-      decoration: BoxDecoration(
-        color: ChewieTheme.canvasColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: isError
-              ? null
-              : () {
-                  setState(() {
-                    item.selected = !item.selected;
-                  });
-                },
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: item.selected,
-                  onChanged: isError
-                      ? null
-                      : (value) {
-                          setState(() {
-                            item.selected = value ?? false;
-                          });
-                        },
-                  activeColor: ChewieTheme.primaryColor,
-                ),
-                const SizedBox(width: 4),
-                CloudOTPItemBuilder.buildTokenImage(item.token, size: 24),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.token.issuer.isNotEmpty
-                            ? item.token.issuer
-                            : item.token.account,
-                        style: ChewieTheme.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (item.token.account.isNotEmpty &&
-                          item.token.account != item.token.issuer)
-                        Text(
-                          item.token.account,
-                          style: ChewieTheme.bodySmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      if (isError && item.errorReason != null)
-                        Text(
-                          item.errorReason!,
-                          style:
-                              ChewieTheme.bodySmall.copyWith(color: Colors.red),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _buildTokenStatusText(item),
-              ],
+    return InkWell(
+      onTap: isError
+          ? null
+          : () {
+              setState(() {
+                item.selected = !item.selected;
+              });
+            },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          children: [
+            Checkbox(
+              value: item.selected,
+              onChanged: isError
+                  ? null
+                  : (value) {
+                      setState(() {
+                        item.selected = value ?? false;
+                      });
+                    },
+              activeColor: ChewieTheme.primaryColor,
             ),
-          ),
+            const SizedBox(width: 4),
+            CloudOTPItemBuilder.buildTokenImage(item.token, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.token.issuer.isNotEmpty
+                        ? item.token.issuer
+                        : item.token.account,
+                    style: ChewieTheme.titleSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (item.token.account.isNotEmpty &&
+                      item.token.account != item.token.issuer)
+                    Text(
+                      item.token.account,
+                      style: ChewieTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  if (isError && item.errorReason != null)
+                    Text(
+                      item.errorReason!,
+                      style: ChewieTheme.bodySmall.copyWith(color: Colors.red),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildTokenStatusText(item),
+            const SizedBox(width: 8),
+          ],
         ),
       ),
     );
@@ -394,68 +382,57 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
 
   Widget _buildCategoryItem(ImportCategoryItem item) {
     final bindingText = _buildCategoryBindingText(item);
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
-      decoration: BoxDecoration(
-        color: ChewieTheme.canvasColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            setState(() {
-              item.selected = !item.selected;
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: item.selected,
-                  onChanged: (value) {
-                    setState(() {
-                      item.selected = value ?? false;
-                    });
-                  },
-                  activeColor: ChewieTheme.primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.category.title,
-                        style: ChewieTheme.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (bindingText.isNotEmpty)
-                        Text(
-                          bindingText,
-                          style: ChewieTheme.bodySmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  item.isNew
-                      ? appLocalizations.importCategoryNew
-                      : (_overwriteExisting
-                          ? appLocalizations.importOverwrite
-                          : appLocalizations.importCategoryExisting),
-                  style: ChewieTheme.bodySmall,
-                ),
-              ],
+    return InkWell(
+      onTap: () {
+        setState(() {
+          item.selected = !item.selected;
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          children: [
+            Checkbox(
+              value: item.selected,
+              onChanged: (value) {
+                setState(() {
+                  item.selected = value ?? false;
+                });
+              },
+              activeColor: ChewieTheme.primaryColor,
             ),
-          ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.category.title,
+                    style: ChewieTheme.titleSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (bindingText.isNotEmpty)
+                    Text(
+                      bindingText,
+                      style: ChewieTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              item.isNew
+                  ? appLocalizations.importCategoryNew
+                  : (_overwriteExisting
+                      ? appLocalizations.importOverwrite
+                      : appLocalizations.importCategoryExisting),
+              style: ChewieTheme.bodySmall,
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
       ),
     );

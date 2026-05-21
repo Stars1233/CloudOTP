@@ -37,14 +37,12 @@ class BackupLogScreen extends StatefulWidget {
   });
 
   static bool _hasContextMenuOverlay(BuildContext context) {
-    return context
-            .findAncestorStateOfType<GenericContextMenuOverlayState>() !=
+    return context.findAncestorStateOfType<GenericContextMenuOverlayState>() !=
         null;
   }
 
   static void show(BuildContext context) {
-    if (ResponsiveUtil.isLandscapeLayout() &&
-        _hasContextMenuOverlay(context)) {
+    if (ResponsiveUtil.isLandscapeLayout() && _hasContextMenuOverlay(context)) {
       BottomSheetBuilder.showGenericContextMenu(
         context,
         const BackupLogScreen(isOverlay: true),
@@ -134,15 +132,14 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
   @override
   Widget build(BuildContext context) {
     Widget header = Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
       child: _buildHeader(),
     );
 
     Widget body = _buildLogList();
 
     if (widget.isOverlay) {
-      final overlayHeight =
-          _mergedLogs.isEmpty || !canBackup ? 300.0 : 400.0;
+      final overlayHeight = _mergedLogs.isEmpty || !canBackup ? 300.0 : 400.0;
       return Container(
         width: min(400, MediaQuery.sizeOf(context).width - 80),
         height: min(overlayHeight, MediaQuery.sizeOf(context).height - 80),
@@ -253,7 +250,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
   Widget _buildLogList() {
     if (!canBackup) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -268,8 +265,8 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
               background: _accent,
               onPressed: () {
                 if (widget.isOverlay) {
-                  RouteUtil.pushDialogRoute(context,
-                      const SettingNavigationScreen(initPageIndex: 3));
+                  RouteUtil.pushDialogRoute(
+                      context, const SettingNavigationScreen(initPageIndex: 3));
                 } else {
                   Navigator.pop(context);
                   RouteUtil.pushCupertinoRoute(
@@ -293,7 +290,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 
     if (_mergedLogs.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: EmptyPlaceholder(
             text: appLocalizations.noBackupLogs, topPadding: 10),
       );
@@ -301,7 +298,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 
     if (widget.isOverlay) {
       return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+        padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(
@@ -315,7 +312,7 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
       shrinkWrap: true,
       itemCount: _mergedLogs.length,
       itemBuilder: (context, index) {
@@ -364,89 +361,88 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: statusColor.withAlpha(30),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        widget.log.triggerType.icon,
-                        size: 15,
-                        color: statusColor,
-                      ),
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: statusColor.withAlpha(30),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.log.triggerType.label,
-                            style: ChewieTheme.bodyMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    child: Icon(
+                      widget.log.triggerType.icon,
+                      size: 15,
+                      color: statusColor,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.log.triggerType.label,
+                          style: ChewieTheme.bodyMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${_dateTimeFormat.format(DateTime.fromMillisecondsSinceEpoch(widget.log.startTimestamp))}  ·  ${widget.log.type.label}',
+                          style: ChewieTheme.bodySmall.copyWith(
+                            color: ChewieTheme.bodyMedium.color?.withAlpha(120),
+                            fontSize: 11,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${_dateTimeFormat.format(DateTime.fromMillisecondsSinceEpoch(widget.log.startTimestamp))}  ·  ${widget.log.type.label}',
-                            style: ChewieTheme.bodySmall.copyWith(
-                              color: ChewieTheme.bodyMedium.color
-                                  ?.withAlpha(120),
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    RoundIconTextButton(
-                      radius: 5,
-                      height: 24,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      text: widget.log.lastStatusItem.labelShort,
-                      textStyle:
-                          ChewieTheme.labelSmall.apply(color: Colors.white),
-                      background: statusColor,
-                    ),
-                    const SizedBox(width: 4),
-                    CircleIconButton(
-                      padding: const EdgeInsets.all(4),
-                      icon: Icon(
-                          expanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          size: 16,
-                          color: ChewieTheme.labelSmall.color),
-                      onTap: () {
-                        setState(() {
-                          expanded = !expanded;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topCenter,
-                  child: expanded
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 10, left: 4),
-                          child: _buildStatusTimeline(),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
+                  ),
+                  const SizedBox(width: 6),
+                  RoundIconTextButton(
+                    radius: 5,
+                    height: 24,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    text: widget.log.lastStatusItem.labelShort,
+                    textStyle:
+                        ChewieTheme.labelSmall.apply(color: Colors.white),
+                    background: statusColor,
+                  ),
+                  const SizedBox(width: 4),
+                  CircleIconButton(
+                    padding: const EdgeInsets.all(4),
+                    icon: Icon(
+                        expanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: ChewieTheme.labelSmall.color),
+                    onTap: () {
+                      setState(() {
+                        expanded = !expanded;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 10, left: 4),
+                        child: _buildStatusTimeline(),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -457,8 +453,8 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
         final statusItem = widget.log.status[i];
         final isLast = i == widget.log.status.length - 1;
         final dotColor = statusItem.status.color;
-        final timeStr = _timeFormat.format(
-            DateTime.fromMillisecondsSinceEpoch(statusItem.timestamp));
+        final timeStr = _timeFormat
+            .format(DateTime.fromMillisecondsSinceEpoch(statusItem.timestamp));
 
         return IntrinsicHeight(
           child: Row(

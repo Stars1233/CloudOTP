@@ -83,7 +83,7 @@ class DropboxBackupsBottomSheetState
 
   _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
       child: Row(
         children: [
           Container(
@@ -100,8 +100,8 @@ class DropboxBackupsBottomSheetState
           Expanded(
             child: Text(
               appLocalizations.cloudBackupFiles(widget.files.length),
-              style: ChewieTheme.titleMedium
-                  .copyWith(fontWeight: FontWeight.bold),
+              style:
+                  ChewieTheme.titleMedium.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -112,7 +112,7 @@ class DropboxBackupsBottomSheetState
   _buildButtons() {
     return ListView.builder(
       shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       itemBuilder: (context, index) => _buildItem(files[index]),
       itemCount: files.length,
     );
@@ -166,19 +166,17 @@ class DropboxBackupsBottomSheetState
           ),
           const SizedBox(width: 6),
           CircleIconButton(
-            icon: Icon(LucideIcons.import, size: 18,
-                color: ChewieTheme.primaryColor),
+            icon: Icon(LucideIcons.import,
+                size: 18, color: ChewieTheme.primaryColor),
             onTap: () async {
               Navigator.pop(context);
               widget.onSelected(file);
             },
           ),
           CircleIconButton(
-            icon:
-                const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
+            icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 18),
             onTap: () async {
-              CustomLoadingDialog.showLoading(
-                  title: appLocalizations.deleting);
+              CustomLoadingDialog.showLoading(title: appLocalizations.deleting);
               try {
                 await widget.cloudService.deleteFile(file.name);
                 setState(() {

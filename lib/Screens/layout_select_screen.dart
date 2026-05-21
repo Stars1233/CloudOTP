@@ -57,13 +57,13 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
     final currentType = homeScreenState?.layoutType ?? LayoutType.Simple;
 
     final content = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildGrid(currentType),
         ],
       ),
@@ -138,7 +138,7 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
   }
 
   Widget _buildGrid(LayoutType currentType) {
-    final values = LayoutType.values;
+    const values = LayoutType.values;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -212,14 +212,12 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
                     type.title,
                     style: ChewieTheme.labelMedium.copyWith(
                       fontWeight: FontWeight.w600,
-                      color:
-                          selected ? _accent : ChewieTheme.titleLarge.color,
+                      color: selected ? _accent : ChewieTheme.titleLarge.color,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (selected)
-                  Icon(LucideIcons.check, size: 14, color: _accent),
+                if (selected) Icon(LucideIcons.check, size: 14, color: _accent),
               ],
             ),
           ],
@@ -231,70 +229,162 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
   Widget _buildPreview(LayoutType type) {
     switch (type) {
       case LayoutType.Simple:
-        return _gridPreview(crossAxis: 2, rows: 2, itemHeight: 12);
+        return _buildSimplePreview();
       case LayoutType.Compact:
-        return _gridPreview(crossAxis: 2, rows: 3, itemHeight: 8);
+        return _buildCompactPreview();
       case LayoutType.Spotlight:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _previewBar(height: 18, widthFactor: 0.85),
-            const SizedBox(height: 3),
-            _previewBar(height: 12, widthFactor: 0.85),
-          ],
-        );
+        return _buildSpotlightPreview();
       case LayoutType.List:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            4,
-            (_) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: _previewBar(height: 5, widthFactor: 1),
-            ),
-          ),
-        );
+        return _buildListPreview();
     }
   }
 
-  Widget _gridPreview({
-    required int crossAxis,
-    required int rows,
-    required double itemHeight,
-  }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(rows, (r) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 1.5),
-          child: Row(
-            children: List.generate(crossAxis, (c) {
-              return Expanded(
-                child: Container(
-                  margin: EdgeInsets.only(right: c == crossAxis - 1 ? 0 : 3),
-                  height: itemHeight,
-                  decoration: BoxDecoration(
-                    color: _accent.withAlpha(70),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              );
-            }),
+  Widget _buildSimplePreview() {
+    Widget card() => Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: _accent.withAlpha(20),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                _dot(5),
+                const SizedBox(width: 2),
+                Expanded(child: _line(height: 3)),
+              ]),
+              const SizedBox(height: 3),
+              Center(child: FractionallySizedBox(widthFactor: 0.7, child: _line(height: 5))),
+            ],
           ),
         );
-      }),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(children: [Expanded(child: card()), const SizedBox(width: 3), Expanded(child: card())]),
+        const SizedBox(height: 3),
+        Row(children: [Expanded(child: card()), const SizedBox(width: 3), Expanded(child: card())]),
+      ],
     );
   }
 
-  Widget _previewBar({required double height, required double widthFactor}) {
-    return FractionallySizedBox(
-      widthFactor: widthFactor,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: _accent.withAlpha(70),
-          borderRadius: BorderRadius.circular(3),
-        ),
+  Widget _buildCompactPreview() {
+    Widget card() => Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: _accent.withAlpha(20),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Expanded(child: _line(height: 3)),
+                const SizedBox(width: 2),
+                _dot(4),
+              ]),
+              const SizedBox(height: 2),
+              FractionallySizedBox(widthFactor: 0.6, child: _line(height: 4)),
+            ],
+          ),
+        );
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(children: [Expanded(child: card()), const SizedBox(width: 3), Expanded(child: card())]),
+        const SizedBox(height: 3),
+        Row(children: [Expanded(child: card()), const SizedBox(width: 3), Expanded(child: card())]),
+        const SizedBox(height: 3),
+        Row(children: [Expanded(child: card()), const SizedBox(width: 3), Expanded(child: card())]),
+      ],
+    );
+  }
+
+  Widget _buildSpotlightPreview() {
+    Widget row() => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          decoration: BoxDecoration(
+            color: _accent.withAlpha(20),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Row(
+            children: [
+              _dot(8),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FractionallySizedBox(widthFactor: 0.5, child: _line(height: 3)),
+                    const SizedBox(height: 2),
+                    _line(height: 5),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              _dot(6),
+            ],
+          ),
+        );
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        row(),
+        const SizedBox(height: 3),
+        row(),
+      ],
+    );
+  }
+
+  Widget _buildListPreview() {
+    Widget row() => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+          decoration: BoxDecoration(
+            color: _accent.withAlpha(20),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Row(
+            children: [
+              _dot(5),
+              const SizedBox(width: 3),
+              Expanded(child: _line(height: 3)),
+              const SizedBox(width: 4),
+              SizedBox(width: 20, child: _line(height: 4)),
+            ],
+          ),
+        );
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        row(),
+        const SizedBox(height: 3),
+        row(),
+        const SizedBox(height: 3),
+        row(),
+        const SizedBox(height: 3),
+        row(),
+      ],
+    );
+  }
+
+  Widget _dot(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: _accent.withAlpha(90),
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  Widget _line({required double height}) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: _accent.withAlpha(70),
+        borderRadius: BorderRadius.circular(2),
       ),
     );
   }

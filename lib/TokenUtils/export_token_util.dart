@@ -501,7 +501,12 @@ class ExportTokenUtil {
   }
 
   static Future<int> getBackupsCount() async {
-    return (await getLocalBackups()).length;
+    final lists = await getLocalBackups();
+    int total = 0;
+    for (final list in lists) {
+      total += list.length;
+    }
+    return total;
   }
 
   static Future<List<FileSystemEntity>> getLocalBackupsByPath(

@@ -21,8 +21,6 @@ const defaultMaxBackupCount = 100;
 
 const maxBackupCountThrehold = 500;
 
-const defaultPeriodicBackupIntervalHours = 24;
-
 const maxBytesLength = 1000;
 
 const double autoCopyNextCodeProgressThrehold = 0.25;

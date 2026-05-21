@@ -64,52 +64,57 @@ class _MobileSettingNavigationScreenState
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 10),
               children: [
-              EntryItem(
-                title: appLocalizations.generalSetting,
-                leading: LucideIcons.settings2,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                    context,
-                    GeneralSettingScreen(),
-                  );
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.appearanceSetting,
-                leading: LucideIcons.paintbrushVertical,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const AppearanceSettingScreen());
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.operationSetting,
-                leading: LucideIcons.pointer,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const OperationSettingScreen());
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.backupSetting,
-                leading: LucideIcons.cloudUpload,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const BackupSettingScreen());
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.safeSetting,
-                leading: LucideIcons.shieldCheck,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const SafeSettingScreen());
-                },
+              CaptionItem(
+                title: appLocalizations.setting,
+                children: [
+                  EntryItem(
+                    title: appLocalizations.generalSetting,
+                    leading: LucideIcons.settings2,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                        context,
+                        GeneralSettingScreen(),
+                      );
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.appearanceSetting,
+                    leading: LucideIcons.paintbrushVertical,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const AppearanceSettingScreen());
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.operationSetting,
+                    leading: LucideIcons.pointer,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const OperationSettingScreen());
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.backupSetting,
+                    leading: LucideIcons.cloudUpload,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const BackupSettingScreen());
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.safeSetting,
+                    leading: LucideIcons.shieldCheck,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const SafeSettingScreen());
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
             ],

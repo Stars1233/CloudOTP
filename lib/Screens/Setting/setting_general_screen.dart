@@ -193,8 +193,8 @@ class GeneralSettingScreenState extends BaseDynamicState<GeneralSettingScreen>
                   await FileOutput.clearLogs();
                   await getLogSize();
                   IToast.showTop(appLocalizations.clearLogSuccess);
-                } catch (e, t) {
-                  ILogger.error("Failed to clear logs", e, t);
+                } catch (e) {
+                  debugPrint("Failed to clear logs: $e");
                   IToast.showTop(appLocalizations.clearLogFailed);
                 } finally {
                   CustomLoadingDialog.dismissLoading();
