@@ -187,6 +187,7 @@ class _GoogleDriveServiceScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeGoogleDrive,
         description: appLocalizations.cloudOAuthSafeTip(
             CloudService.serverEndpoint, appLocalizations.cloudTypeGoogleDrive),

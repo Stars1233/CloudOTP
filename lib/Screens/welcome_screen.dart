@@ -444,7 +444,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget _buildSkipButton() {
     return Positioned(
       top: 8,
-      right: ResponsiveUtil.isMacOS() ? 8 : 16,
+      right: 8,
       child: TextButton(
         onPressed: _skip,
         style: TextButton.styleFrom(

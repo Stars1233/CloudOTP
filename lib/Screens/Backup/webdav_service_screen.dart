@@ -170,6 +170,7 @@ class _WebDavServiceScreenState extends BaseDynamicState<WebDavServiceScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeWebDav,
         value: _webDavCloudServiceConfig?.enabled ?? false,
         onTap: () {

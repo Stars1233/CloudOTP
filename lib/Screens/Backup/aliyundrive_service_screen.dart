@@ -194,6 +194,7 @@ class _AliyunDriveServiceScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeAliyunDrive,
         description: appLocalizations.cloudOAuthSafeTip(
             CloudService.serverEndpoint, appLocalizations.cloudTypeAliyunDrive),

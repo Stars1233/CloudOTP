@@ -191,6 +191,7 @@ class _DropboxServiceScreenState extends BaseDynamicState<DropboxServiceScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeDropbox,
         value: _dropboxCloudServiceConfig?.enabled ?? false,
         onTap: () {

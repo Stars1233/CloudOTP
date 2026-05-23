@@ -178,6 +178,7 @@ class _S3CloudServiceScreenState extends BaseDynamicState<S3CloudServiceScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeS3Cloud,
         value: _s3CloudServiceConfig?.enabled ?? false,
         onTap: () {

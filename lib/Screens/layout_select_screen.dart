@@ -182,7 +182,7 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? _accent : ChewieTheme.borderColor,
-            width: selected ? 1.5 : 1,
+            width: selected ? 1.5 : 0,
           ),
         ),
         padding: const EdgeInsets.all(10),

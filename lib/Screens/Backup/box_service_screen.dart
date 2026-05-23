@@ -202,6 +202,7 @@ class _BoxServiceScreenState extends BaseDynamicState<BoxServiceScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeBox,
         description: appLocalizations.cloudOAuthSafeTip(
             CloudService.serverEndpoint, appLocalizations.cloudTypeBox),

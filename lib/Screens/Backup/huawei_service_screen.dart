@@ -203,6 +203,7 @@ class _HuaweiCloudServiceScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeHuaweiCloud,
         description: appLocalizations.cloudOAuthSafeTip(
             CloudService.serverEndpoint, appLocalizations.cloudTypeHuaweiCloud),

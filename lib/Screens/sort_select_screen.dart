@@ -232,7 +232,6 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
           decoration: BoxDecoration(
             color: ChewieTheme.canvasColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: ChewieTheme.borderColor),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
