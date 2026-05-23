@@ -67,7 +67,7 @@ class _CustomConfirmDialogWidgetState
                 ? const BoxConstraints(maxWidth: 400)
                 : null,
             margin: widget.margin ??
-                EdgeInsets.all(16).copyWith(
+                const EdgeInsets.all(16).copyWith(
                     bottom: widget.align == Alignment.bottomCenter
                         ? 16 + MediaQuery.of(context).padding.bottom
                         : 16),
@@ -78,7 +78,7 @@ class _CustomConfirmDialogWidgetState
                   widget.backgroundColor ?? ChewieTheme.scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(
                   widget.radiusDimen ?? ChewieDimens.dimen16),
-              border: ChewieTheme.border,
+              border: ChewieTheme.responsiveBorder,
               boxShadow: ChewieTheme.defaultBoxShadow,
             ),
             child: Column(

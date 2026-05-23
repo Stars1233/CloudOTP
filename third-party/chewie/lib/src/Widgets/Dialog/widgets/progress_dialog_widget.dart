@@ -144,6 +144,7 @@ class ProgressDialog {
               child: Container(
                 decoration: ChewieTheme.defaultDecoration.copyWith(
                   color: ChewieTheme.scaffoldBackgroundColor,
+                  border: ChewieTheme.responsiveBorder,
                 ),
                 padding:
                     const EdgeInsets.symmetric(vertical: 20, horizontal: 30),

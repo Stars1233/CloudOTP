@@ -1664,6 +1664,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                 ],
               ],
             ),
+            const SizedBox(height: 100),
           ],
         ),
       ),

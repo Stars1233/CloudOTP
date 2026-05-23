@@ -66,7 +66,7 @@ class _CustomInfoDialogWidgetState
                 ? const BoxConstraints(maxWidth: 400)
                 : null,
             margin: widget.margin ??
-                EdgeInsets.all(16).copyWith(
+                const EdgeInsets.all(16).copyWith(
                     bottom: widget.align == Alignment.bottomCenter
                         ? 16 + MediaQuery.of(context).padding.bottom
                         : 16),
@@ -81,7 +81,7 @@ class _CustomInfoDialogWidgetState
                 top:
                     Radius.circular(widget.roundTop ? ChewieDimens.dimen16 : 0),
               ),
-              border: ChewieTheme.border,
+              border: ChewieTheme.responsiveBorder,
               boxShadow: ChewieTheme.defaultBoxShadow,
             ),
             child: Column(

@@ -63,7 +63,7 @@ class S3CloudBackupsBottomSheetState
           bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero,
         ),
         color: ChewieTheme.scaffoldBackgroundColor,
-        border: ChewieTheme.border,
+        border: ChewieTheme.responsiveBorder,
         boxShadow: ChewieTheme.defaultBoxShadow,
       ),
       child: Column(

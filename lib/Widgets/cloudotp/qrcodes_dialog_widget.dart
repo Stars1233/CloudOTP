@@ -76,6 +76,7 @@ class QrcodesDialogWidgetState extends BaseDynamicState<QrcodesDialogWidget> {
                 : EdgeInsets.zero,
             decoration: ChewieTheme.defaultDecoration.copyWith(
               color: ChewieTheme.scaffoldBackgroundColor,
+              border: ChewieTheme.responsiveBorder,
             ),
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 24),

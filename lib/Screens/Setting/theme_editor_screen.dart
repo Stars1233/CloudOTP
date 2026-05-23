@@ -43,6 +43,7 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
   late ChewieThemeColorData _theme;
   late TextEditingController _nameController;
   final FocusNode _nameFocusNode = FocusNode();
+
   bool get _isEditing => widget.editIndex != null;
 
   @override
@@ -317,7 +318,7 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
       ],
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: InputItem(
             controller: _nameController,
             focusNode: _nameFocusNode,
@@ -327,7 +328,7 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: _ThemePreview(theme: _theme),
         ),
         _buildColorGroup(

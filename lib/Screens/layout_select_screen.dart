@@ -92,7 +92,7 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
               bottom: ResponsiveUtil.isWideDevice() ? _radius : Radius.zero,
             ),
             color: ChewieTheme.scaffoldBackgroundColor,
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: content,

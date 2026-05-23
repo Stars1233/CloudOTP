@@ -49,7 +49,7 @@ class ContextMenuBottomSheetState extends State<ContextMenuBottomSheet> {
               top: radius,
               bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero,
             ),
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: Column(

@@ -138,7 +138,7 @@ class ChewieTheme {
   static BoxDecoration get defaultDecoration {
     return BoxDecoration(
       color: ChewieTheme.canvasColor,
-      border: ChewieTheme.border,
+      border: ChewieTheme.responsiveBorder,
       boxShadow: ChewieTheme.defaultBoxShadow,
       borderRadius: ChewieDimens.defaultBorderRadius,
     );
@@ -173,6 +173,8 @@ class ChewieTheme {
       Border.fromBorderSide(dividerSideWithWidth(width));
 
   static Border get border => borderWithWidth(0.8);
+
+  static Border? get responsiveBorder => ResponsiveUtil.isLandscapeLayout() ? ChewieTheme.border : null;
 
   static Border get divider => dividerWithWidth(1);
 

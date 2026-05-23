@@ -693,7 +693,7 @@ class _MenuListSheet extends StatelessWidget {
                   bottom:
                       ResponsiveUtil.isWideDevice() ? _radius : Radius.zero),
               color: ChewieTheme.scaffoldBackgroundColor,
-              border: ChewieTheme.border,
+              border: ChewieTheme.responsiveBorder,
               boxShadow: ChewieTheme.defaultBoxShadow,
             ),
             child: Column(

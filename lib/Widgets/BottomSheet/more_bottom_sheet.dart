@@ -58,7 +58,7 @@ class _MoreBottomSheetState extends BaseDynamicState<MoreBottomSheet> {
                   : Radius.zero,
             ),
             color: ChewieTheme.scaffoldBackgroundColor,
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: Column(
