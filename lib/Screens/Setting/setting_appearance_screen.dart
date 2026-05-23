@@ -50,9 +50,8 @@ class _AppearanceSettingScreenState
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.showLayoutButtonKey);
   bool showSortButton =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.showSortButtonKey);
-  bool showBackupLogButton = ChewieHiveUtil.getBool(
-      CloudOTPHiveUtil.showBackupLogButtonKey,
-      defaultValue: ResponsiveUtil.isLandscapeLayout());
+  bool showBackupLogButton =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.showBackupLogButtonKey);
   bool showCloudBackupButton = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.showCloudBackupButtonKey,
       defaultValue: true);
@@ -182,22 +181,22 @@ class _AppearanceSettingScreenState
       title: appLocalizations.sideBarSettings,
       children: [
         CheckboxItem(
-          title: appLocalizations.showBackupLogButton,
-          value: showBackupLogButton,
-          onTap: () {
-            setState(() {
-              showBackupLogButton = !showBackupLogButton;
-              appProvider.showBackupLogButton = showBackupLogButton;
-            });
-          },
-        ),
-        CheckboxItem(
           title: appLocalizations.showCloudBackupButton,
           value: showCloudBackupButton,
           onTap: () {
             setState(() {
               showCloudBackupButton = !showCloudBackupButton;
               appProvider.showCloudBackupButton = showCloudBackupButton;
+            });
+          },
+        ),
+        CheckboxItem(
+          title: appLocalizations.showBackupLogButton,
+          value: showBackupLogButton,
+          onTap: () {
+            setState(() {
+              showBackupLogButton = !showBackupLogButton;
+              appProvider.showBackupLogButton = showBackupLogButton;
             });
           },
         ),

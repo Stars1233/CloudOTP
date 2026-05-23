@@ -106,7 +106,9 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
         },
         child: ListView.builder(
           padding: widget.padding
-              .add(const EdgeInsets.symmetric(horizontal: 4, vertical: 10)),
+              .add(const EdgeInsets.symmetric(horizontal: 4, vertical: 10))
+              .add(EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom)),
           itemBuilder: (context, index) => _buildItem(
             releaseItems[index],
             index,

@@ -13,13 +13,12 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:cloudotp/Database/database_manager.dart';
 import 'package:cloudotp/Utils/hive_util.dart';
 import 'package:flutter/material.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../../Screens/home_screen.dart';
 import '../../l10n/l10n.dart';
@@ -30,11 +29,15 @@ class CoachMarkManager {
   final GlobalKey? firstTokenKey;
   final GlobalKey? categoryTabKey;
   final GlobalKey moreButtonKey;
+  final GlobalKey? sortButtonKey;
+  final GlobalKey? layoutButtonKey;
+  final GlobalKey? fabKey;
+  final GlobalKey? cloudBackupKey;
+  final GlobalKey? backupLogKey;
   final LayoutType layoutType;
   final int tokenCount;
   final int categoryCount;
-  final Future<void> Function(String identify)? onDemoAction;
-  final Future<void> Function(String identify)? onUndoDemoAction;
+  final VoidCallback? onDeleteSampleData;
 
   CoachMarkManager({
     required this.context,
@@ -42,15 +45,19 @@ class CoachMarkManager {
     this.firstTokenKey,
     this.categoryTabKey,
     required this.moreButtonKey,
+    this.sortButtonKey,
+    this.layoutButtonKey,
+    this.fabKey,
+    this.cloudBackupKey,
+    this.backupLogKey,
     required this.layoutType,
     required this.tokenCount,
     required this.categoryCount,
-    this.onDemoAction,
-    this.onUndoDemoAction,
+    this.onDeleteSampleData,
   });
 
   Future<void> show({bool force = false}) async {
-    if (!ResponsiveUtil.isMobile()) return;
+    if (!ResponsiveUtil.isMobile() || ResponsiveUtil.isLandscapeTablet()) return;
     if (!force &&
         ChewieHiveUtil.getBool(CloudOTPHiveUtil.haveShownCoachMarkKey,
             defaultValue: false)) {
@@ -60,55 +67,43 @@ class CoachMarkManager {
     List<_CoachStep> steps = _buildSteps();
     if (steps.isEmpty) return;
 
-    bool skipped = false;
+    if (!context.mounted) return;
 
-    for (int i = 0; i < steps.length; i++) {
-      if (skipped || !context.mounted) break;
-      final step = steps[i];
-      final completer = Completer<bool>();
-
-      final tcm = TutorialCoachMark(
-        targets: [_buildTarget(step, i, steps.length, completer)],
-        colorShadow: Colors.black,
-        opacityShadow: 0.75,
-        paddingFocus: 8,
-        pulseEnable: true,
-        focusAnimationDuration: const Duration(milliseconds: 300),
-        unFocusAnimationDuration: const Duration(milliseconds: 300),
-        showSkipInLastTarget: true,
-        hideSkip: true,
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _CoachMarkOverlay(
+        steps: steps,
         onFinish: () {
-          if (!completer.isCompleted) completer.complete(true);
+          entry.remove();
+          _markShown();
         },
-        onSkip: () {
-          if (!completer.isCompleted) completer.complete(false);
-          return true;
-        },
-      );
-
-      tcm.show(context: context);
-      final proceed = await completer.future;
-
-      if (!proceed) {
-        skipped = true;
-        break;
-      }
-
-      if (onDemoAction != null && context.mounted) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        await onDemoAction!(step.identify);
-        await Future.delayed(const Duration(milliseconds: 1200));
-        if (context.mounted) {
-          await onUndoDemoAction?.call(step.identify);
-        }
-        await Future.delayed(const Duration(milliseconds: 400));
-      }
-    }
-    _markShown();
+      ),
+    );
+    overlay.insert(entry);
   }
 
   void _markShown() {
     ChewieHiveUtil.put(CloudOTPHiveUtil.haveShownCoachMarkKey, true);
+    _promptDeleteSampleData();
+  }
+
+  Future<void> _promptDeleteSampleData() async {
+    if (!context.mounted) return;
+    final hasSample = await DatabaseManager.hasSampleData();
+    if (!hasSample || !context.mounted) return;
+    DialogBuilder.showConfirmDialog(
+      context,
+      title: appLocalizations.coachMarkDeleteSampleTitle,
+      message: appLocalizations.coachMarkDeleteSampleMessage,
+      onTapConfirm: () async {
+        await DatabaseManager.deleteSampleData();
+        onDeleteSampleData?.call();
+      },
+      onTapCancel: () {
+        DatabaseManager.clearSampleDataFlag();
+      },
+    );
   }
 
   List<_CoachStep> _buildSteps() {
@@ -116,12 +111,49 @@ class CoachMarkManager {
 
     steps.add(_CoachStep(
       key: appBarTitleKey,
-      identify: "search_title",
-      shape: ShapeLightFocus.RRect,
-      radius: 8,
       title: appLocalizations.coachMarkSearchTitle,
       description: appLocalizations.coachMarkSearchDescription,
     ));
+
+    if (cloudBackupKey != null) {
+      steps.add(_CoachStep(
+        key: cloudBackupKey!,
+        title: appLocalizations.coachMarkCloudBackupTitle,
+        description: appLocalizations.coachMarkCloudBackupDescription,
+      ));
+    }
+
+    if (backupLogKey != null) {
+      steps.add(_CoachStep(
+        key: backupLogKey!,
+        title: appLocalizations.coachMarkBackupLogTitle,
+        description: appLocalizations.coachMarkBackupLogDescription,
+      ));
+    }
+
+    if (layoutButtonKey != null) {
+      steps.add(_CoachStep(
+        key: layoutButtonKey!,
+        title: appLocalizations.coachMarkLayoutTitle,
+        description: appLocalizations.coachMarkLayoutDescription,
+      ));
+    }
+
+    if (sortButtonKey != null) {
+      steps.add(_CoachStep(
+        key: sortButtonKey!,
+        title: appLocalizations.coachMarkSortTitle,
+        description: appLocalizations.coachMarkSortDescription,
+      ));
+    }
+
+    if (tokenCount > 1) {
+      steps.add(_CoachStep(
+        key: moreButtonKey,
+        title: appLocalizations.coachMarkMultiSelectTitle,
+        description: appLocalizations.coachMarkMultiSelectDescription,
+      ));
+    }
 
     bool swipeApplicable = tokenCount >= 1 &&
         firstTokenKey != null &&
@@ -129,101 +161,267 @@ class CoachMarkManager {
     if (swipeApplicable) {
       steps.add(_CoachStep(
         key: firstTokenKey!,
-        identify: "swipe_token",
-        shape: ShapeLightFocus.RRect,
-        radius: 12,
         title: appLocalizations.coachMarkSwipeTitle,
         description: appLocalizations.coachMarkSwipeDescription,
+        radius: 12,
       ));
     }
 
     if (categoryCount >= 1 && categoryTabKey != null) {
       steps.add(_CoachStep(
         key: categoryTabKey!,
-        identify: "category_tab",
-        shape: ShapeLightFocus.RRect,
-        radius: 8,
         title: appLocalizations.coachMarkCategoryTitle,
         description: appLocalizations.coachMarkCategoryDescription,
       ));
     }
 
-    if (tokenCount > 1) {
+    if (fabKey != null) {
       steps.add(_CoachStep(
-        key: moreButtonKey,
-        identify: "more_menu",
-        shape: ShapeLightFocus.Circle,
-        radius: 0,
-        title: appLocalizations.coachMarkMultiSelectTitle,
-        description: appLocalizations.coachMarkMultiSelectDescription,
+        key: fabKey!,
+        title: appLocalizations.coachMarkScanTitle,
+        description: appLocalizations.coachMarkScanDescription,
+        radius: 12,
       ));
     }
 
     return steps;
   }
+}
 
-  TargetFocus _buildTarget(
-      _CoachStep step, int index, int total, Completer<bool> completer) {
-    return TargetFocus(
-      identify: step.identify,
-      keyTarget: step.key,
-      alignSkip: Alignment.topRight,
-      shape: step.shape,
-      radius: step.radius,
-      enableOverlayTab: false,
-      enableTargetTab: false,
-      contents: [
-        TargetContent(
-          align: _contentAlign(step.key),
-          builder: (context, controller) {
-            return _buildContent(
-              title: step.title,
-              description: step.description,
-              stepIndex: index,
-              totalSteps: total,
-              isLast: index == total - 1,
-              onNext: () {
-                if (!completer.isCompleted) {
-                  controller.next();
-                }
-              },
-              onSkip: () {
-                if (!completer.isCompleted) {
-                  completer.complete(false);
-                  controller.skip();
-                }
-              },
-            );
-          },
-        ),
-      ],
+class _CoachMarkOverlay extends StatefulWidget {
+  final List<_CoachStep> steps;
+  final VoidCallback onFinish;
+
+  const _CoachMarkOverlay({
+    required this.steps,
+    required this.onFinish,
+  });
+
+  @override
+  State<_CoachMarkOverlay> createState() => _CoachMarkOverlayState();
+}
+
+class _CoachMarkOverlayState extends State<_CoachMarkOverlay>
+    with TickerProviderStateMixin {
+  static const _shadowOpacity = 0.75;
+  static const _padding = 4.0;
+  static const _animDuration = Duration(milliseconds: 350);
+
+  int _currentIndex = 0;
+  late AnimationController _holeController;
+  Animation<Rect?>? _holeAnimation;
+  late AnimationController _contentController;
+  late AnimationController _pulseController;
+  bool _isTransitioning = false;
+
+  Rect _currentTargetRect = Rect.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _holeController = AnimationController(vsync: this, duration: _animDuration);
+    _contentController =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _holeController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _currentTargetRect = _holeAnimation?.value ?? _currentTargetRect;
+        _isTransitioning = false;
+        _contentController.forward();
+        _pulseController.repeat(reverse: true);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initFirstTarget();
+    });
+  }
+
+  Rect _expandedRect(Rect target, Size screenSize) {
+    final expandFactor = screenSize.longestSide;
+    return Rect.fromCenter(
+      center: target.center,
+      width: target.width + expandFactor,
+      height: target.height + expandFactor,
     );
   }
 
-  ContentAlign _contentAlign(GlobalKey key) {
-    try {
-      final renderBox =
-          key.currentContext?.findRenderObject() as RenderBox?;
-      if (renderBox == null) return ContentAlign.bottom;
-      final pos = renderBox.localToGlobal(Offset.zero);
-      final screenHeight = MediaQuery.of(context).size.height;
-      return pos.dy < screenHeight / 2
-          ? ContentAlign.bottom
-          : ContentAlign.top;
-    } catch (_) {
-      return ContentAlign.bottom;
+  void _initFirstTarget() {
+    final rect = _getTargetRect(widget.steps[0]);
+    if (rect == null) {
+      widget.onFinish();
+      return;
     }
+    final screenSize = MediaQuery.of(context).size;
+    final startRect = _expandedRect(rect, screenSize);
+    _currentTargetRect = rect;
+    _holeAnimation = RectTween(begin: startRect, end: rect)
+        .animate(CurvedAnimation(parent: _holeController, curve: Curves.easeOutCubic));
+    _holeController.forward(from: 0).then((_) {
+      _contentController.forward();
+    });
+    setState(() {});
   }
 
-  Widget _buildContent({
-    required String title,
-    required String description,
-    required int stepIndex,
-    required int totalSteps,
-    required bool isLast,
-    required VoidCallback onNext,
-    required VoidCallback onSkip,
-  }) {
+  Rect? _getTargetRect(_CoachStep step) {
+    final renderBox =
+        step.key.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached) return null;
+    final pos = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    return Rect.fromLTWH(
+      pos.dx - _padding,
+      pos.dy - _padding,
+      size.width + _padding * 2,
+      size.height + _padding * 2,
+    );
+  }
+
+  void _goToNext() {
+    if (_isTransitioning) return;
+    final nextIndex = _currentIndex + 1;
+    if (nextIndex >= widget.steps.length) {
+      _dismiss();
+      return;
+    }
+    _transitionTo(nextIndex);
+  }
+
+  void _dismiss() {
+    _pulseController.stop();
+    _contentController.reverse().then((_) {
+      widget.onFinish();
+    });
+  }
+
+  void _transitionTo(int index) {
+    final nextRect = _getTargetRect(widget.steps[index]);
+    if (nextRect == null) {
+      if (index + 1 < widget.steps.length) {
+        _transitionTo(index + 1);
+      } else {
+        _dismiss();
+      }
+      return;
+    }
+
+    _isTransitioning = true;
+    _pulseController.stop();
+    _contentController.reverse().then((_) {
+      setState(() {
+        _currentIndex = index;
+      });
+      _holeAnimation = RectTween(begin: _currentTargetRect, end: nextRect)
+          .animate(CurvedAnimation(parent: _holeController, curve: Curves.easeInOut));
+      _holeController.forward(from: 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _holeController.dispose();
+    _contentController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_holeAnimation == null) return const SizedBox.shrink();
+    final step = widget.steps[_currentIndex];
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_holeController, _pulseController]),
+              builder: (context, _) {
+                Rect rect = _holeAnimation?.value ?? _currentTargetRect;
+                if (!_isTransitioning && _pulseController.isAnimating) {
+                  final pulseAmount = 3.0 * _pulseController.value;
+                  rect = rect.inflate(pulseAmount);
+                }
+                return CustomPaint(
+                  painter: _HolePainter(
+                    holeRect: rect,
+                    radius: step.radius,
+                    shadowColor: Colors.black,
+                    shadowOpacity: _shadowOpacity,
+                  ),
+                  child: const SizedBox.expand(),
+                );
+              },
+            ),
+          ),
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _goToNext,
+              child: const SizedBox.expand(),
+            ),
+          ),
+          _buildContentPositioned(step),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContentPositioned(_CoachStep step) {
+    final screenSize = MediaQuery.of(context).size;
+    final targetRect = _getTargetRect(step) ?? _currentTargetRect;
+    final contentAlign = _computeContentAlign(targetRect, screenSize);
+
+    double? top, bottom, left, right;
+
+    switch (contentAlign) {
+      case _ContentAlign.bottom:
+        top = targetRect.bottom + 12;
+        left = 0;
+        right = 0;
+        break;
+      case _ContentAlign.top:
+        bottom = screenSize.height - targetRect.top + 12;
+        left = 0;
+        right = 0;
+        break;
+    }
+
+    return Positioned(
+      top: top,
+      bottom: bottom,
+      left: left,
+      right: right,
+      child: FadeTransition(
+        opacity: _contentController,
+        child: _buildContent(step: step),
+      ),
+    );
+  }
+
+  _ContentAlign _computeContentAlign(Rect targetRect, Size screenSize) {
+    const contentHeight = 200.0;
+
+    final targetBottom = targetRect.bottom;
+    if (targetBottom + contentHeight > screenSize.height - 40) {
+      return _ContentAlign.top;
+    }
+    if (targetRect.top - contentHeight < 40) {
+      return _ContentAlign.bottom;
+    }
+    return targetRect.top < screenSize.height / 2
+        ? _ContentAlign.bottom
+        : _ContentAlign.top;
+  }
+
+  Widget _buildContent({required _CoachStep step}) {
+    final totalSteps = widget.steps.length;
+    final isLast = _currentIndex == totalSteps - 1;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ClipRRect(
@@ -241,10 +439,10 @@ class CoachMarkManager {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildProgressDots(stepIndex, totalSteps),
+                _buildProgressDots(_currentIndex, totalSteps),
                 const SizedBox(height: 16),
                 Text(
-                  title,
+                  step.title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -253,7 +451,7 @@ class CoachMarkManager {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  description,
+                  step.description,
                   style: TextStyle(
                     color: Colors.white.withAlpha(200),
                     fontSize: 14,
@@ -265,8 +463,9 @@ class CoachMarkManager {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: onSkip,
+                      onPressed: _dismiss,
                       style: TextButton.styleFrom(
+                        overlayColor: Colors.white.withAlpha(40),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         shape: RoundedRectangleBorder(
@@ -283,9 +482,11 @@ class CoachMarkManager {
                     ),
                     const SizedBox(width: 8),
                     TextButton(
-                      onPressed: onNext,
+                      onPressed: _goToNext,
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.white,
+                        overlayColor:
+                            ChewieTheme.primaryColor.withAlpha(40),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 10),
                         shape: RoundedRectangleBorder(
@@ -331,20 +532,53 @@ class CoachMarkManager {
   }
 }
 
+class _HolePainter extends CustomPainter {
+  final Rect holeRect;
+  final double radius;
+  final Color shadowColor;
+  final double shadowOpacity;
+
+  _HolePainter({
+    required this.holeRect,
+    required this.radius,
+    required this.shadowColor,
+    required this.shadowOpacity,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = shadowColor.withAlpha((shadowOpacity * 255).round())
+      ..style = PaintingStyle.fill;
+
+    final fullPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final holePath = Path()
+      ..addRRect(RRect.fromRectAndRadius(holeRect, Radius.circular(radius)));
+
+    final combined = Path.combine(PathOperation.difference, fullPath, holePath);
+    canvas.drawPath(combined, paint);
+  }
+
+  @override
+  bool shouldRepaint(_HolePainter oldDelegate) {
+    return oldDelegate.holeRect != holeRect ||
+        oldDelegate.radius != radius ||
+        oldDelegate.shadowOpacity != shadowOpacity;
+  }
+}
+
+enum _ContentAlign { top, bottom }
+
 class _CoachStep {
   final GlobalKey key;
-  final String identify;
-  final ShapeLightFocus shape;
-  final double radius;
   final String title;
   final String description;
+  final double radius;
 
   _CoachStep({
     required this.key,
-    required this.identify,
-    required this.shape,
-    required this.radius,
     required this.title,
     required this.description,
+    this.radius = 8,
   });
 }

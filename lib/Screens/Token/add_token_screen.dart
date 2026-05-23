@@ -173,7 +173,7 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
             _isEditing ? appLocalizations.editToken : appLocalizations.addToken,
         showBack: !ResponsiveUtil.isLandscapeLayout(),
         titleLeftMargin: ResponsiveUtil.isLandscapeLayout() ? 15 : 5,
-        desktopActions: [
+        landscapeActions: [
           ToolButton(
             context: context,
             icon: LucideIcons.check,

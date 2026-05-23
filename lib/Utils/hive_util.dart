@@ -14,6 +14,7 @@
  */
 
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -99,10 +100,12 @@ class CloudOTPHiveUtil {
   static const String oldVersionKey = "oldVersion";
   static const String haveShowQAuthDialogKey = "haveShowQAuthDialog";
   static const String haveShownCoachMarkKey = "haveShownCoachMark";
+  static const String haveShownDesktopCoachMarkKey = "haveShownDesktopCoachMark";
+  static const String haveShownWelcome4Key = "haveShownWelcome4";
 
   static initConfig() async {
     await ChewieHiveUtil.put(
-        CloudOTPHiveUtil.layoutTypeKey, LayoutType.Compact.index);
+        CloudOTPHiveUtil.layoutTypeKey, LayoutType.List.index);
     await ChewieHiveUtil.put(CloudOTPHiveUtil.autoFocusSearchBarKey, false);
     await ChewieHiveUtil.put(
         CloudOTPHiveUtil.maxBackupsCountKey, defaultMaxBackupCount);
@@ -112,6 +115,8 @@ class CloudOTPHiveUtil {
     await ChewieHiveUtil.put(
         CloudOTPHiveUtil.autoMinimizeAfterClickToCopyKey, false);
     await ChewieHiveUtil.put(CloudOTPHiveUtil.hideGestureTrailKey, false);
+    await ChewieHiveUtil.put(CloudOTPHiveUtil.showSortButtonKey, true);
+    await ChewieHiveUtil.put(CloudOTPHiveUtil.showLayoutButtonKey, true);
   }
 
   static bool canLock() => canGuestureLock() || canDatabaseLock();
@@ -237,6 +242,18 @@ class CloudOTPHiveUtil {
             key: _secureDbPasswordKey, value: hivePassword);
       } catch (_) {}
       return hivePassword;
+    }
+    if (securePassword == null && Platform.isWindows) {
+      try {
+        await _secureStorage.delete(key: _secureDbPasswordKey);
+        securePassword =
+            await _secureStorage.read(key: _secureDbPasswordKey);
+        if (securePassword != null && securePassword.isNotEmpty) {
+          await ChewieHiveUtil.put(
+              CloudOTPHiveUtil.defaultDatabasePasswordKey, securePassword);
+          return securePassword;
+        }
+      } catch (_) {}
     }
     return '';
   }

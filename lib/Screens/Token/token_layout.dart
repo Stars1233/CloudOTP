@@ -104,8 +104,13 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   TokenLayoutNotifier tokenLayoutNotifier = TokenLayoutNotifier();
 
+  late final AnimationController _entranceController;
+  late final Animation<double> _entranceAnimation;
+
   AnimationController? _wobbleController;
   late Animation<double> _wobbleAnimation;
+
+  int _lastTimeStep = -1;
 
   SlidableController? _slidableController;
 
@@ -162,6 +167,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   @override
   void dispose() {
+    _entranceController.dispose();
     _tickerSubscription?.cancel();
     _stopWobble();
     final sc = _slidableController;
@@ -198,6 +204,15 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   @override
   void initState() {
     super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _entranceAnimation = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOutCubic,
+    );
+    _entranceController.forward();
     updateCode();
     progressNotifier.value = currentProgress;
     resetTimer();
@@ -224,7 +239,23 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   @override
   Widget build(BuildContext context) {
-    return _buildContextMenuRegion();
+    return AnimatedBuilder(
+      animation: _entranceAnimation,
+      builder: (context, child) {
+        final value = _entranceAnimation.value;
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Transform.scale(
+            scale: 0.82 + 0.18 * value,
+            child: Opacity(
+              opacity: value,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: RepaintBoundary(child: _buildContextMenuRegion()),
+    );
   }
 
   String getCurrentCode() {
@@ -335,11 +366,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
         child: Selector<AppProvider, IssuerAndAccountShowOption>(
           selector: (context, provider) => provider.issuerAndAccountShowOption,
           builder: (context, issuerAndAccountShowOption, child) {
-            return PressableAnimation(
-              child: _buildBody(
-                issuerAndAccountShowOption: issuerAndAccountShowOption,
-              ),
+            final body = _buildBody(
+              issuerAndAccountShowOption: issuerAndAccountShowOption,
             );
+            if (widget.multiSelectMode) return body;
+            return PressableAnimation(child: body);
           },
         ),
       ),
@@ -834,20 +865,30 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
+  bool _showingNextCode = false;
+
   updateCode() {
-    if (appProvider.autoDisplayNextCode &&
-        currentProgress < autoCopyNextCodeProgressThrehold) {
-      tokenLayoutNotifier.code = getNextCode();
-    } else {
-      tokenLayoutNotifier.code = getCurrentCode();
+    if (!isHOTP && !isYandex && widget.token.period > 0) {
+      final shouldShowNext = appProvider.autoDisplayNextCode &&
+          currentProgress < autoCopyNextCodeProgressThrehold;
+      final currentTimeStep = DateTime.now().millisecondsSinceEpoch ~/
+          (widget.token.period * 1000);
+      final timeStepChanged = currentTimeStep != _lastTimeStep;
+      final nextCodeStateChanged = shouldShowNext != _showingNextCode;
+      if (!timeStepChanged && !nextCodeStateChanged) return;
+      _lastTimeStep = currentTimeStep;
+      _showingNextCode = shouldShowNext;
+    }
+    final newCode = (appProvider.autoDisplayNextCode &&
+            currentProgress < autoCopyNextCodeProgressThrehold)
+        ? getNextCode()
+        : getCurrentCode();
+    if (newCode != tokenLayoutNotifier.code) {
+      tokenLayoutNotifier.code = newCode;
     }
   }
 
   _processTap() {
-    if (widget.multiSelectMode) {
-      widget.onToggleSelect?.call();
-      return;
-    }
     if (!appProvider.showEye) {
       tokenLayoutNotifier.codeVisiable = true;
     }
@@ -890,7 +931,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           borderRadius: ChewieDimens.defaultBorderRadius,
           child: Stack(
             alignment: Alignment.bottomCenter,
@@ -962,7 +1003,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           customBorder: const RoundedRectangleBorder(
               borderRadius: ChewieDimens.defaultBorderRadius),
           child: Stack(
@@ -1066,7 +1107,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           borderRadius: ChewieDimens.defaultBorderRadius,
           child: Container(
             decoration: const BoxDecoration(
@@ -1158,7 +1199,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           borderRadius: ChewieDimens.defaultBorderRadius,
           child: Container(
             decoration: const BoxDecoration(

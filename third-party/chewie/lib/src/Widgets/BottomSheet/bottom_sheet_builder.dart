@@ -46,6 +46,7 @@ class BottomSheetBuilder {
             animation: animation,
             child: BottomSheetWrapperWidget(
               preferMinWidth: preferMinWidth,
+              useVerticalMargin: true,
               child: builder(context),
             ),
           );

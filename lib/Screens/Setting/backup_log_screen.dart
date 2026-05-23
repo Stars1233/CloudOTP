@@ -249,34 +249,53 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
 
   Widget _buildLogList() {
     if (!canBackup) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              appLocalizations.haveNotSetBackupPassword,
-              style: ChewieTheme.bodyMedium,
-            ),
-            const SizedBox(height: 10),
-            RoundIconTextButton(
-              height: 36,
-              text: appLocalizations.goToSetBackupPassword,
-              background: _accent,
-              onPressed: () {
-                if (widget.isOverlay) {
-                  RouteUtil.pushDialogRoute(
-                      context, const SettingNavigationScreen(initPageIndex: 3));
-                } else {
-                  Navigator.pop(context);
-                  RouteUtil.pushCupertinoRoute(
-                      context,
-                      const BackupSettingScreen(
-                          jumpToAutoBackupPassword: true));
-                }
-              },
-            ),
-          ],
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: _accent.withAlpha(20),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  LucideIcons.keyRound,
+                  size: 26,
+                  color: _accent,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                appLocalizations.haveNotSetBackupPassword,
+                style: ChewieTheme.bodyMedium.copyWith(
+                  color: ChewieTheme.bodyMedium.color?.withAlpha(150),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              RoundIconTextButton(
+                height: 38,
+                text: appLocalizations.goToSetBackupPassword,
+                background: _accent,
+                onPressed: () {
+                  if (widget.isOverlay) {
+                    RouteUtil.pushDialogRoute(
+                        context, const SettingNavigationScreen(initPageIndex: 3));
+                  } else {
+                    Navigator.pop(context);
+                    RouteUtil.pushCupertinoRoute(
+                        context,
+                        const BackupSettingScreen(
+                            jumpToAutoBackupPassword: true));
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       );
     }

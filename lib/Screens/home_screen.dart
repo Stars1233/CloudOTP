@@ -17,6 +17,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:cloudotp/Database/database_manager.dart';
 import 'package:cloudotp/Database/category_dao.dart';
 import 'package:cloudotp/Database/token_category_binding_dao.dart';
 import 'package:cloudotp/Models/opt_token.dart';
@@ -45,6 +46,7 @@ import '../Utils/app_provider.dart';
 import '../Widgets/BottomSheet/select_category_for_tokens_bottom_sheet.dart';
 import '../Widgets/BottomSheet/select_token_bottom_sheet.dart';
 import '../Widgets/CoachMark/coach_mark_manager.dart';
+import 'Token/add_token_screen.dart';
 import '../l10n/l10n.dart';
 import 'Token/token_layout.dart';
 
@@ -64,6 +66,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   LayoutType layoutType = CloudOTPHiveUtil.getLayoutType();
   OrderType orderType = CloudOTPHiveUtil.getOrderType();
   List<OtpToken> tokens = [];
+  int _allTokenCount = 0;
   List<TokenCategory> categories = [];
 
   List<Tab> tabList = [];
@@ -92,6 +95,12 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   final GlobalKey _appBarTitleKey = GlobalKey();
   final GlobalKey _moreButtonKey = GlobalKey();
   final GlobalKey _firstCategoryTabKey = GlobalKey();
+  final GlobalKey _sortButtonKey = GlobalKey();
+  final GlobalKey _layoutButtonKey = GlobalKey();
+  final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey _cloudBackupKey = GlobalKey();
+  final GlobalKey _backupLogKey = GlobalKey();
+  final GlobalKey desktopSearchBarKey = GlobalKey();
 
   bool get hasSearchFocus => appProvider.searchFocusNode.hasFocus;
 
@@ -697,8 +706,21 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    if (DatabaseManager.isNewDatabase) {
+      DatabaseManager.updateSampleCategoryTitle(
+          appLocalizations.sampleCategoryName);
+    }
     initTab(true);
-    refresh(true);
+    refresh(true).then((_) {
+      if (ResponsiveUtil.isMobile() &&
+          !ResponsiveUtil.isLandscapeTablet() &&
+          !ChewieHiveUtil.getBool(CloudOTPHiveUtil.haveShownCoachMarkKey,
+              defaultValue: false)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showCoachMarkInternal(force: true);
+        });
+      }
+    });
     _searchController.addListener(() {
       performSearch(_searchController.text);
     });
@@ -868,6 +890,13 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       tokenKeyMap.removeWhere((uid, _) => !currentUids.contains(uid));
       performSort();
     });
+
+    if (currentCategoryUid.isEmpty && _searchKey.isEmpty) {
+      _allTokenCount = tokens.length;
+    } else {
+      final allTokens = await TokenDao.listTokens();
+      _allTokenCount = allTokens.length;
+    }
   }
 
   void showCoachMark() {
@@ -875,66 +904,25 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   void _showCoachMarkInternal({required bool force}) {
+    final provider = context.read<AppProvider>();
     CoachMarkManager(
       context: context,
       appBarTitleKey: _appBarTitleKey,
       firstTokenKey: tokenKeyMap.isNotEmpty ? tokenKeyMap.values.first : null,
       categoryTabKey: categories.isNotEmpty ? _firstCategoryTabKey : null,
       moreButtonKey: _moreButtonKey,
+      sortButtonKey: provider.showSortButton ? _sortButtonKey : null,
+      layoutButtonKey: provider.showLayoutButton ? _layoutButtonKey : null,
+      fabKey: _fabKey,
+      cloudBackupKey:
+          provider.showCloudBackupButton ? _cloudBackupKey : null,
+      backupLogKey:
+          provider.showBackupLogButton ? _backupLogKey : null,
       layoutType: layoutType,
       tokenCount: tokens.length,
       categoryCount: categories.length,
-      onDemoAction: _performCoachDemo,
-      onUndoDemoAction: _undoCoachDemo,
+      onDeleteSampleData: () => refresh(true),
     ).show(force: force);
-  }
-
-  Future<void> _performCoachDemo(String identify) async {
-    switch (identify) {
-      case 'search_title':
-        changeSearchBar(true);
-        break;
-      case 'swipe_token':
-        final key = tokenKeyMap.values.firstOrNull;
-        await key?.currentState?.openEndActionPane();
-        break;
-      case 'category_tab':
-        if (categories.isNotEmpty) {
-          BottomSheetBuilder.showBottomSheet(
-            context,
-            responsive: true,
-            (ctx) => SelectTokenBottomSheet(category: categories.first),
-          );
-        }
-        break;
-      case 'more_menu':
-        if (tokens.isNotEmpty) {
-          setState(() {
-            _multiSelectMode = true;
-            _selectedTokenUids.clear();
-            _selectedTokenUids.add(tokens.first.uid);
-          });
-        }
-        break;
-    }
-  }
-
-  Future<void> _undoCoachDemo(String identify) async {
-    switch (identify) {
-      case 'search_title':
-        changeSearchBar(false);
-        break;
-      case 'swipe_token':
-        final key = tokenKeyMap.values.firstOrNull;
-        await key?.currentState?.closeSlidable();
-        break;
-      case 'category_tab':
-        if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-        break;
-      case 'more_menu':
-        exitMultiSelectMode();
-        break;
-    }
   }
 
   getCategories([bool isInit = false]) async {
@@ -984,6 +972,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
             : ResponsiveAppBar(
                 titleLeftMargin: 10,
                 titleWidget: Container(
+                  key: desktopSearchBarKey,
                   constraints: const BoxConstraints(
                       maxWidth: 300, minWidth: 200, maxHeight: 36),
                   child: MySearchBar(
@@ -1079,6 +1068,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
 
   _buildFloatingActionButton() {
     var button = MyFloatingActionButton(
+      key: _fabKey,
       heroTag: "Hero-${categories.length}",
       onPressed: () {
         BottomSheetBuilder.showBottomSheet(
@@ -1111,12 +1101,14 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
 
   getActions(AppProvider provider) {
     return [
-      if (provider.canShowCloudBackupButton && provider.showCloudBackupButton)
+      if (provider.showCloudBackupButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
           child: ToolButton(
+            key: _cloudBackupKey,
             context: context,
             tooltip: appLocalizations.cloudBackupServiceSetting,
+            tooltipPosition: TooltipPosition.bottom,
             icon: LucideIcons.cloud,
             onPressed: () {
               RouteUtil.pushCupertinoRoute(context, const CloudServiceScreen());
@@ -1126,28 +1118,33 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       if (provider.showBackupLogButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
-          child: CircleIconButton(
-            tooltip: appLocalizations.backupLogs,
-            padding: EdgeInsets.zero,
-            icon: Selector<AppProvider, LoadingStatus>(
-              selector: (context, appProvider) =>
-                  appProvider.autoBackupLoadingStatus,
-              builder: (context, autoBackupLoadingStatus, child) => LoadingIcon(
+          child: Selector<AppProvider, LoadingStatus>(
+            selector: (context, appProvider) =>
+                appProvider.autoBackupLoadingStatus,
+            builder: (context, autoBackupLoadingStatus, child) => ToolButton(
+              key: _backupLogKey,
+              context: context,
+              tooltip: appLocalizations.backupLogs,
+              tooltipPosition: TooltipPosition.bottom,
+              iconBuilder: (buttonContext) => LoadingIcon(
                 status: autoBackupLoadingStatus,
-                normalIcon:
-                    Icon(Icons.history_rounded, color: ChewieTheme.iconColor),
+                normalIcon: Icon(Icons.history_rounded,
+                    color: buttonContext.iconColor),
               ),
+              onPressed: () {
+                BackupLogScreen.show(context);
+              },
             ),
-            onTap: () {
-              BackupLogScreen.show(context);
-            },
           ),
         ),
       if (provider.showLayoutButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
           child: ToolButton(
+            key: _layoutButtonKey,
             context: context,
+            tooltip: appLocalizations.layoutType,
+            tooltipPosition: TooltipPosition.bottom,
             icon: layoutType.icon,
             onPressed: () {
               LayoutSelectScreen.show(context);
@@ -1158,7 +1155,10 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         Container(
           margin: const EdgeInsets.only(right: 5),
           child: ToolButton(
+            key: _sortButtonKey,
             context: context,
+            tooltip: appLocalizations.sortType,
+            tooltipPosition: TooltipPosition.bottom,
             icon: orderType.icon,
             onPressed: () {
               SortSelectScreen.show(context);
@@ -1168,6 +1168,8 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       ToolButton(
         key: _moreButtonKey,
         context: context,
+        tooltip: appLocalizations.more,
+        tooltipPosition: TooltipPosition.bottom,
         icon: LucideIcons.ellipsisVertical,
         onPressed: () {
           BottomSheetBuilder.showBottomSheet(
@@ -1191,6 +1193,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         pinned: true,
         elevation: 0,
         scrolledUnderElevation: 0,
+        titleSpacing: 0,
         backgroundColor: ChewieTheme.scaffoldBackgroundColor,
         leading: IconButton(
           icon: Icon(LucideIcons.x, color: ChewieTheme.iconColor),
@@ -1382,7 +1385,6 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
             preferredHeight: layoutType.getHeight(settings.hideProgress),
           ),
           dragToReorder: _multiSelectMode ? false : settings.dragToReorder,
-          cacheExtent: 9999,
           onReorderStart: (_) {
             _fabScrollToHideController.hide();
             _bottombarScrollToHideController.hide();
@@ -1441,18 +1443,109 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       },
     );
     Widget body = tokens.isEmpty
-        ? ListView(
-            padding: const EdgeInsets.symmetric(vertical: 50),
-            children: [
-              EmptyPlaceholder(
-                text: _searchKey.isEmpty
-                    ? appLocalizations.noToken
-                    : appLocalizations.noTokenContainingSearchKey(_searchKey),
-              ),
-            ],
-          )
+        ? _buildEmptyPlaceholder()
         : gridView;
     return SlidableAutoCloseBehavior(child: body);
+  }
+
+  Widget _buildEmptyPlaceholder() {
+    if (_searchKey.isNotEmpty) {
+      return ListView(
+        padding: const EdgeInsets.symmetric(vertical: 50),
+        children: [
+          EmptyPlaceholder(
+            text: appLocalizations.noTokenContainingSearchKey(_searchKey),
+          ),
+        ],
+      );
+    }
+
+    final inCategory = currentCategoryUid.isNotEmpty;
+    final hasGlobalTokens = _allTokenCount > 0;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.inbox,
+              size: 48,
+              color: ChewieTheme.labelLarge.color?.withAlpha(120),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              inCategory
+                  ? appLocalizations.noTokenInCategory
+                  : appLocalizations.noToken,
+              style: ChewieTheme.labelLarge.copyWith(fontSize: 15),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton.icon(
+                  onPressed: () {
+                    if (ResponsiveUtil.isMobile()) {
+                      BottomSheetBuilder.showBottomSheet(
+                        context,
+                        enableDrag: false,
+                        responsive: true,
+                        (context) => AddBottomSheet(
+                          onlyShowScanner: ResponsiveUtil.isLandscapeTablet(),
+                        ),
+                      );
+                    } else {
+                      DialogBuilder.showPageDialog(context,
+                          child: const AddTokenScreen());
+                    }
+                  },
+                  icon: const Icon(LucideIcons.plus, size: 18),
+                  label: Text(appLocalizations.addToken),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ChewieTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                if (inCategory && hasGlobalTokens) ...[
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      final category = categories[_currentTabIndex - 1];
+                      BottomSheetBuilder.showBottomSheet(
+                        context,
+                        responsive: true,
+                        (context) =>
+                            SelectTokenBottomSheet(category: category),
+                      );
+                    },
+                    icon: const Icon(LucideIcons.listPlus, size: 18),
+                    label: Text(appLocalizations.addExistingToken),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ChewieTheme.primaryColor,
+                      side: BorderSide(
+                          color: ChewieTheme.primaryColor.withAlpha(120)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   _buildTabBar([EdgeInsetsGeometry? padding]) {

@@ -233,7 +233,7 @@ class _ImportPreviewScreenState extends BaseDynamicState<ImportPreviewScreen> {
             ),
           const SizedBox(width: 5),
         ],
-        desktopActions: [
+        landscapeActions: [
           if (!_loading)
             ToolButton(
               context: context,

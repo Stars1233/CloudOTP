@@ -42,6 +42,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'Screens/main_screen.dart';
+import 'Screens/welcome_screen.dart';
 import 'TokenUtils/token_image_util.dart';
 import 'Utils/utils.dart';
 import 'Widgets/Shortcuts/app_shortcuts.dart';
@@ -79,6 +80,10 @@ Widget getRootPage([bool isMain = false]) {
               jumpToMain: true,
               showWindowTitle: true,
             );
+          } else if (!ChewieHiveUtil.getBool(
+              CloudOTPHiveUtil.haveShownWelcome4Key,
+              defaultValue: false)) {
+            home = const WelcomeScreen();
           } else {
             home = AppShortcuts(child: MainScreen(key: mainScreenKey));
           }
@@ -125,7 +130,8 @@ Future<void> initHive() async {
   try {
     await DatabaseManager.initDataBase(
         await CloudOTPHiveUtil.getDatabasePassword());
-  } catch (e) {
+  } catch (e, t) {
+    ILogger.error("Failed to init database", e, t);
     await DatabaseManager.resetDatabase();
     if (DatabaseManager.lib != null) {
       CloudOTPHiveUtil.setEncryptDatabaseStatus(

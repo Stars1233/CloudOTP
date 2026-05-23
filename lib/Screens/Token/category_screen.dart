@@ -74,7 +74,7 @@ class _CategoryScreenState extends BaseDynamicState<CategoryScreen>
         showBorder: true,
         showBack: !ResponsiveUtil.isLandscapeLayout(),
         titleLeftMargin: ResponsiveUtil.isLandscapeLayout() ? 15 : 5,
-        desktopActions: [
+        landscapeActions: [
           ToolButton(
             context: context,
             icon: LucideIcons.plus,
@@ -149,7 +149,7 @@ class _CategoryScreenState extends BaseDynamicState<CategoryScreen>
   Widget _buildGrid() {
     return EasyRefresh(
       child: ReorderableGridView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 6, 12, 30),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 30),
         gridDelegate: const SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 480,
           crossAxisSpacing: 10,
@@ -159,8 +159,7 @@ class _CategoryScreenState extends BaseDynamicState<CategoryScreen>
         cacheExtent: 9999,
         itemCount: categories.length,
         onReorder: _onReorder,
-        proxyDecorator:
-            (Widget child, int index, Animation<double> animation) {
+        proxyDecorator: (Widget child, int index, Animation<double> animation) {
           return Container(
             decoration: BoxDecoration(
               boxShadow: ChewieTheme.defaultBoxShadow,
@@ -274,8 +273,8 @@ class _CategoryScreenState extends BaseDynamicState<CategoryScreen>
           ),
           const SizedBox(width: 6),
           CircleIconButton(
-            icon:
-                Icon(LucideIcons.pencil, size: 16, color: ChewieTheme.iconColor),
+            icon: Icon(LucideIcons.pencil,
+                size: 16, color: ChewieTheme.iconColor),
             onTap: () => _editCategory(category),
           ),
           CircleIconButton(
@@ -299,8 +298,7 @@ class _CategoryScreenState extends BaseDynamicState<CategoryScreen>
         if (text.isEmpty) {
           return appLocalizations.categoryNameCannotBeEmpty;
         }
-        if (text != category.title &&
-            await CategoryDao.isCategoryExist(text)) {
+        if (text != category.title && await CategoryDao.isCategoryExist(text)) {
           return appLocalizations.categoryNameDuplicate;
         }
         return null;
@@ -350,8 +348,7 @@ class _CategoryScreenState extends BaseDynamicState<CategoryScreen>
       cancelButtonText: appLocalizations.cancel,
       onTapConfirm: () async {
         await CategoryDao.deleteCategory(category);
-        IToast.showTop(
-            appLocalizations.deleteCategorySuccess(category.title));
+        IToast.showTop(appLocalizations.deleteCategorySuccess(category.title));
         categories.remove(category);
         _categoryTokens.remove(category.uid);
         setState(() {});

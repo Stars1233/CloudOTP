@@ -150,14 +150,6 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
 
   bool get canBackup => _autoBackupPassword.isNotEmpty;
 
-  bool get canLocalBackup =>
-      _autoBackupPath.isNotEmpty && _autoBackupPassword.isNotEmpty;
-
-  bool get canCloudBackup => _autoBackupPassword.isNotEmpty;
-
-  bool get canImmediateBackup =>
-      canBackup && (_enableLocalBackup || _enableCloudBackup);
-
   loadWebDavConfig() async {
     List<CloudServiceConfig> configs =
         await CloudServiceConfigDao.getValidConfigs();
@@ -236,7 +228,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _useBackupPasswordToExportImport : false,
             title: appLocalizations.useBackupPasswordToExportImport,
             description: appLocalizations.useBackupPasswordToExportImportTip,
-            disabled: _autoBackupPassword.isEmpty,
+            disabled: !canBackup,
             onTap: () {
               setState(() {
                 _useBackupPasswordToExportImport =
@@ -256,7 +248,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableAutoBackup : false,
             title: appLocalizations.autoBackup,
             description: appLocalizations.autoBackupTip,
-            disabled: !canBackup || !canImmediateBackup,
+            disabled: !canBackup,
             onTap: () {
               setState(() {
                 _enableAutoBackup = !_enableAutoBackup;
@@ -265,7 +257,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          if (_enableAutoBackup)
+          if (_enableAutoBackup && canBackup)
             CheckboxItem(
               value: _enableBackupOnLaunch,
               title: appLocalizations.backupOnLaunch,
@@ -278,7 +270,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 });
               },
             ),
-          if (canImmediateBackup)
+          if (canBackup)
             EntryItem(
               title: appLocalizations.immediatelyBackup,
               description: appLocalizations.immediatelyBackupTip,
@@ -288,7 +280,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                     showToast: true, showLoading: true, force: true);
               },
             ),
-          if (canImmediateBackup)
+          if (canBackup)
             EntryItem(
               title: appLocalizations.maxBackupCount,
               description: appLocalizations.maxBackupCountTip,
@@ -369,13 +361,14 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          EntryItem(
-            title: appLocalizations.backupLogs,
-            trailing: LucideIcons.history,
-            onTap: () async {
-              BackupLogScreen.show(context);
-            },
-          ),
+          if (canBackup)
+            EntryItem(
+              title: appLocalizations.backupLogs,
+              trailing: LucideIcons.history,
+              onTap: () async {
+                BackupLogScreen.show(context);
+              },
+            ),
         ],
       ),
       CaptionItem(
@@ -385,7 +378,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableLocalBackup : false,
             title: appLocalizations.enableLocalBackup,
             description: appLocalizations.enableLocalBackupTip,
-            disabled: !canLocalBackup ||
+            disabled: !canBackup ||
                 (_enableLocalBackup &&
                     (!_enableCloudBackup || validConfigs.isEmpty)),
             onTap: () {
@@ -457,7 +450,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableCloudBackup : false,
             title: appLocalizations.enableCloudBackup,
             description: appLocalizations.enableCloudBackupTip,
-            disabled: !canCloudBackup ||
+            disabled: !canBackup ||
                 (_enableCloudBackup && !_enableLocalBackup),
             onTap: () {
               setState(() {

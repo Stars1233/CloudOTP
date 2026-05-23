@@ -53,11 +53,15 @@ import '../Utils/utils.dart';
 import '../Widgets/BottomSheet/import_from_third_party_bottom_sheet.dart';
 import '../l10n/l10n.dart';
 import 'Backup/cloud_service_screen.dart';
+import 'package:flutter/foundation.dart';
+
 import 'Lock/database_decrypt_screen.dart';
 import 'Lock/pin_verify_screen.dart';
 import 'Setting/backup_log_screen.dart';
 import 'Setting/setting_navigation_screen.dart';
 import 'Token/category_screen.dart';
+import 'feature_showcase_screen.dart';
+import '../Widgets/CoachMark/desktop_coach_mark_manager.dart';
 
 const borderColor = Color(0xFF805306);
 const backgroundStartColor = Color(0xFFFFD500);
@@ -83,6 +87,20 @@ class MainScreenState extends BaseWindowState<MainScreen>
   TextEditingController searchController = TextEditingController();
   List<OtpToken> _menuTokens = [];
   List<TokenCategory> _menuCategories = [];
+
+  final GlobalKey _sidebarLogoKey = GlobalKey();
+  final GlobalKey _sidebarAddKey = GlobalKey();
+  final GlobalKey _sidebarCategoryKey = GlobalKey();
+  final GlobalKey _sidebarImportKey = GlobalKey();
+  final GlobalKey _sidebarImportThirdKey = GlobalKey();
+  final GlobalKey _sidebarCloudBackupKey = GlobalKey();
+  final GlobalKey _sidebarBackupLogKey = GlobalKey();
+  final GlobalKey _sidebarFeatureShowcaseKey = GlobalKey();
+  final GlobalKey _sidebarSettingKey = GlobalKey();
+  final GlobalKey _sidebarQrScanKey = GlobalKey();
+  final GlobalKey _sidebarSortKey = GlobalKey();
+  final GlobalKey _sidebarLayoutKey = GlobalKey();
+  final GlobalKey _searchBarKey = GlobalKey();
 
   @override
   void onWindowMinimize() {
@@ -179,6 +197,46 @@ class MainScreenState extends BaseWindowState<MainScreen>
       homeScreenState?.performSearch(searchController.text);
     });
     _startAutoBackupOnLaunch();
+    _scheduleDesktopCoachMark();
+  }
+
+  void _scheduleDesktopCoachMark() {
+    if (!ResponsiveUtil.isDesktop() && !ResponsiveUtil.isLandscapeTablet()) {
+      return;
+    }
+    if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.haveShownDesktopCoachMarkKey,
+        defaultValue: false)) return;
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      showDesktopCoachMark();
+    });
+  }
+
+  void showDesktopCoachMark({bool force = false}) {
+    final provider = context.read<AppProvider>();
+    final searchKey = ResponsiveUtil.isMacOS()
+        ? _searchBarKey
+        : (homeScreenState?.desktopSearchBarKey ?? _searchBarKey);
+    DesktopCoachMarkManager(
+      context: context,
+      searchBarKey: searchKey,
+      addTokenKey: _sidebarAddKey,
+      categoryKey: _sidebarCategoryKey,
+      qrScanKey: ResponsiveUtil.isLandscapeTablet() ? null : _sidebarQrScanKey,
+      importExportKey: _sidebarImportKey,
+      importThirdPartyKey: _sidebarImportThirdKey,
+      cloudBackupKey:
+          provider.showCloudBackupButton ? _sidebarCloudBackupKey : null,
+      backupLogKey:
+          provider.showBackupLogButton ? _sidebarBackupLogKey : null,
+      sortButtonKey: provider.showSortButton ? _sidebarSortKey : null,
+      layoutButtonKey: provider.showLayoutButton ? _sidebarLayoutKey : null,
+      featureShowcaseKey: _sidebarFeatureShowcaseKey,
+      settingKey: _sidebarSettingKey,
+      logoKey: _sidebarLogoKey,
+      firstTokenKey: homeScreenState?.tokenKeyMap.values.firstOrNull,
+      onDeleteSampleData: () => homeScreenState?.refresh(true),
+    ).show(force: force);
   }
 
   static const _notifierChannel = MethodChannel('local_notifier');
@@ -1048,6 +1106,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 _buildLogo(),
                 const SizedBox(height: 8),
                 ToolButton(
+                  key: _sidebarAddKey,
                   context: context,
                   tooltip: appLocalizations.addToken,
                   tooltipPosition: TooltipPosition.right,
@@ -1061,6 +1120,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 ),
                 const SizedBox(height: 4),
                 ToolButton(
+                  key: _sidebarCategoryKey,
                   context: context,
                   tooltip: appLocalizations.category,
                   tooltipPosition: TooltipPosition.right,
@@ -1076,6 +1136,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                   const SizedBox(height: 4),
                 if (!ResponsiveUtil.isLandscapeTablet())
                   ToolButton(
+                    key: _sidebarQrScanKey,
                     context: context,
                     tooltip: appLocalizations.scanToken,
                     tooltipPosition: TooltipPosition.right,
@@ -1089,6 +1150,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                   ),
                 const SizedBox(height: 4),
                 ToolButton(
+                  key: _sidebarImportKey,
                   context: context,
                   tooltip: appLocalizations.exportImport,
                   tooltipPosition: TooltipPosition.right,
@@ -1104,6 +1166,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 ),
                 const SizedBox(height: 4),
                 ToolButton(
+                  key: _sidebarImportThirdKey,
                   context: context,
                   tooltip: appLocalizations.importFromThirdParty,
                   icon: LucideIcons.waypoints,
@@ -1118,9 +1181,9 @@ class MainScreenState extends BaseWindowState<MainScreen>
                   },
                 ),
                 const SizedBox(height: 4),
-                if (provider.canShowCloudBackupButton &&
-                    provider.showCloudBackupButton)
+                if (provider.showCloudBackupButton)
                   ToolButton(
+                    key: _sidebarCloudBackupKey,
                     context: context,
                     tooltip: appLocalizations.cloudBackupServiceSetting,
                     icon: LucideIcons.cloudUpload,
@@ -1132,9 +1195,27 @@ class MainScreenState extends BaseWindowState<MainScreen>
                           child: const CloudServiceScreen(showBack: false));
                     },
                   ),
+                if (ResponsiveUtil.isLandscapeTablet())
+                  const SizedBox(height: 4),
+                if (ResponsiveUtil.isLandscapeTablet())
+                  ToolButton(
+                    context: context,
+                    tooltip: appLocalizations.select,
+                    tooltipPosition: TooltipPosition.right,
+                    icon: LucideIcons.listChecks,
+                    padding: const EdgeInsets.all(8),
+                    iconSize: 22,
+                    onPressed: () {
+                      final tokens = homeScreenState?.tokens;
+                      if (tokens != null && tokens.isNotEmpty) {
+                        homeScreenState?.enterMultiSelectMode(tokens.first.uid);
+                      }
+                    },
+                  ),
                 const Spacer(),
                 if (provider.showBackupLogButton) ...[
                   ToolButton(
+                    key: _sidebarBackupLogKey,
                     context: context,
                     tooltip: appLocalizations.backupLogs,
                     tooltipPosition: TooltipPosition.right,
@@ -1156,6 +1237,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 ],
                 if (provider.showSortButton) ...[
                   ToolButton(
+                    key: _sidebarSortKey,
                     context: context,
                     icon: homeScreenState?.orderType.icon ??
                         LucideIcons.arrowUpNarrowWide,
@@ -1171,6 +1253,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
                 ],
                 if (provider.showLayoutButton) ...[
                   ToolButton(
+                    key: _sidebarLayoutKey,
                     context: context,
                     icon: homeScreenState?.layoutType.icon ??
                         LucideIcons.layoutDashboard,
@@ -1184,6 +1267,19 @@ class MainScreenState extends BaseWindowState<MainScreen>
                   ),
                   const SizedBox(height: 4),
                 ],
+                ToolButton(
+                  key: _sidebarFeatureShowcaseKey,
+                  context: context,
+                  tooltip: appLocalizations.featureShowcase,
+                  tooltipPosition: TooltipPosition.right,
+                  icon: LucideIcons.telescope,
+                  padding: const EdgeInsets.all(8),
+                  iconSize: 22,
+                  onPressed: () {
+                    FeatureShowcaseScreen.showAsDialog(context);
+                  },
+                ),
+                const SizedBox(height: 4),
                 ToolButton.dynamicButton(
                   tooltip: appLocalizations.themeMode,
                   iconBuilder: (context, isDark) =>
@@ -1193,8 +1289,29 @@ class MainScreenState extends BaseWindowState<MainScreen>
                   onChangemode: (context, themeMode, child) {},
                   iconSize: 22,
                 ),
+                if (kDebugMode)
+                  const SizedBox(height: 4),
+                if (kDebugMode)
+                  ToolButton(
+                    context: context,
+                    tooltip: "Reset Welcome",
+                    tooltipPosition: TooltipPosition.right,
+                    icon: LucideIcons.rotateCcw,
+                    padding: const EdgeInsets.all(8),
+                    iconSize: 22,
+                    onPressed: () {
+                      ChewieHiveUtil.put(
+                          CloudOTPHiveUtil.haveShownWelcome4Key, false);
+                      ChewieHiveUtil.put(
+                          CloudOTPHiveUtil.haveShownCoachMarkKey, false);
+                      ChewieHiveUtil.put(
+                          CloudOTPHiveUtil.haveShownDesktopCoachMarkKey, false);
+                      IToast.showTop("Welcome screen reset");
+                    },
+                  ),
                 const SizedBox(height: 4),
                 ToolButton(
+                  key: _sidebarSettingKey,
                   context: context,
                   tooltip: appLocalizations.setting,
                   tooltipPosition: TooltipPosition.right,
@@ -1218,8 +1335,14 @@ class MainScreenState extends BaseWindowState<MainScreen>
   Widget _buildLogo({
     double size = 32,
   }) {
-    return IgnorePointer(
-      child: ClipRRect(
+    return ToolButton(
+      key: _sidebarLogoKey,
+      context: context,
+      tooltip: appLocalizations.shortcut,
+      tooltipPosition: TooltipPosition.right,
+      padding: const EdgeInsets.all(4),
+      iconSize: size,
+      iconBuilder: (_) => ClipRRect(
         borderRadius: ChewieDimens.borderRadius8,
         clipBehavior: Clip.antiAlias,
         child: Container(
@@ -1233,6 +1356,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
           ),
         ),
       ),
+      onPressed: () => ShortcutsUtil.showShortcutHelp(context),
     );
   }
 
@@ -1273,6 +1397,7 @@ class MainScreenState extends BaseWindowState<MainScreen>
         leftWidgets: [
           const SizedBox(width: macosTitleBarLeftMargin),
           Container(
+            key: _searchBarKey,
             constraints: const BoxConstraints(
                 maxWidth: 300, minWidth: 200, maxHeight: 36),
             child: MySearchBar(

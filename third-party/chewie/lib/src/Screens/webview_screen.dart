@@ -118,7 +118,7 @@ class _WebviewScreenState extends BaseDynamicState<WebviewScreen>
               },
             ),
           ],
-          desktopActions: [
+          landscapeActions: [
             ToolButton(
               context: context,
               icon: LucideIcons.ellipsisVertical,

@@ -14,6 +14,7 @@
  */
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:cloudotp/Utils/hive_util.dart';
 import 'package:cloudotp/Screens/Setting/about_setting_screen.dart';
 import 'package:cloudotp/Screens/Setting/setting_appearance_screen.dart';
 import 'package:cloudotp/Screens/Setting/setting_backup_screen.dart';
@@ -22,6 +23,7 @@ import 'package:cloudotp/Screens/Setting/setting_operation_screen.dart';
 import 'package:cloudotp/Screens/Setting/setting_safe_screen.dart';
 import 'package:cloudotp/Screens/Token/category_screen.dart';
 import 'package:cloudotp/Screens/feature_showcase_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -145,7 +147,6 @@ class _MoreBottomSheetState extends BaseDynamicState<MoreBottomSheet> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: ChewieTheme.borderColor),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
@@ -255,6 +256,22 @@ class _MoreBottomSheetState extends BaseDynamicState<MoreBottomSheet> {
               }
             },
           ),
+          if (kDebugMode)
+            EntryItem(
+              title: "Reset Welcome",
+              showLeading: true,
+              leading: LucideIcons.rotateCcw,
+              onTap: () {
+                ChewieHiveUtil.put(
+                    CloudOTPHiveUtil.haveShownWelcome4Key, false);
+                ChewieHiveUtil.put(
+                    CloudOTPHiveUtil.haveShownCoachMarkKey, false);
+                ChewieHiveUtil.put(
+                    CloudOTPHiveUtil.haveShownDesktopCoachMarkKey, false);
+                Navigator.pop(context);
+                IToast.showTop("Welcome screen reset");
+              },
+            ),
         ],
       ),
     );

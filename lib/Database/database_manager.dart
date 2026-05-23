@@ -14,6 +14,7 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
@@ -48,6 +49,7 @@ class DatabaseManager {
   });
   static DatabaseFactory _currentDbFactory = cipherDbFactory;
   static bool isDatabaseEncrypted = false;
+  static bool isNewDatabase = false;
 
   static bool get initialized => _database != null;
 
@@ -84,6 +86,7 @@ class DatabaseManager {
         }
       } else {
         isDatabaseEncrypted = true;
+        isNewDatabase = true;
         _currentDbFactory = cipherDbFactory;
         password = await CloudOTPHiveUtil.regeneratePassword();
         appProvider.currentDatabasePassword = password;
@@ -105,6 +108,69 @@ class DatabaseManager {
       );
     }
     await ConfigDao.initConfig();
+  }
+
+  static Future<void> clearSampleDataFlag() async {
+    if (_database == null) return;
+    final db = _database!;
+    final tokens = await db.query('otp_token',
+        where: "remark LIKE '%is_example%'");
+    for (final row in tokens) {
+      final remark = Map<String, dynamic>.from(
+          jsonDecode(row['remark'] as String? ?? '{}'));
+      remark.remove('is_example');
+      await db.update(
+        'otp_token',
+        {'remark': jsonEncode(remark)},
+        where: 'uid = ?',
+        whereArgs: [row['uid']],
+      );
+    }
+    final categories = await db.query('token_category',
+        where: "remark LIKE '%is_example%'");
+    for (final row in categories) {
+      final remark = Map<String, dynamic>.from(
+          jsonDecode(row['remark'] as String? ?? '{}'));
+      remark.remove('is_example');
+      await db.update(
+        'token_category',
+        {'remark': jsonEncode(remark)},
+        where: 'uid = ?',
+        whereArgs: [row['uid']],
+      );
+    }
+  }
+
+  static Future<bool> hasSampleData() async {
+    if (_database == null) return false;
+    final db = _database!;
+    final tokens = await db.query('otp_token',
+        where: "remark LIKE '%is_example%'");
+    return tokens.isNotEmpty;
+  }
+
+  static Future<void> deleteSampleData() async {
+    if (_database == null) return;
+    final db = _database!;
+    final tokens = await db.query('otp_token',
+        where: "remark LIKE '%is_example%'");
+    for (final row in tokens) {
+      final uid = row['uid'] as String;
+      await db.delete('token_category_binding',
+          where: 'token_uid = ?', whereArgs: [uid]);
+      await db.delete('otp_token', where: 'uid = ?', whereArgs: [uid]);
+    }
+    await db.delete('token_category', where: "remark LIKE '%is_example%'");
+  }
+
+  static Future<void> updateSampleCategoryTitle(String title) async {
+    if (_database == null) return;
+    final db = _database!;
+    await db.update(
+      'token_category',
+      {'title': title},
+      where: "remark LIKE '%is_example%'",
+    );
   }
 
   static String _escapeSql(String value) => value.replaceAll("'", "''");
@@ -159,6 +225,114 @@ class DatabaseManager {
     await db.execute(Sql.createCloudServiceConfigTable.sql);
     await db.execute(Sql.createAutoBackupLogTable.sql);
     await db.execute(Sql.createTokenCategoryBindingTable.sql);
+    await _insertSampleData(db);
+  }
+
+  static Future<void> _insertSampleData(Database db) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final remark = jsonEncode({'is_example': true});
+
+    final token1Uid = StringUtil.generateUid();
+    final token2Uid = StringUtil.generateUid();
+    final token3Uid = StringUtil.generateUid();
+    final categoryUid = StringUtil.generateUid();
+
+    await db.insert('otp_token', {
+      'id': 1,
+      'uid': token1Uid,
+      'seq': 1,
+      'issuer': 'Google',
+      'secret': 'JBSWY3DPEHPK3PXP',
+      'account': 'user@example.com',
+      'image_path': 'google.png',
+      'token_type': OtpTokenType.TOTP.index,
+      'algorithm': 'SHA1',
+      'digits': 6,
+      'counter': 0,
+      'period': 30,
+      'pinned': 0,
+      'create_timestamp': now,
+      'edit_timestamp': now,
+      'remark': remark,
+      'copy_times': 0,
+      'pin': '',
+      'last_copy_timestamp': 0,
+      'description': '',
+      'tags': '',
+    });
+
+    await db.insert('otp_token', {
+      'id': 2,
+      'uid': token2Uid,
+      'seq': 2,
+      'issuer': 'Steam',
+      'secret': 'JBSWY3DPEHPK3PXQ',
+      'account': 'gamer',
+      'image_path': 'steam.png',
+      'token_type': OtpTokenType.Steam.index,
+      'algorithm': 'SHA1',
+      'digits': 5,
+      'counter': 0,
+      'period': 30,
+      'pinned': 0,
+      'create_timestamp': now,
+      'edit_timestamp': now,
+      'remark': remark,
+      'copy_times': 0,
+      'pin': '',
+      'last_copy_timestamp': 0,
+      'description': '',
+      'tags': '',
+    });
+
+    await db.insert('otp_token', {
+      'id': 3,
+      'uid': token3Uid,
+      'seq': 3,
+      'issuer': 'Yandex',
+      'secret': 'JBSWY3DPEHPK3PXR',
+      'account': 'user@yandex.com',
+      'image_path': 'yandex.png',
+      'token_type': OtpTokenType.Yandex.index,
+      'algorithm': 'SHA256',
+      'digits': 8,
+      'counter': 0,
+      'period': 30,
+      'pinned': 0,
+      'create_timestamp': now,
+      'edit_timestamp': now,
+      'remark': remark,
+      'copy_times': 0,
+      'pin': '1234567890123456',
+      'last_copy_timestamp': 0,
+      'description': '',
+      'tags': '',
+    });
+
+    await db.insert('token_category', {
+      'id': 1,
+      'uid': categoryUid,
+      'seq': 1,
+      'title': 'Example',
+      'description': '',
+      'create_timestamp': now,
+      'edit_timestamp': now,
+      'pinned': 0,
+      'remark': remark,
+    });
+
+    await db.insert('token_category_binding', {
+      'token_uid': token1Uid,
+      'category_uid': categoryUid,
+    });
+    await db.insert('token_category_binding', {
+      'token_uid': token2Uid,
+      'category_uid': categoryUid,
+    });
+    await db.insert('token_category_binding', {
+      'token_uid': token3Uid,
+      'category_uid': categoryUid,
+    });
   }
 
   static Future<void> _onUpgrade(

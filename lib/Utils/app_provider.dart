@@ -369,9 +369,8 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool _showBackupLogButton = ChewieHiveUtil.getBool(
-      CloudOTPHiveUtil.showBackupLogButtonKey,
-      defaultValue: ResponsiveUtil.isLandscapeLayout(false));
+  bool _showBackupLogButton =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.showBackupLogButtonKey);
 
   bool get showBackupLogButton => _showBackupLogButton;
 

@@ -169,7 +169,11 @@ class _LayoutSelectScreenState extends BaseDynamicState<LayoutSelectScreen> {
     return GestureDetector(
       onTap: () {
         homeScreenState?.changeLayoutType(type);
-        setState(() {});
+        if (!widget.isOverlay) {
+          Navigator.pop(context);
+        } else {
+          setState(() {});
+        }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

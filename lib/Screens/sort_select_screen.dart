@@ -257,7 +257,11 @@ class _SortSelectScreenState extends BaseDynamicState<SortSelectScreen> {
     return GestureDetector(
       onTap: () {
         homeScreenState?.changeOrderType(type: type);
-        setState(() {});
+        if (!widget.isOverlay) {
+          Navigator.pop(context);
+        } else {
+          setState(() {});
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: Padding(

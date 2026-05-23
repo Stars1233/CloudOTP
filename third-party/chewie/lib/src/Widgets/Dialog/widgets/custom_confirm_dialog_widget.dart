@@ -66,7 +66,11 @@ class _CustomConfirmDialogWidgetState
             constraints: ResponsiveUtil.isWideDevice()
                 ? const BoxConstraints(maxWidth: 400)
                 : null,
-            margin: widget.margin ?? const EdgeInsets.all(16),
+            margin: widget.margin ??
+                EdgeInsets.all(16).copyWith(
+                    bottom: widget.align == Alignment.bottomCenter
+                        ? 16 + MediaQuery.of(context).padding.bottom
+                        : 16),
             padding: widget.padding ??
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
             decoration: BoxDecoration(

@@ -45,7 +45,7 @@ class ItemBuilder {
               showBorder: showBorder,
               onTapBack: onTapBack,
               actions: actions,
-              desktopActions: desktopActions,
+              landscapeActions: desktopActions,
             )
           : null,
       body: overrideBody ??
