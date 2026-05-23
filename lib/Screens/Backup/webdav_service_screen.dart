@@ -155,7 +155,7 @@ class _WebDavServiceScreenState extends BaseDynamicState<WebDavServiceScreen>
   }
 
   _buildBody() {
-    return Column(
+    return ListView(
       children: [
         if (_configInitialized) _enableInfo(),
         if (_configInitialized) _accountInfo(),

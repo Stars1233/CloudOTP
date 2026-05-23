@@ -14,6 +14,7 @@
  */
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -57,7 +58,7 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
 
   @override
   Future<void> onWindowClose() async {
-    await windowManager.destroy();
+    exit(0);
   }
 
   static const int _lockoutDurationSeconds = 30;

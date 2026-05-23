@@ -166,6 +166,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             _buildFeatureContent(),
             if (!_transitionDone) _buildHeroTransition(),
             _buildSkipButton(),
+            if (ResponsiveUtil.isDesktop()) const WindowMoveHandle(),
           ],
         ),
       ),

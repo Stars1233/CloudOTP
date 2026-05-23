@@ -13,6 +13,7 @@ class EntryItem extends SearchableStatefulWidget {
   final Color? descriptionColor;
   final CrossAxisAlignment crossAxisAlignment;
   final IconData leading;
+  final Widget? leadingWidget;
   final String tip;
   final Function()? onTap;
   final double? paddingVertical;
@@ -37,6 +38,7 @@ class EntryItem extends SearchableStatefulWidget {
     this.descriptionColor,
     this.crossAxisAlignment = CrossAxisAlignment.start,
     this.leading = LucideIcons.house,
+    this.leadingWidget,
     this.tip = "",
     this.onTap,
     this.paddingVertical,
@@ -80,6 +82,7 @@ class EntryItem extends SearchableStatefulWidget {
       descriptionColor: descriptionColor,
       crossAxisAlignment: crossAxisAlignment,
       leading: leading,
+      leadingWidget: leadingWidget,
       tip: tip,
       onTap: onTap,
       paddingVertical: paddingVertical,
@@ -134,9 +137,10 @@ class EntryItemState extends SearchableState<EntryItem> {
   }
 
   List<Widget> _buildRowChildren() {
+    final hasLeading = widget.showLeading || widget.leadingWidget != null;
     return [
-      if (widget.showLeading) _buildLeadingIcon(),
-      SizedBox(width: widget.showLeading ? 10 : 5),
+      if (hasLeading) _buildLeadingIcon(),
+      SizedBox(width: hasLeading ? 10 : 5),
       Expanded(child: _buildTextContent()),
       if (widget.tipWidget != null) const SizedBox(width: 10),
       if (widget.tipWidget != null) _buildCustomTipWidget(),
@@ -146,6 +150,12 @@ class EntryItemState extends SearchableState<EntryItem> {
   }
 
   Widget _buildLeadingIcon() {
+    if (widget.leadingWidget != null) {
+      return Container(
+        margin: const EdgeInsets.only(left: 4),
+        child: widget.leadingWidget!,
+      );
+    }
     return Container(
       width: 28,
       height: 28,

@@ -13,6 +13,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:io';
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -45,7 +46,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
 
   @override
   Future<void> onWindowClose() async {
-    await windowManager.destroy();
+    exit(0);
   }
 
   late InputValidateAsyncController validateAsyncController;

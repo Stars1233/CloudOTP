@@ -322,6 +322,8 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
           ...allThemes.map((theme) => EntryItem(
                 paddingHorizontal: 20,
                 title: theme.i18nName,
+                showLeading: true,
+                leadingWidget: _buildThemePreviewDots(theme),
                 showTrailing: false,
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -331,6 +333,8 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
           ...customThemes.map((theme) => EntryItem(
                 paddingHorizontal: 20,
                 title: theme.name,
+                showLeading: true,
+                leadingWidget: _buildThemePreviewDots(theme),
                 showTrailing: false,
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -361,6 +365,39 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildThemePreviewDots(ChewieThemeColorData theme) {
+    final colors = [
+      theme.primaryColor,
+      theme.scaffoldBackgroundColor,
+      theme.textColor,
+    ];
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: List.generate(colors.length, (i) {
+          return Positioned(
+            left: i * 8.0,
+            top: (28 - 18) / 2,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: colors[i],
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: ChewieTheme.dividerColor,
+                  width: 1,
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

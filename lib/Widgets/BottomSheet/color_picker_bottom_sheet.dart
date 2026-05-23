@@ -69,32 +69,29 @@ class _ColorPickerBottomSheetState extends State<ColorPickerBottomSheet> {
     return AnimatedPadding(
       padding: MediaQuery.of(context).viewInsets,
       duration: const Duration(milliseconds: 100),
-      child: Wrap(
-        runAlignment: WrapAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.vertical(
-                  top: radius,
-                  bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
-              color: ChewieTheme.scaffoldBackgroundColor,
-              border: ChewieTheme.border,
-              boxShadow: ChewieTheme.defaultBoxShadow,
-            ),
-            child: Material(
-              type: MaterialType.transparency,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    alignment: Alignment.center,
-                    child: Text(widget.title, style: ChewieTheme.titleLarge),
-                  ),
-                  ColorPicker(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.vertical(
+              top: radius,
+              bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
+          color: ChewieTheme.scaffoldBackgroundColor,
+          border: ChewieTheme.border,
+          boxShadow: ChewieTheme.defaultBoxShadow,
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Text(widget.title, style: ChewieTheme.titleLarge),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: ColorPicker(
                     color: _currentColor,
                     onColorChanged: (Color color) {
                       setState(() => _currentColor = color);
@@ -127,49 +124,48 @@ class _ColorPickerBottomSheetState extends State<ColorPickerBottomSheet> {
                     wheelWidth: 20,
                     wheelDiameter: 220,
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 45,
-                            child: RoundIconTextButton(
-                              text: appLocalizations.cancel,
-                              onPressed: () => Navigator.of(context).pop(),
-                              fontSizeDelta: 2,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: SizedBox(
-                            height: 45,
-                            child: RoundIconTextButton(
-                              background: ChewieTheme.primaryColor,
-                              color: Colors.white,
-                              text: appLocalizations.confirm,
-                              onPressed: () {
-                                widget.onColorChanged(_currentColor);
-                                Navigator.of(context).pop();
-                              },
-                              fontSizeDelta: 2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 45,
+                        child: RoundIconTextButton(
+                          text: appLocalizations.cancel,
+                          onPressed: () => Navigator.of(context).pop(),
+                          fontSizeDelta: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SizedBox(
+                        height: 45,
+                        child: RoundIconTextButton(
+                          background: ChewieTheme.primaryColor,
+                          color: Colors.white,
+                          text: appLocalizations.confirm,
+                          onPressed: () {
+                            widget.onColorChanged(_currentColor);
+                            Navigator.of(context).pop();
+                          },
+                          fontSizeDelta: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

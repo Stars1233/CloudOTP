@@ -258,24 +258,26 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
     return CaptionItem(
       title: title,
       initiallyExpanded: initiallyExpanded,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: 8,
-            right: 8,
-            top: 3,
-            bottom: 3,
-          ),
-          child: Column(children: children),
-        ),
-      ],
+      children: children,
     );
   }
 
   Widget _buildColorRow(String field, String label) {
     final color = _getColor(field);
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
+    return EntryItem(
+      title: label,
+      tip: '#${color.toHex().substring(3).toUpperCase()}',
+      showLeading: true,
+      leadingWidget: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: ChewieTheme.dividerColor, width: 1),
+        ),
+      ),
+      showTrailing: false,
       onTap: () {
         ColorPickerBottomSheet.show(
           context,
@@ -284,33 +286,6 @@ class _ThemeEditorScreenState extends BaseDynamicState<ThemeEditorScreen>
           onColorChanged: (newColor) => _updateColor(field, newColor),
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: ChewieTheme.dividerColor, width: 1),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(label, style: ChewieTheme.bodyMedium),
-            ),
-            Text(
-              '#${color.toHex().substring(3).toUpperCase()}',
-              style: ChewieTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
     );
   }
 

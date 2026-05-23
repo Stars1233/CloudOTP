@@ -145,10 +145,12 @@ Future<void> initHive() async {
 
 Future<void> initAndroid() async {
   await initDisplayMode();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemUiOverlayStyle systemUiOverlayStyle = const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
       systemNavigationBarIconBrightness: Brightness.dark);
   SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
 }
@@ -197,17 +199,20 @@ Future<void> initDesktop() async {
 Future<void> initWindow() async {
   await windowManager.ensureInitialized();
   Offset position = ChewieHiveUtil.getWindowPosition();
+  bool shouldCenter = position == Offset.zero;
   WindowOptions windowOptions = WindowOptions(
     size: ChewieHiveUtil.getWindowSize(),
     minimumSize: ChewieProvider.minimumWindowSize,
-    center: position == Offset.zero,
+    center: shouldCenter,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.setPreventClose(true);
-    await windowManager.setPosition(position);
+    if (!shouldCenter) {
+      await windowManager.setPosition(position);
+    }
     await windowManager.show();
     await windowManager.focus();
   });
@@ -329,6 +334,21 @@ class MyApp extends StatelessWidget {
           home: home,
           builder: (context, widget) {
             chewieProvider.initRootContext(context);
+            if (ResponsiveUtil.isAndroid()) {
+              final brightness = Theme.of(context).brightness;
+              final overlayStyle = SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarContrastEnforced: false,
+                systemNavigationBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+              );
+              SystemChrome.setSystemUIOverlayStyle(overlayStyle);
+            }
             return Overlay(
               initialEntries: [
                 if (widget != null) ...[
