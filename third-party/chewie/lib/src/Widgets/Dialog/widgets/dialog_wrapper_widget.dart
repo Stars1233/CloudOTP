@@ -85,6 +85,9 @@ class DialogWrapperWidgetState extends State<DialogWrapperWidget>
         height > preferHeight ? (height - preferHeight) / 2 : 0;
     preferHorizontalMargin = max(preferHorizontalMargin, 20);
     preferVerticalMargin = max(preferVerticalMargin, 80);
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final adjustedBottomMargin =
+        max(preferVerticalMargin - keyboardHeight, 20.0);
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
       child: GestureDetector(
@@ -110,9 +113,11 @@ class DialogWrapperWidgetState extends State<DialogWrapperWidget>
               color: widget.barrierDismissible ? null : Colors.transparent,
               padding: widget.fullScreen
                   ? EdgeInsets.zero
-                  : EdgeInsets.symmetric(
-                      horizontal: preferHorizontalMargin,
-                      vertical: preferVerticalMargin,
+                  : EdgeInsets.only(
+                      left: preferHorizontalMargin,
+                      right: preferHorizontalMargin,
+                      top: preferVerticalMargin,
+                      bottom: adjustedBottomMargin,
                     ),
               child: GestureDetector(
                 onTap: () {},

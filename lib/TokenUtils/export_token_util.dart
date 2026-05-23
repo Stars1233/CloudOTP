@@ -167,6 +167,43 @@ class ExportTokenUtil {
     }
   }
 
+  static Future<Uint8List?> getUint8ListForTokens({
+    required List<OtpToken> tokens,
+    String? password,
+  }) async {
+    try {
+      String tmpPassword = password ?? await ConfigDao.getBackupPassword();
+      List<TokenCategory> categories = await CategoryDao.listCategories();
+      for (TokenCategory category in categories) {
+        category.bindings = await BindingDao.getTokenUids(category.uid);
+      }
+      Set<String> tokenUids = tokens.map((t) => t.uid).toSet();
+      categories = categories.where((c) {
+        return c.bindings.any((uid) => tokenUids.contains(uid));
+      }).toList();
+      for (var c in categories) {
+        c.bindings =
+            c.bindings.where((uid) => tokenUids.contains(uid)).toList();
+      }
+      return await compute((_) async {
+        Backup backup = Backup(
+          tokens: tokens,
+          categories: categories,
+        );
+        BackupEncryptionV1 backupEncryption = BackupEncryptionV1();
+        Uint8List encryptedData =
+            await backupEncryption.encrypt(backup, tmpPassword);
+        return encryptedData;
+      }, null);
+    } catch (e, t) {
+      ILogger.error("Failed to export selected tokens to Uint8List", e, t);
+      if (e is BackupBaseException) {
+        IToast.showTop(e.intlMessage);
+      }
+      return null;
+    }
+  }
+
   static exportEncryptFile(
     String filePath,
     String password, {

@@ -14,6 +14,9 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -31,6 +34,7 @@ import 'package:cloudotp/Utils/search_query_parser.dart';
 import 'package:cloudotp/Widgets/BottomSheet/add_bottom_sheet.dart';
 import 'package:cloudotp/Widgets/BottomSheet/more_bottom_sheet.dart';
 import 'package:cloudotp/Widgets/cloudotp/cloudotp_item_builder.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -38,6 +42,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:move_to_background/move_to_background.dart';
 import 'package:provider/provider.dart';
 
+import 'package:file_picker/file_picker.dart';
+
+import '../Database/config_dao.dart';
 import '../Database/token_dao.dart';
 import '../Models/token_category.dart';
 import '../TokenUtils/export_token_util.dart';
@@ -271,11 +278,37 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       FlutterContextMenu(
         entries: [
           FlutterContextMenuItem(
-            appLocalizations.exportToFile,
+            appLocalizations.exportUriFile,
             iconData: LucideIcons.fileOutput,
             onPressed: () {
-              ExportTokenUtil.exportSelectedTokensUri(selected);
+              DialogBuilder.showConfirmDialog(
+                context,
+                title: appLocalizations.exportUriClearWarningTitle,
+                message: appLocalizations.exportUriClearWarningTip,
+                onTapConfirm: () async {
+                  if (ResponsiveUtil.isDesktop()) {
+                    String? result = await FileUtil.saveFile(
+                      dialogTitle: appLocalizations.exportUriFileTitle,
+                      fileName: ExportTokenUtil.getExportFileName("txt"),
+                      type: FileType.custom,
+                      allowedExtensions: ['txt'],
+                      lockParentWindow: true,
+                    );
+                    if (result != null) {
+                      _exportSelectedTokensUriToFile(selected, result);
+                    }
+                  } else {
+                    _exportSelectedTokensUriToMobile(selected);
+                  }
+                },
+                onTapCancel: () {},
+              );
             },
+          ),
+          FlutterContextMenuItem(
+            appLocalizations.exportEncryptFile,
+            iconData: LucideIcons.fileLock2,
+            onPressed: () => _exportSelectedEncrypted(selected),
           ),
           FlutterContextMenuItem(
             appLocalizations.exportQrcode,
@@ -328,6 +361,100 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _exportSelectedEncrypted(List<OtpToken> selected) async {
+    if (await CloudOTPHiveUtil.canImportOrExportUseBackupPassword()) {
+      _doExportSelectedEncrypted(selected, await ConfigDao.getBackupPassword());
+    } else {
+      BottomSheetBuilder.showBottomSheet(
+        context,
+        responsive: true,
+        (context) => InputBottomSheet(
+          title: appLocalizations.setExportPasswordTitle,
+          message: appLocalizations.setExportPasswordTip,
+          hint: appLocalizations.setExportPasswordHint,
+          tailingConfig: InputItemLeadingTailingConfig(
+            type: InputItemLeadingTailingType.password,
+          ),
+          inputFormatters: [
+            RegexInputFormatter.onlyNumberAndLetterAndSymbol,
+          ],
+          validator: (value) {
+            if (value.isEmpty) {
+              return appLocalizations.encryptDatabasePasswordCannotBeEmpty;
+            }
+            return null;
+          },
+          onValidConfirm: (password) async {
+            _doExportSelectedEncrypted(selected, password);
+            return null;
+          },
+        ),
+      );
+    }
+  }
+
+  Future<void> _doExportSelectedEncrypted(
+      List<OtpToken> selected, String password) async {
+    if (ResponsiveUtil.isDesktop()) {
+      String? result = await FileUtil.saveFile(
+        dialogTitle: appLocalizations.exportEncryptFileTitle,
+        fileName: ExportTokenUtil.getExportFileName("bin"),
+        type: FileType.custom,
+        allowedExtensions: ['bin'],
+        lockParentWindow: true,
+      );
+      if (result != null) {
+        final data = await ExportTokenUtil.getUint8ListForTokens(
+            tokens: selected, password: password);
+        if (data != null) {
+          ExportTokenUtil.exportEncryptFile(result, password,
+              encryptedData: data);
+        }
+      }
+    } else {
+      final data = await ExportTokenUtil.getUint8ListForTokens(
+          tokens: selected, password: password);
+      if (data != null) {
+        ExportTokenUtil.exportEncryptToMobileDirectory(
+            encryptedData: data, password: password);
+      }
+    }
+  }
+
+  Future<void> _exportSelectedTokensUriToFile(
+      List<OtpToken> tokens, String filePath) async {
+    CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
+    await compute((_) async {
+      List<String> uris =
+          tokens.map((e) => OtpTokenParser.toUri(e).toString()).toList();
+      String content = uris.join("\n");
+      File(filePath).writeAsStringSync(content);
+    }, null);
+    CustomLoadingDialog.dismissLoading();
+    IToast.showTop(appLocalizations.exportSuccess);
+  }
+
+  Future<void> _exportSelectedTokensUriToMobile(List<OtpToken> tokens) async {
+    CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
+    Uint8List res = await compute((_) async {
+      List<String> uris =
+          tokens.map((e) => OtpTokenParser.toUri(e).toString()).toList();
+      String content = uris.join("\n");
+      return utf8.encode(content);
+    }, null);
+    String? filePath = await FileUtil.saveFile(
+      dialogTitle: appLocalizations.exportUriFileTitle,
+      fileName: ExportTokenUtil.getExportFileName("txt"),
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+      bytes: res,
+    );
+    CustomLoadingDialog.dismissLoading();
+    if (filePath != null) {
+      IToast.showTop(appLocalizations.exportSuccess);
+    }
   }
 
   Future<void> _processMultiPin() async {
@@ -914,10 +1041,8 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       sortButtonKey: provider.showSortButton ? _sortButtonKey : null,
       layoutButtonKey: provider.showLayoutButton ? _layoutButtonKey : null,
       fabKey: _fabKey,
-      cloudBackupKey:
-          provider.showCloudBackupButton ? _cloudBackupKey : null,
-      backupLogKey:
-          provider.showBackupLogButton ? _backupLogKey : null,
+      cloudBackupKey: provider.showCloudBackupButton ? _cloudBackupKey : null,
+      backupLogKey: provider.showBackupLogButton ? _backupLogKey : null,
       layoutType: layoutType,
       tokenCount: tokens.length,
       categoryCount: categories.length,
@@ -1128,8 +1253,8 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
               tooltipPosition: TooltipPosition.bottom,
               iconBuilder: (buttonContext) => LoadingIcon(
                 status: autoBackupLoadingStatus,
-                normalIcon: Icon(Icons.history_rounded,
-                    color: buttonContext.iconColor),
+                normalIcon:
+                    Icon(Icons.history_rounded, color: buttonContext.iconColor),
               ),
               onPressed: () {
                 BackupLogScreen.show(context);
@@ -1363,7 +1488,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         hideProgress: provider.hideProgressBar,
       ),
       builder: (context, settings, child) {
-        double bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+        double bottomPadding = MediaQuery.of(context).padding.bottom;
         return ReorderableGridView.builder(
           // controller: _scrollController,
           gridItemsNotifier: gridItemsNotifier,
@@ -1374,7 +1499,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
               right: 10,
               top: 10,
               bottom: _multiSelectMode
-                  ? 80 + bottomPadding
+                  ? 88 + bottomPadding
                   : settings.hideBottombar || categories.isEmpty
                       ? 10 + bottomPadding
                       : 85 + bottomPadding),
@@ -1442,9 +1567,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         );
       },
     );
-    Widget body = tokens.isEmpty
-        ? _buildEmptyPlaceholder()
-        : gridView;
+    Widget body = tokens.isEmpty ? _buildEmptyPlaceholder() : gridView;
     return SlidableAutoCloseBehavior(child: body);
   }
 
@@ -1522,8 +1645,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                       BottomSheetBuilder.showBottomSheet(
                         context,
                         responsive: true,
-                        (context) =>
-                            SelectTokenBottomSheet(category: category),
+                        (context) => SelectTokenBottomSheet(category: category),
                       );
                     },
                     icon: const Icon(LucideIcons.listPlus, size: 18),

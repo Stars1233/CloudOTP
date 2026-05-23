@@ -84,10 +84,11 @@ class _ColorPickerBottomSheetState extends State<ColorPickerBottomSheet> {
             ),
             child: Material(
               type: MaterialType.transparency,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     alignment: Alignment.center,
@@ -165,6 +166,7 @@ class _ColorPickerBottomSheetState extends State<ColorPickerBottomSheet> {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ],

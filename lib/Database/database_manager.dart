@@ -381,8 +381,10 @@ class DatabaseManager {
       }
     }
     if (oldVersion < 7) {
-      await db.execute(
-          "alter table otp_token add column tags TEXT NOT NULL DEFAULT ''");
+      if (!(await isColumnExist("otp_token", "tags", overrideDb: db))) {
+        await db.execute(
+            "alter table otp_token add column tags TEXT NOT NULL DEFAULT ''");
+      }
     }
     if (oldVersion < 8) {
       await db.execute('''
