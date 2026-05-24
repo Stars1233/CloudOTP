@@ -391,17 +391,23 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       startActionPane: ActionPane(
         extentRatio: startExtentRatio,
         motion: const ScrollMotion(),
+        onAutoTrigger: () => _processPin(),
         children: [
           SlidableAction(
             onPressed: (context) => _processPin(),
             backgroundColor: widget.token.pinned
                 ? ChewieTheme.primaryColor
                 : ChewieTheme.cardColor,
+            autoTriggerBackgroundColor: ChewieTheme.primaryColor,
+            autoTriggerIconAndTextColor: Colors.white,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             foregroundColor: ChewieTheme.primaryColor,
             icon: widget.token.pinned
                 ? Icons.push_pin_rounded
                 : Icons.push_pin_outlined,
+            autoTriggerIcon: widget.token.pinned
+                ? Icons.push_pin_outlined
+                : Icons.push_pin_rounded,
             label: widget.token.pinned
                 ? appLocalizations.unPinTokenShort
                 : appLocalizations.pinTokenShort,
@@ -416,59 +422,143 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       endActionPane: ActionPane(
         extentRatio: endExtentRatio,
         motion: const ScrollMotion(),
-        children: [
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => _processViewQrCode(),
-            backgroundColor: ChewieTheme.cardColor,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.qrCode,
-            label: appLocalizations.viewTokenQrCodeShort,
-            spacing: 8,
-            simple: simple,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-          ),
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => _processEdit(),
-            backgroundColor: ChewieTheme.cardColor,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.pencilLine,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            label: appLocalizations.editTokenShort,
-            simple: simple,
-            spacing: 8,
-          ),
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => showContextMenu(),
-            backgroundColor: ChewieTheme.cardColor,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.ellipsisVertical,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            label: appLocalizations.moreOptionShort,
-            simple: simple,
-            spacing: 8,
-          ),
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => _processDelete(),
-            backgroundColor: Colors.red,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.trash2,
-            simple: simple,
-            label: appLocalizations.deleteTokenShort,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            spacing: 8,
-            iconAndTextColor: Colors.white,
-          ),
-        ],
+        children: simple
+            ? [
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => _processViewQrCode(),
+                  backgroundColor: ChewieTheme.cardColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.qrCode,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => _processEdit(),
+                  backgroundColor: ChewieTheme.cardColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.pencilLine,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => showContextMenu(),
+                  backgroundColor: ChewieTheme.cardColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.ellipsisVertical,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                // const SizedBox(width: 6),
+                // SlidableAction(
+                //   onPressed: (context) => widget.onEnterMultiSelect?.call(),
+                //   backgroundColor: ChewieTheme.cardColor,
+                //   borderRadius: const BorderRadius.all(Radius.circular(12)),
+                //   foregroundColor: ChewieTheme.primaryColor,
+                //   icon: LucideIcons.listChecks,
+                //   simple: true,
+                //   padding: const EdgeInsets.symmetric(horizontal: 4),
+                // ),
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => _processDelete(),
+                  backgroundColor: Colors.red,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.trash2,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  iconAndTextColor: Colors.white,
+                ),
+              ]
+            : [
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: _processViewQrCode,
+                          icon: LucideIcons.qrCode,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: () => widget.onEnterMultiSelect?.call(),
+                          icon: LucideIcons.listChecks,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: _processEdit,
+                          icon: LucideIcons.pencilLine,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: showContextMenu,
+                          icon: LucideIcons.ellipsisVertical,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _buildGridActionButton(
+                    onPressed: _processDelete,
+                    icon: LucideIcons.trash2,
+                    backgroundColor: Colors.red,
+                    iconAndTextColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
       ),
       child: child,
+    );
+  }
+
+  Widget _buildGridActionButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    Color? backgroundColor,
+    Color? iconAndTextColor,
+  }) {
+    final bg = backgroundColor ?? ChewieTheme.cardColor;
+    final fgColor = iconAndTextColor ?? Theme.of(context).iconTheme.color;
+    return SizedBox.expand(
+      child: OutlinedButton(
+        onPressed: () {
+          onPressed();
+          Slidable.of(context)?.close();
+        },
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          backgroundColor: bg,
+          foregroundColor: fgColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          side: BorderSide.none,
+        ),
+        child:
+            Icon(icon, color: fgColor, size: Theme.of(context).iconTheme.size),
+      ),
     );
   }
 
@@ -501,7 +591,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       case LayoutType.Spotlight:
         body = _buildSlidable(
           startExtentRatio: 0.21,
-          endExtentRatio: 0.8,
+          endExtentRatio: 0.50,
           child: _buildSpotlightLayout(
             issuerAndAccountShowOption: issuerAndAccountShowOption,
           ),
@@ -555,19 +645,14 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   }
 
   showContextMenu() {
-    if (ResponsiveUtil.isLandscapeLayout()) {
-      BottomSheetBuilder.showBottomSheet(
-        context,
-        responsive: true,
-        (context) => TokenOptionBottomSheet(token: widget.token),
-      );
-    } else {
-      BottomSheetBuilder.showBottomSheet(
-        context,
-        responsive: true,
-        (context) => TokenOptionBottomSheet(token: widget.token),
-      );
-    }
+    BottomSheetBuilder.showBottomSheet(
+      context,
+      responsive: true,
+      (context) => TokenOptionBottomSheet(
+        token: widget.token,
+        onEnterMultiSelect: widget.onEnterMultiSelect,
+      ),
+    );
   }
 
   _processCopyCode() {
@@ -871,8 +956,8 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     if (!isHOTP && !isYandex && widget.token.period > 0) {
       final shouldShowNext = appProvider.autoDisplayNextCode &&
           currentProgress < autoCopyNextCodeProgressThrehold;
-      final currentTimeStep = DateTime.now().millisecondsSinceEpoch ~/
-          (widget.token.period * 1000);
+      final currentTimeStep =
+          DateTime.now().millisecondsSinceEpoch ~/ (widget.token.period * 1000);
       final timeStepChanged = currentTimeStep != _lastTimeStep;
       final nextCodeStateChanged = shouldShowNext != _showingNextCode;
       if (!timeStepChanged && !nextCodeStateChanged) return;

@@ -150,6 +150,9 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       token = tokens.firstWhere((t) => t.uid == tokenUid);
     }
 
+    for (final key in tokenKeyMap.values) {
+      key.currentState?.closeSlidable();
+    }
     setState(() {
       _multiSelectMode = true;
       _selectedTokenUids.clear();
@@ -1592,24 +1595,58 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              LucideIcons.inbox,
-              size: 48,
-              color: ChewieTheme.labelLarge.color?.withAlpha(120),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: ChewieTheme.primaryColor.withAlpha(20),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                LucideIcons.inbox,
+                size: 26,
+                color: ChewieTheme.primaryColor,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               inCategory
                   ? appLocalizations.noTokenInCategory
                   : appLocalizations.noToken,
-              style: ChewieTheme.labelLarge.copyWith(fontSize: 15),
+              style: ChewieTheme.bodyMedium.copyWith(
+                color: ChewieTheme.bodyMedium.color?.withAlpha(150),
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FilledButton.icon(
+                if (inCategory && hasGlobalTokens) ...[
+                  RoundIconButton(
+                    icon: Icon(
+                      LucideIcons.listPlus,
+                      size: 18,
+                      color: ChewieTheme.primaryColor,
+                    ),
+                    background: ChewieTheme.primaryColor.withAlpha(20),
+                    padding: const EdgeInsets.all(10),
+                    onPressed: () {
+                      final category = categories[_currentTabIndex - 1];
+                      BottomSheetBuilder.showBottomSheet(
+                        context,
+                        responsive: true,
+                        (context) =>
+                            SelectTokenBottomSheet(category: category),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                RoundIconTextButton(
+                  height: 38,
+                  text: appLocalizations.addToken,
+                  background: ChewieTheme.primaryColor,
                   onPressed: () {
                     if (ResponsiveUtil.isMobile()) {
                       BottomSheetBuilder.showBottomSheet(
@@ -1625,43 +1662,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                           child: const AddTokenScreen());
                     }
                   },
-                  icon: const Icon(LucideIcons.plus, size: 18),
-                  label: Text(appLocalizations.addToken),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ChewieTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
                 ),
-                if (inCategory && hasGlobalTokens) ...[
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      final category = categories[_currentTabIndex - 1];
-                      BottomSheetBuilder.showBottomSheet(
-                        context,
-                        responsive: true,
-                        (context) => SelectTokenBottomSheet(category: category),
-                      );
-                    },
-                    icon: const Icon(LucideIcons.listPlus, size: 18),
-                    label: Text(appLocalizations.addExistingToken),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ChewieTheme.primaryColor,
-                      side: BorderSide(
-                          color: ChewieTheme.primaryColor.withAlpha(120)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
             const SizedBox(height: 100),

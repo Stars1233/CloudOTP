@@ -41,10 +41,12 @@ class TokenOptionBottomSheet extends StatefulWidget {
     super.key,
     required this.token,
     this.isNewToken,
+    this.onEnterMultiSelect,
   });
 
   final OtpToken token;
   final bool? isNewToken;
+  final VoidCallback? onEnterMultiSelect;
 
   @override
   TokenOptionBottomSheetState createState() => TokenOptionBottomSheetState();
@@ -389,6 +391,15 @@ class TokenOptionBottomSheetState
             );
           },
         ),
+        if (widget.onEnterMultiSelect != null)
+          _buildItem(
+            leading: LucideIcons.listChecks,
+            title: appLocalizations.select,
+            onTap: () {
+              Navigator.pop(context);
+              widget.onEnterMultiSelect!();
+            },
+          ),
         if (widget.token.tokenType == OtpTokenType.HOTP)
           _buildItem(
             leading: Icons.plus_one_rounded,
@@ -398,13 +409,6 @@ class TokenOptionBottomSheetState
         _buildItem(
           leading: LucideIcons.squarePercent,
           title: appLocalizations.currentCopyTimes(widget.token.copyTimes),
-          onTap: () {},
-        ),
-        _buildItem(
-          leading: LucideIcons.rotateCcw,
-          title: appLocalizations.resetCopyTimes,
-          titleColor: Colors.red,
-          leadingColor: Colors.red,
           onTap: () {
             DialogBuilder.showConfirmDialog(
               context,

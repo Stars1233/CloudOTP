@@ -150,11 +150,18 @@ class _CloudServiceScreenState extends BaseDynamicState<CloudServiceScreen>
                     RouteUtil.pushDialogRoute(
                         context, const SettingNavigationScreen(initPageIndex: 3));
                   } else {
-                    Navigator.pop(context);
                     RouteUtil.pushCupertinoRoute(
-                        context,
-                        const BackupSettingScreen(
-                            jumpToAutoBackupPassword: true));
+                      context,
+                      const BackupSettingScreen(
+                          jumpToAutoBackupPassword: true),
+                      onThen: (_) {
+                        ConfigDao.getConfig().then((config) {
+                          setState(() {
+                            _autoBackupPassword = config.backupPassword;
+                          });
+                        });
+                      },
+                    );
                   }
                 },
               ),

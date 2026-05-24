@@ -31,11 +31,14 @@ class RouteUtil {
         if (popAll) {
           Navigator.pushAndRemoveUntil(
               context,
-              CustomCupertinoPageRoute(builder: (context) => page),
+              CustomCupertinoPageRoute(
+                  builder: (context) => page, fullscreenDialog: true),
               (_) => false).then(onThen ?? (_) => {});
         } else {
           Navigator.push(
-                  context, CustomCupertinoPageRoute(builder: (context) => page))
+                  context,
+                  CustomCupertinoPageRoute(
+                      builder: (context) => page, fullscreenDialog: true))
               .then(onThen ?? (_) => {});
         }
       }

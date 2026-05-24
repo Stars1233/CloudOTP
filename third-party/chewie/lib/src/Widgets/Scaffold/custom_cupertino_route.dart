@@ -19,6 +19,7 @@ import 'package:flutter/rendering.dart';
 
 const double _kBackGestureWidth = 20.0;
 const double _kMinFlingVelocity = 1.0; // Screen widths per second.
+const double _kDownDismissGestureHeight = 150.0; // Top drag area height.
 
 // An eyeballed value for the maximum time it takes for a page to animate forward
 // if the user releases a page mid swipe.
@@ -220,7 +221,11 @@ mixin CupertinoRouteTransitionMixin<T> on PageRoute<T> {
         primaryRouteAnimation: animation,
         secondaryRouteAnimation: secondaryAnimation,
         linearTransition: linearTransition,
-        child: child,
+        child: _CupertinoDownDismissGestureDetector<T>(
+          enabledCallback: () => route.popGestureEnabled,
+          onStartPopGesture: () => _startPopGesture<T>(route),
+          child: child,
+        ),
       );
     } else {
       return CupertinoPageTransition(
@@ -599,13 +604,13 @@ class _CupertinoFullscreenDialogTransitionState
   }
 
   void _setupAnimation() {
-    _primaryPositionAnimation = (_primaryPositionCurve = CurvedAnimation(
-      parent: widget.primaryRouteAnimation,
-      curve: Curves.linearToEaseOut,
-      // The curve must be flipped so that the reverse animation doesn't play
-      // an ease-in curve, which iOS does not use.
-      reverseCurve: Curves.linearToEaseOut.flipped,
-    ))
+    _primaryPositionAnimation = (widget.linearTransition
+            ? widget.primaryRouteAnimation
+            : _primaryPositionCurve = CurvedAnimation(
+                parent: widget.primaryRouteAnimation,
+                curve: Curves.linearToEaseOut,
+                reverseCurve: Curves.linearToEaseOut.flipped,
+              ))
         .drive(_kBottomUpTween);
     _secondaryPositionAnimation = (widget.linearTransition
             ? widget.secondaryRouteAnimation
@@ -755,6 +760,108 @@ class _CupertinoBackGestureDetectorState<T>
           width: max(dragAreaWidth, _kBackGestureWidth),
           top: 0.0,
           bottom: 0.0,
+          child: Listener(
+            onPointerDown: _handlePointerDown,
+            behavior: HitTestBehavior.translucent,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CupertinoDownDismissGestureDetector<T> extends StatefulWidget {
+  const _CupertinoDownDismissGestureDetector({
+    super.key,
+    required this.enabledCallback,
+    required this.onStartPopGesture,
+    required this.child,
+  });
+
+  final Widget child;
+  final ValueGetter<bool> enabledCallback;
+  final ValueGetter<_CupertinoBackGestureController<T>> onStartPopGesture;
+
+  @override
+  _CupertinoDownDismissGestureDetectorState<T> createState() =>
+      _CupertinoDownDismissGestureDetectorState<T>();
+}
+
+class _CupertinoDownDismissGestureDetectorState<T>
+    extends State<_CupertinoDownDismissGestureDetector<T>> {
+  _CupertinoBackGestureController<T>? _backGestureController;
+
+  late VerticalDragGestureRecognizer _recognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _recognizer = VerticalDragGestureRecognizer(debugOwner: this)
+      ..onStart = _handleDragStart
+      ..onUpdate = _handleDragUpdate
+      ..onEnd = _handleDragEnd
+      ..onCancel = _handleDragCancel;
+  }
+
+  @override
+  void dispose() {
+    _recognizer.dispose();
+    if (_backGestureController != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_backGestureController?.navigator.mounted ?? false) {
+          _backGestureController?.navigator.didStopUserGesture();
+        }
+        _backGestureController = null;
+      });
+    }
+    super.dispose();
+  }
+
+  void _handleDragStart(DragStartDetails details) {
+    assert(mounted);
+    assert(_backGestureController == null);
+    _backGestureController = widget.onStartPopGesture();
+  }
+
+  void _handleDragUpdate(DragUpdateDetails details) {
+    assert(mounted);
+    assert(_backGestureController != null);
+    _backGestureController!
+        .dragUpdate(details.primaryDelta! / context.size!.height);
+  }
+
+  void _handleDragEnd(DragEndDetails details) {
+    assert(mounted);
+    assert(_backGestureController != null);
+    _backGestureController!.dragEnd(
+        details.velocity.pixelsPerSecond.dy / context.size!.height);
+    _backGestureController = null;
+  }
+
+  void _handleDragCancel() {
+    assert(mounted);
+    _backGestureController?.dragEnd(0.0);
+    _backGestureController = null;
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (widget.enabledCallback()) {
+      _recognizer.addPointer(event);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.paddingOf(context).top;
+    return Stack(
+      fit: StackFit.passthrough,
+      children: <Widget>[
+        widget.child,
+        Positioned(
+          left: 0.0,
+          right: 0.0,
+          top: 0.0,
+          height: max(topPadding, _kDownDismissGestureHeight),
           child: Listener(
             onPointerDown: _handlePointerDown,
             behavior: HitTestBehavior.translucent,
