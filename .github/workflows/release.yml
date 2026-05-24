@@ -37,12 +37,12 @@ jobs:
             artifact_path: |
               build/linux/*.deb
               build/linux/*.tar.gz
-          - target: Linux-arm
-            os: ubuntu-22.04-arm
-            artifact_name: release-Linux-arm
-            artifact_path: |
-              build/linux/*.deb
-              build/linux/*.tar.gz
+          # - target: Linux-arm
+          #   os: ubuntu-22.04-arm
+          #   artifact_name: release-Linux-arm
+          #   artifact_path: |
+          #     build/linux/*.deb
+          #     build/linux/*.tar.gz
           - target: iOS
             os: macos-latest
             cache_pod_key: ios-pods
@@ -267,8 +267,8 @@ jobs:
           mv /tmp/artifacts/release-Windows/*.exe /tmp/artifacts/final/
           mv /tmp/artifacts/release-Linux/*.deb /tmp/artifacts/final/
           mv /tmp/artifacts/release-Linux/*.tar.gz /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Linux-arm/*.deb /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Linux-arm/*.tar.gz /tmp/artifacts/final/
+          # mv /tmp/artifacts/release-Linux-arm/*.deb /tmp/artifacts/final/
+          # mv /tmp/artifacts/release-Linux-arm/*.tar.gz /tmp/artifacts/final/
           mv /tmp/artifacts/release-iOS/*.ipa /tmp/artifacts/final/ 2>/dev/null || true
           mv /tmp/artifacts/release-macOS/*.dmg /tmp/artifacts/final/ 2>/dev/null || true
 
