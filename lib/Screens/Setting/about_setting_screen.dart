@@ -304,7 +304,7 @@ class _AboutSettingScreenState extends BaseDynamicState<AboutSettingScreen>
             UriUtil.openExternal(telegramLink);
           },
           showLeading: true,
-          leading: LucideIcons.telescope,
+          leading: LucideIcons.component,
           trailing: LucideIcons.externalLink,
         ),
       ],

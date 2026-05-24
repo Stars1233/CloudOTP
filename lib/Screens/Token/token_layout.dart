@@ -395,7 +395,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
         extentRatio: startExtentRatio,
         motion: const ScrollMotion(),
         onAutoTrigger: () => _processPin(),
-        autoTriggerThreshold: startExtentRatio * 3.0,
+        autoTriggerThreshold: startExtentRatio * 2.5,
         children: [
           SlidableAction(
             onPressed: (context) => _processPin(),
@@ -407,15 +407,15 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             foregroundColor: ChewieTheme.primaryColor,
             icon: widget.token.pinned
-                ? Icons.push_pin_rounded
-                : Icons.push_pin_outlined,
+                ? LucideIcons.pin
+                : LucideIcons.pinOff,
             autoTriggerIcon: widget.token.pinned
-                ? Icons.push_pin_outlined
-                : Icons.push_pin_rounded,
+                ? LucideIcons.pinOff
+                : LucideIcons.pin,
             label: widget.token.pinned
                 ? appLocalizations.unPinTokenShort
                 : appLocalizations.pinTokenShort,
-            simple: simple,
+            simple: true,
             spacing: 8,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             iconAndTextColor: widget.token.pinned ? Colors.white : null,
@@ -624,7 +624,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 ),
                 padding: const EdgeInsets.all(2),
                 child: Icon(
-                  Icons.check,
+                  LucideIcons.check,
                   size: 14,
                   color: widget.isSelected ? Colors.white : Colors.transparent,
                 ),
@@ -839,7 +839,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 },
                 padding: EdgeInsets.all(padding),
                 icon: Icon(
-                  Icons.refresh_rounded,
+                  LucideIcons.rotateCw,
                   size: 20,
                   color: color ?? ChewieTheme.labelMedium.color,
                 ),

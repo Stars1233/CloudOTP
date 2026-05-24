@@ -502,8 +502,8 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
         radius: 12,
         text: appLocalizations.showAdvancedInfo,
         icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: ChewieTheme.bodySmall?.color,
+          LucideIcons.chevronDown,
+          color: ChewieTheme.bodySmall.color,
         ),
         textStyle: ChewieTheme.titleMedium,
         fontSizeDelta: 2,
@@ -619,8 +619,8 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
               radius: 12,
               text: appLocalizations.hideAdvancedInfo,
               icon: Icon(
-                Icons.keyboard_arrow_up_rounded,
-                color: ChewieTheme.bodySmall?.color,
+                LucideIcons.chevronUp,
+                color: ChewieTheme.bodySmall.color,
               ),
               textStyle: ChewieTheme.titleMedium,
               fontSizeDelta: 2,

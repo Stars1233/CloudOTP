@@ -6,7 +6,7 @@ import 'controller.dart';
 // INTERNAL USE
 // ignore_for_file: public_member_api_docs
 
-const double _kDragDampingFactor = 0.6;
+const double _kDragDampingFactor = 0.8;
 
 class SlidableGestureDetector extends StatefulWidget {
   const SlidableGestureDetector({

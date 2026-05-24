@@ -206,7 +206,7 @@ class TokenOptionBottomSheetState
                           setState(() {});
                         },
                         icon: Icon(
-                          Icons.refresh_rounded,
+                          LucideIcons.refreshCcw,
                           size: 20,
                           color: ChewieTheme.bodyMedium.color,
                         ),
@@ -297,9 +297,7 @@ class TokenOptionBottomSheetState
           },
         ),
         _buildItem(
-          leading: widget.token.pinned
-              ? Icons.push_pin_rounded
-              : Icons.push_pin_outlined,
+          leading: widget.token.pinned ? LucideIcons.pinOff : LucideIcons.pin,
           title: widget.token.pinned
               ? appLocalizations.unPinToken
               : appLocalizations.pinToken,

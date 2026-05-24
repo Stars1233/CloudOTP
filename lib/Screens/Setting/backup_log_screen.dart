@@ -291,8 +291,8 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
                 background: _accent,
                 onPressed: () {
                   if (widget.isOverlay) {
-                    RouteUtil.pushDialogRoute(
-                        context, const SettingNavigationScreen(initPageIndex: 3));
+                    RouteUtil.pushDialogRoute(context,
+                        const SettingNavigationScreen(initPageIndex: 3));
                   } else {
                     Navigator.pop(context);
                     RouteUtil.pushCupertinoRoute(
@@ -443,8 +443,8 @@ class BackupLogItemState extends BaseDynamicState<BackupLogItem> {
                     padding: const EdgeInsets.all(4),
                     icon: Icon(
                         expanded
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
+                            ? LucideIcons.chevronUp
+                            : LucideIcons.chevronDown,
                         size: 16,
                         color: ChewieTheme.labelSmall.color),
                     onTap: () {

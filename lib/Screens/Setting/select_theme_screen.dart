@@ -597,7 +597,7 @@ class _SelectThemeScreenState extends BaseDynamicState<SelectThemeScreen>
             ),
           _buildAccentCircle(
             color: null,
-            icon: Icons.colorize,
+            icon: LucideIcons.paintBucket,
             label: appLocalizations.customColor,
             isSelected: selectedIndex == _presetAccentColors.length + 1,
             onTap: () {

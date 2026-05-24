@@ -18,6 +18,7 @@ import 'dart:ui';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 import '../../../l10n/l10n.dart';
@@ -189,7 +190,7 @@ class QrcodesDialogWidgetState extends BaseDynamicState<QrcodesDialogWidget> {
                               fontSizeDelta: 2,
                               disabled: currentPage <= 0,
                               icon: Icon(
-                                Icons.arrow_back_rounded,
+                                LucideIcons.arrowLeft,
                                 color: currentPage <= 0 ? Colors.grey : null,
                               ),
                               padding: const EdgeInsets.symmetric(

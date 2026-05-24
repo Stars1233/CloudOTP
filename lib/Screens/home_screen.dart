@@ -500,7 +500,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
             _buildDockItem(
               icon: _selectedTokenUids.length == tokens.length
                   ? Icons.deselect
-                  : Icons.select_all,
+                  : LucideIcons.checkCheck,
               label: _selectedTokenUids.length == tokens.length
                   ? appLocalizations.deselectAll
                   : appLocalizations.selectAll,
@@ -1202,7 +1202,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       onPressed: () {
         BottomSheetBuilder.showBottomSheet(
           context,
-          enableDrag: false,
+          enableDrag: true,
           responsive: true,
           (context) => AddBottomSheet(
             onlyShowScanner: ResponsiveUtil.isLandscapeTablet(),
@@ -1378,7 +1378,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                           CircleIconButton(
                             tooltip: appLocalizations.cancel,
                             icon: Icon(
-                              Icons.arrow_back_rounded,
+                              LucideIcons.arrowLeft,
                               color: ChewieTheme.iconColor,
                             ),
                             onTap: () {
@@ -1652,7 +1652,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                     if (ResponsiveUtil.isMobile()) {
                       BottomSheetBuilder.showBottomSheet(
                         context,
-                        enableDrag: false,
+                        enableDrag: true,
                         responsive: true,
                         (context) => AddBottomSheet(
                           onlyShowScanner: ResponsiveUtil.isLandscapeTablet(),

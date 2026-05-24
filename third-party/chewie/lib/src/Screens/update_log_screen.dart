@@ -98,23 +98,24 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
                   : ChewieTheme.scaffoldBackgroundColor,
             )
           : null,
-      body: EasyRefresh(
-        controller: _refreshController,
-        refreshOnStart: true,
-        onRefresh: () async {
-          await fetchReleases();
-        },
-        child: ListView.builder(
-          padding: widget.padding
-              .add(const EdgeInsets.symmetric(horizontal: 4, vertical: 10))
-              .add(EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom)),
-          itemBuilder: (context, index) => _buildItem(
-            releaseItems[index],
-            index,
-            index == releaseItems.length - 1,
+      body: SafeArea(
+        top: false,
+        child: EasyRefresh(
+          controller: _refreshController,
+          refreshOnStart: true,
+          onRefresh: () async {
+            await fetchReleases();
+          },
+          child: ListView.builder(
+            padding: widget.padding
+                .add(const EdgeInsets.symmetric(horizontal: 4, vertical: 10)),
+            itemBuilder: (context, index) => _buildItem(
+              releaseItems[index],
+              index,
+              index == releaseItems.length - 1,
+            ),
+            itemCount: releaseItems.length,
           ),
-          itemCount: releaseItems.length,
         ),
       ),
     );
@@ -165,117 +166,115 @@ class _UpdateLogScreenState extends BaseDynamicState<UpdateLogScreen>
             const SizedBox(width: 13),
             Expanded(
               child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ChewieTheme.canvasColor,
-                borderRadius: ChewieDimens.borderRadius12,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: accent.withAlpha(30),
-                          borderRadius: BorderRadius.circular(8),
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ChewieTheme.canvasColor,
+                  borderRadius: ChewieDimens.borderRadius12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: accent.withAlpha(30),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            isLatest ? LucideIcons.sparkles : LucideIcons.tag,
+                            size: 15,
+                            color: accent,
+                          ),
                         ),
-                        child: Icon(
-                          isLatest
-                              ? LucideIcons.sparkles
-                              : LucideIcons.tag,
-                          size: 15,
-                          color: accent,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  item.tagName,
-                                  style: ChewieTheme.bodyMedium.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (isCurrent) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: accent.withAlpha(25),
-                                      borderRadius: BorderRadius.circular(10),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    item.tagName,
+                                    style: ChewieTheme.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    child: Text(
-                                      chewieLocalizations.currentVersion,
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: accent,
+                                  ),
+                                  if (isCurrent) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: accent.withAlpha(25),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        chewieLocalizations.currentVersion,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: accent,
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                            if (releaseDate.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                releaseDate,
-                                style: ChewieTheme.bodySmall.copyWith(
-                                  color: ChewieTheme.bodyMedium.color
-                                      ?.withAlpha(120),
-                                  fontSize: 11,
-                                ),
                               ),
+                              if (releaseDate.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  releaseDate,
+                                  style: ChewieTheme.bodySmall.copyWith(
+                                    color: ChewieTheme.bodyMedium.color
+                                        ?.withAlpha(120),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      CircleIconButton(
-                        icon: Icon(
-                          LucideIcons.externalLink,
-                          size: 14,
-                          color: ChewieTheme.iconColor,
+                        CircleIconButton(
+                          icon: Icon(
+                            LucideIcons.externalLink,
+                            size: 14,
+                            color: ChewieTheme.iconColor,
+                          ),
+                          onTap: () {
+                            UriUtil.launchUrlUri(context, item.htmlUrl);
+                          },
                         ),
-                        onTap: () {
-                          UriUtil.launchUrlUri(context, item.htmlUrl);
-                        },
-                      ),
-                    ],
-                  ),
-                  if ((item.body ?? "").isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: ChewieTheme.scaffoldBackgroundColor,
-                          borderRadius: ChewieDimens.borderRadius8,
-                        ),
-                        child: SelectableAreaWrapper(
-                          focusNode: FocusNode(),
-                          child: CustomMarkdownWidget(
-                            item.body ?? "",
-                            baseStyle: ChewieTheme.bodySmall,
+                      ],
+                    ),
+                    if ((item.body ?? "").isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: ChewieTheme.scaffoldBackgroundColor,
+                            borderRadius: ChewieDimens.borderRadius8,
+                          ),
+                          child: SelectableAreaWrapper(
+                            focusNode: FocusNode(),
+                            child: CustomMarkdownWidget(
+                              item.body ?? "",
+                              baseStyle: ChewieTheme.bodySmall,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
           ],
         ),
       ],
