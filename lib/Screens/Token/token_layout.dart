@@ -122,6 +122,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     await _slidableController?.close();
   }
 
+  void replayEntrance() {
+    _entranceController.reset();
+    _entranceController.forward();
+  }
+
   void _startWobble() {
     if (_wobbleController != null) return;
     _wobbleController = AnimationController(
@@ -170,13 +175,8 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     _entranceController.dispose();
     _tickerSubscription?.cancel();
     _stopWobble();
-    final sc = _slidableController;
+    _slidableController?.dispose();
     _slidableController = null;
-    if (sc != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        sc.dispose();
-      });
-    }
     tokenLayoutNotifier.dispose();
     super.dispose();
   }
@@ -188,6 +188,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       _startWobble();
     } else if (!widget.multiSelectMode && oldWidget.multiSelectMode) {
       _stopWobble();
+    }
+    if (widget.layoutType != oldWidget.layoutType) {
+      _slidableController?.close();
     }
   }
 
@@ -206,11 +209,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     super.initState();
     _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 500),
     );
     _entranceAnimation = CurvedAnimation(
       parent: _entranceController,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOutBack,
     );
     _entranceController.forward();
     updateCode();
@@ -244,11 +247,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       builder: (context, child) {
         final value = _entranceAnimation.value;
         return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
+          offset: Offset(0, 40 * (1 - value)),
           child: Transform.scale(
-            scale: 0.82 + 0.18 * value,
+            scale: 0.75 + 0.25 * value,
             child: Opacity(
-              opacity: value,
+              opacity: value.clamp(0.0, 1.0),
               child: child,
             ),
           ),
@@ -392,6 +395,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
         extentRatio: startExtentRatio,
         motion: const ScrollMotion(),
         onAutoTrigger: () => _processPin(),
+        autoTriggerThreshold: startExtentRatio * 3.0,
         children: [
           SlidableAction(
             onPressed: (context) => _processPin(),

@@ -1028,5 +1028,9 @@
   "desktopCoachLogoShortcutTitle": "快捷键帮助",
   "desktopCoachLogoShortcutDescription": "点击 Logo 查看所有快捷键。",
   "desktopCoachRightClickTitle": "右键菜单",
-  "desktopCoachRightClickDescription": "右键点击任何令牌可快速访问编辑、置顶、查看二维码、删除或进入多选模式等操作。"
+  "desktopCoachRightClickDescription": "右键点击任何令牌可快速访问编辑、置顶、查看二维码、删除或进入多选模式等操作。",
+  "enableModalSheet": "页面延伸至状态栏",
+  "enableModalSheetTip": "关闭后，页面将延伸至状态栏后方而非停留在状态栏下方",
+  "clearBackupLogs": "清除备份日志",
+  "clearBackupLogsConfirm": "确定要清除所有备份日志吗？"
 }

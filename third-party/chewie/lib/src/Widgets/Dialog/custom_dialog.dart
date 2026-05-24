@@ -81,7 +81,7 @@ class CustomInfoDialog {
         context: context,
         barrierLabel: '',
         barrierColor: ChewieTheme.barrierColor,
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: ChewieTheme.animationDuration,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return CustomDialogAnimations.fromBottom(
             animation,
@@ -188,7 +188,7 @@ class CustomConfirmDialog {
         context: context,
         barrierLabel: '',
         barrierColor: ChewieTheme.barrierColor,
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: ChewieTheme.animationDuration,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return CustomDialogAnimations.fromBottom(
             animation,

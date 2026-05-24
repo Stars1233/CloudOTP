@@ -67,6 +67,7 @@ class CloudOTPHiveUtil {
   static const String hideBottombarWhenScrollingKey =
       "hideBottombarWhenScrolling";
   static const String enableLandscapeInTabletKey = "enableLandscapeInTablet";
+  static const String enableModalSheetKey = "enableModalSheet";
 
   //Backup
   static const String enableAutoBackupKey = "enableAutoBackup";

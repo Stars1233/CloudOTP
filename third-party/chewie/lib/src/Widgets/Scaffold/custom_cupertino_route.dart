@@ -15,7 +15,10 @@ import 'dart:ui' show ImageFilter, lerpDouble;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/rendering.dart';
+
+import 'package:awesome_chewie/awesome_chewie.dart' show ChewieTheme;
 
 const double _kBackGestureWidth = 20.0;
 const double _kMinFlingVelocity = 1.0; // Screen widths per second.
@@ -101,6 +104,8 @@ mixin CupertinoRouteTransitionMixin<T> on PageRoute<T> {
   /// {@endtemplate}
   String? get title;
 
+  bool get modalSheet => false;
+
   ValueNotifier<String?>? _previousTitle;
 
   /// The title string of the previous [CustomCupertinoPageRoute].
@@ -146,12 +151,26 @@ mixin CupertinoRouteTransitionMixin<T> on PageRoute<T> {
   }
 
   @override
-  // A relatively rigorous eyeball estimation.
-  Duration get transitionDuration => const Duration(milliseconds: 500);
+  bool get opaque => !fullscreenDialog;
 
   @override
-  Color? get barrierColor =>
-      fullscreenDialog ? null : _kCupertinoPageTransitionBarrierColor;
+  bool get popGestureEnabled {
+    if (isFirst) return false;
+    if (willHandlePopInternally) return false;
+    if (popDisposition == RoutePopDisposition.doNotPop) {
+      return false;
+    }
+    if (!animation!.isCompleted) return false;
+    return true;
+  }
+
+  @override
+  Duration get transitionDuration => ChewieTheme.animationDuration;
+
+  @override
+  Color? get barrierColor => fullscreenDialog
+      ? const Color(0x59000000)
+      : _kCupertinoPageTransitionBarrierColor;
 
   @override
   String? get barrierLabel => null;
@@ -217,10 +236,13 @@ mixin CupertinoRouteTransitionMixin<T> on PageRoute<T> {
     // match finger motions.
     final bool linearTransition = route.popGestureInProgress;
     if (route.fullscreenDialog) {
+      final bool modalSheet = route is CupertinoRouteTransitionMixin &&
+          (route as CupertinoRouteTransitionMixin).modalSheet;
       return CupertinoFullscreenDialogTransition(
         primaryRouteAnimation: animation,
         secondaryRouteAnimation: secondaryAnimation,
         linearTransition: linearTransition,
+        modalSheet: modalSheet,
         child: _CupertinoDownDismissGestureDetector<T>(
           enabledCallback: () => route.popGestureEnabled,
           onStartPopGesture: () => _startPopGesture<T>(route),
@@ -284,14 +306,13 @@ class CustomCupertinoPageRoute<T> extends PageRoute<T>
   CustomCupertinoPageRoute({
     required this.builder,
     this.title,
+    this.modalSheet = false,
     super.settings,
     this.maintainState = true,
     super.fullscreenDialog,
     super.allowSnapshotting = true,
     super.barrierDismissible = false,
-  }) {
-    assert(opaque);
-  }
+  });
 
   /// Builds the primary contents of the route.
   final WidgetBuilder builder;
@@ -301,6 +322,9 @@ class CustomCupertinoPageRoute<T> extends PageRoute<T>
 
   @override
   final String? title;
+
+  @override
+  final bool modalSheet;
 
   @override
   final bool maintainState;
@@ -318,9 +342,7 @@ class _PageBasedCustomCupertinoPageRoute<T> extends PageRoute<T>
   _PageBasedCustomCupertinoPageRoute({
     required CupertinoPage<T> page,
     super.allowSnapshotting = true,
-  }) : super(settings: page) {
-    assert(opaque);
-  }
+  }) : super(settings: page);
 
   CupertinoPage<T> get _page => settings as CupertinoPage<T>;
 
@@ -329,6 +351,9 @@ class _PageBasedCustomCupertinoPageRoute<T> extends PageRoute<T>
 
   @override
   String? get title => _page.title;
+
+  @override
+  bool get modalSheet => _page.modalSheet;
 
   @override
   bool get maintainState => _page.maintainState;
@@ -363,6 +388,7 @@ class CupertinoPage<T> extends Page<T> {
     this.maintainState = true,
     this.title,
     this.fullscreenDialog = false,
+    this.modalSheet = false,
     this.allowSnapshotting = true,
     super.canPop,
     super.onPopInvoked,
@@ -383,6 +409,8 @@ class CupertinoPage<T> extends Page<T> {
 
   /// {@macro flutter.widgets.PageRoute.fullscreenDialog}
   final bool fullscreenDialog;
+
+  final bool modalSheet;
 
   /// {@macro flutter.widgets.TransitionRoute.allowSnapshotting}
   final bool allowSnapshotting;
@@ -536,6 +564,7 @@ class CupertinoFullscreenDialogTransition extends StatefulWidget {
     required this.secondaryRouteAnimation,
     required this.child,
     required this.linearTransition,
+    this.modalSheet = false,
   });
 
   ///  * `primaryRouteAnimation` is a linear route animation from 0.0 to 1.0
@@ -550,6 +579,8 @@ class CupertinoFullscreenDialogTransition extends StatefulWidget {
   ///    Used to precisely track back gesture drags.
   final bool linearTransition;
 
+  final bool modalSheet;
+
   /// The widget below this widget in the tree.
   final Widget child;
 
@@ -563,14 +594,8 @@ class _CupertinoFullscreenDialogTransitionState
   /// When this page is coming in to cover another page.
   late Animation<Offset> _primaryPositionAnimation;
 
-  /// When this page is becoming covered by another page.
-  late Animation<Offset> _secondaryPositionAnimation;
-
   /// Curve of primary page which is coming in to cover another page.
   CurvedAnimation? _primaryPositionCurve;
-
-  /// Curve of secondary page which is becoming covered by another page.
-  CurvedAnimation? _secondaryPositionCurve;
 
   @override
   void initState() {
@@ -598,42 +623,52 @@ class _CupertinoFullscreenDialogTransitionState
 
   void _disposeCurve() {
     _primaryPositionCurve?.dispose();
-    _secondaryPositionCurve?.dispose();
     _primaryPositionCurve = null;
-    _secondaryPositionCurve = null;
   }
 
   void _setupAnimation() {
-    _primaryPositionAnimation = (widget.linearTransition
-            ? widget.primaryRouteAnimation
-            : _primaryPositionCurve = CurvedAnimation(
-                parent: widget.primaryRouteAnimation,
-                curve: Curves.linearToEaseOut,
-                reverseCurve: Curves.linearToEaseOut.flipped,
-              ))
-        .drive(_kBottomUpTween);
-    _secondaryPositionAnimation = (widget.linearTransition
-            ? widget.secondaryRouteAnimation
-            : _secondaryPositionCurve = CurvedAnimation(
-                parent: widget.secondaryRouteAnimation,
-                curve: Curves.linearToEaseOut,
-                reverseCurve: Curves.easeInToLinear,
-              ))
-        .drive(_kMiddleLeftTween);
+    final primaryCurved = widget.linearTransition
+        ? widget.primaryRouteAnimation
+        : _primaryPositionCurve = CurvedAnimation(
+            parent: widget.primaryRouteAnimation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+    _primaryPositionAnimation = primaryCurved.drive(_kBottomUpTween);
   }
 
   @override
   Widget build(BuildContext context) {
-    assert(debugCheckHasDirectionality(context));
-    final TextDirection textDirection = Directionality.of(context);
+    Widget content = widget.child;
+    const borderRadius = BorderRadius.vertical(
+      top: Radius.circular(20.0),
+    );
+    if (widget.modalSheet) {
+      final topPadding = MediaQuery.of(context).padding.top;
+      content = Padding(
+        padding: EdgeInsets.only(top: topPadding),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            padding: const EdgeInsets.only(top: 6),
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: true,
+              child: content,
+            ),
+          ),
+        ),
+      );
+    } else {
+      content = ClipRRect(
+        borderRadius: borderRadius,
+        child: content,
+      );
+    }
     return SlideTransition(
-      position: _secondaryPositionAnimation,
-      textDirection: textDirection,
-      transformHitTests: false,
-      child: SlideTransition(
-        position: _primaryPositionAnimation,
-        child: widget.child,
-      ),
+      position: _primaryPositionAnimation,
+      child: content,
     );
   }
 }
@@ -833,8 +868,8 @@ class _CupertinoDownDismissGestureDetectorState<T>
   void _handleDragEnd(DragEndDetails details) {
     assert(mounted);
     assert(_backGestureController != null);
-    _backGestureController!.dragEnd(
-        details.velocity.pixelsPerSecond.dy / context.size!.height);
+    _backGestureController!
+        .dragEnd(details.velocity.pixelsPerSecond.dy / context.size!.height);
     _backGestureController = null;
   }
 

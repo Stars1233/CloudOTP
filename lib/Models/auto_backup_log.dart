@@ -57,25 +57,25 @@ enum AutoBackupStatus {
       case AutoBackupStatus.pending:
         return Colors.grey;
       case AutoBackupStatus.encrypting:
-        return ChewieTheme.primaryColor;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.encryptFailed:
         return Colors.red;
       case AutoBackupStatus.encrpytSuccess:
-        return Colors.green;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.saving:
-        return ChewieTheme.primaryColor;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.saveFailed:
         return Colors.red;
       case AutoBackupStatus.saveSuccess:
-        return Colors.green;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.uploading:
-        return ChewieTheme.primaryColor;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.uploadFailed:
         return Colors.red;
       case AutoBackupStatus.uploadSuccess:
-        return Colors.green;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.complete:
-        return Colors.green;
+        return ChewieTheme.primaryColor;
       case AutoBackupStatus.failed:
         return Colors.red;
     }

@@ -39,7 +39,7 @@ class BottomSheetBuilder {
         barrierColor: ChewieTheme.barrierColor,
         barrierLabel:
             MaterialLocalizations.of(context).modalBarrierDismissLabel,
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: ChewieTheme.animationDuration,
         pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return DialogAnimation(
@@ -58,9 +58,10 @@ class BottomSheetBuilder {
         elevation: 0,
         enableDrag: enableDrag,
         barrierColor: ChewieTheme.barrierColor,
+        duration: ChewieTheme.animationDuration,
         backgroundColor: backgroundColor ?? ChewieTheme.canvasColor,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: ChewieDimens.defaultRadius),
         ),
         builder: builder,
         containerWidget: (_, animation, child) => BottomSheetWrapperWidget(

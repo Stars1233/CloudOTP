@@ -295,7 +295,9 @@ class ChewieTheme {
 
   static Color get barrierColor => ResponsiveUtil.isLandscapeLayout()
       ? ChewieTheme.scaffoldBackgroundColor.withValues(alpha: 0.7)
-      : Colors.black54;
+      : const Color(0x59000000);
+
+  static const Duration animationDuration = Duration(milliseconds: 450);
 
   static Color get iconColor =>
       Theme.of(chewieProvider.rootContext).iconTheme.color!;

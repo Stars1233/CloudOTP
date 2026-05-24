@@ -17,6 +17,7 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/token_category_binding_dao.dart';
 import 'package:cloudotp/Screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../Database/category_dao.dart';
 import '../../Models/opt_token.dart';
@@ -80,8 +81,10 @@ class _SelectCategoryForTokensBottomSheetState
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildHeader(),
-              const SizedBox(height: 10),
-              _buildButtons(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: _buildButtons(),
+              ),
               _buildFooter(),
             ],
           ),
@@ -91,15 +94,31 @@ class _SelectCategoryForTokensBottomSheetState
   }
 
   _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      alignment: Alignment.center,
-      decoration:
-          BoxDecoration(borderRadius: BorderRadius.vertical(top: radius)),
-      child: Text(
-        textAlign: TextAlign.center,
-        appLocalizations.setCategoryForTokens(widget.tokens.length),
-        style: ChewieTheme.titleLarge,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 10),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: ChewieTheme.primaryColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(LucideIcons.tags,
+                color: ChewieTheme.primaryColor, size: 17),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              appLocalizations.setCategoryForTokens(widget.tokens.length),
+              style: ChewieTheme.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -131,39 +150,50 @@ class _SelectCategoryForTokensBottomSheetState
 
   _buildFooter() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       alignment: Alignment.center,
       child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded(flex: 2, child: SizedBox(height: 50)),
+          Expanded(
+            child: SizedBox(
+              height: 45,
+              child: RoundIconTextButton(
+                text: appLocalizations.cancel,
+                onPressed: () => Navigator.of(context).pop(),
+                fontSizeDelta: 2,
+              ),
+            ),
+          ),
+          if (categories.isNotEmpty) const SizedBox(width: 10),
           if (categories.isNotEmpty)
             Expanded(
-              flex: 1,
-              child: RoundIconTextButton(
-                background: ChewieTheme.primaryColor,
-                text: appLocalizations.save,
-                onPressed: () async {
-                  List<int> selectedIndexes =
-                      controller.selectedIndexes.toList();
-                  List<String> selectedCategoryUids =
-                      selectedIndexes.map((e) => categories[e].uid).toList();
-                  Navigator.of(context).pop();
-                  for (OtpToken token in widget.tokens) {
-                    List<String> existingUids =
-                        await BindingDao.getCategoryUids(token.uid);
-                    List<String> newUids = selectedCategoryUids
-                        .where((uid) => !existingUids.contains(uid))
-                        .toList();
-                    if (newUids.isNotEmpty) {
-                      await BindingDao.bingdingsForToken(token.uid, newUids);
+              child: SizedBox(
+                height: 45,
+                child: RoundIconTextButton(
+                  background: ChewieTheme.primaryColor,
+                  color: Colors.white,
+                  text: appLocalizations.save,
+                  onPressed: () async {
+                    List<int> selectedIndexes =
+                        controller.selectedIndexes.toList();
+                    List<String> selectedCategoryUids =
+                        selectedIndexes.map((e) => categories[e].uid).toList();
+                    Navigator.of(context).pop();
+                    for (OtpToken token in widget.tokens) {
+                      List<String> existingUids =
+                          await BindingDao.getCategoryUids(token.uid);
+                      List<String> newUids = selectedCategoryUids
+                          .where((uid) => !existingUids.contains(uid))
+                          .toList();
+                      if (newUids.isNotEmpty) {
+                        await BindingDao.bingdingsForToken(token.uid, newUids);
+                      }
                     }
-                  }
-                  IToast.showTop(appLocalizations.saveSuccess);
-                  widget.onCompleted();
-                },
-                fontSizeDelta: 2,
+                    IToast.showTop(appLocalizations.saveSuccess);
+                    widget.onCompleted();
+                  },
+                  fontSizeDelta: 2,
+                ),
               ),
             ),
         ],

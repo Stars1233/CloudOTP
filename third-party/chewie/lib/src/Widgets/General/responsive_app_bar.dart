@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -73,9 +74,8 @@ class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
                               onPressed: onTapBack ??
                                   () => chewieProvider.panelScreenState
                                       ?.popPage(),
-                              iconBuilder: (_) => const Icon(
-                                  Icons.arrow_back_rounded,
-                                  size: 22),
+                              buttonSize: const Size(32, 32),
+                              icon: LucideIcons.arrowLeft,
                             ),
                           ),
                         titleContent,

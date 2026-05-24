@@ -80,7 +80,7 @@ class _AboutSettingScreenState extends BaseDynamicState<AboutSettingScreen>
 
   diaplayCelebrate() {
     restore();
-    RouteUtil.pushFadeRoute(context, const EggScreen());
+    RouteUtil.pushDialogRoute(context, const EggScreen());
     setState(() {});
   }
 

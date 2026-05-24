@@ -63,6 +63,8 @@ class _AppearanceSettingScreenState
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideAppbarWhenScrollingKey);
   bool hideBottombarWhenScrolling =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideBottombarWhenScrollingKey);
+  bool enableModalSheet =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableModalSheetKey, defaultValue: false);
   final GlobalKey _setAutoBackupPasswordKey = GlobalKey();
   bool hideProgressBar =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideProgressBarKey);
@@ -307,6 +309,17 @@ class _AppearanceSettingScreenState
               hideBottombarWhenScrolling = !hideBottombarWhenScrolling;
               appProvider.hideBottombarWhenScrolling =
                   hideBottombarWhenScrolling;
+            });
+          },
+        ),
+        CheckboxItem(
+          value: enableModalSheet,
+          title: appLocalizations.enableModalSheet,
+          description: appLocalizations.enableModalSheetTip,
+          onTap: () {
+            setState(() {
+              enableModalSheet = !enableModalSheet;
+              appProvider.enableModalSheet = enableModalSheet;
             });
           },
         ),

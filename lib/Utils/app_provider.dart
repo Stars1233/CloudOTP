@@ -426,6 +426,17 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool _enableModalSheet =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableModalSheetKey, defaultValue: false);
+
+  bool get enableModalSheet => _enableModalSheet;
+
+  set enableModalSheet(bool value) {
+    _enableModalSheet = value;
+    ChewieHiveUtil.put(CloudOTPHiveUtil.enableModalSheetKey, value);
+    notifyListeners();
+  }
+
   // Map<Type, Action<Intent>> _dynamicShortcuts =
   //     KeyboardHandlerState.mainScreenShortcuts;
 

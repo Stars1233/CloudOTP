@@ -150,7 +150,7 @@ class DialogBuilder {
       context: context,
       barrierLabel: '',
       barrierColor: ChewieTheme.barrierColor,
-      transitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: ChewieTheme.animationDuration,
       transitionBuilder: (context, animation, secondaryAnimation, _) {
         return DialogAnimation(
           animation: animation,

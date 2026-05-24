@@ -193,7 +193,13 @@ class PinVerifyScreenState extends BaseWindowState<PinVerifyScreen>
                     BlankIconButton(),
                   ],
                 )
-              : null,
+              : !widget.isModal
+                  ? ResponsiveAppBar(
+                      showBack: true,
+                      onTapBack: () => Navigator.pop(context),
+                      showBorder: false,
+                    )
+                  : null,
           bottomNavigationBar: widget.showWindowTitle
               ? Container(
                   height: 86,

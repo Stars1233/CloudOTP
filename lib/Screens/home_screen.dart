@@ -28,6 +28,7 @@ import 'package:cloudotp/Screens/Backup/cloud_service_screen.dart';
 import 'package:cloudotp/Screens/layout_select_screen.dart';
 import 'package:cloudotp/Screens/sort_select_screen.dart';
 import 'package:cloudotp/Screens/Setting/backup_log_screen.dart';
+import 'package:cloudotp/Screens/Token/category_screen.dart';
 import 'package:cloudotp/Screens/main_screen.dart';
 import 'package:cloudotp/Utils/hive_util.dart';
 import 'package:cloudotp/Utils/search_query_parser.dart';
@@ -1493,6 +1494,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       builder: (context, settings, child) {
         double bottomPadding = MediaQuery.of(context).padding.bottom;
         return ReorderableGridView.builder(
+          cacheExtent: 1000,
           // controller: _scrollController,
           gridItemsNotifier: gridItemsNotifier,
           autoScroll: true,
@@ -1636,8 +1638,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                       BottomSheetBuilder.showBottomSheet(
                         context,
                         responsive: true,
-                        (context) =>
-                            SelectTokenBottomSheet(category: category),
+                        (context) => SelectTokenBottomSheet(category: category),
                       );
                     },
                   ),
@@ -1696,6 +1697,11 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         _currentTabIndex = index;
         getTokens();
         CloudOTPHiveUtil.setSelectedCategoryUid(currentCategoryUid);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          for (final key in tokenKeyMap.values) {
+            key.currentState?.replayEntrance();
+          }
+        });
       },
     );
   }
@@ -1709,13 +1715,15 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
               ? _firstCategoryTabKey
               : null,
           onLongPress: () {
+            HapticFeedback.lightImpact();
             if (category != null) {
-              HapticFeedback.lightImpact();
               BottomSheetBuilder.showBottomSheet(
                 context,
                 responsive: true,
                 (context) => SelectTokenBottomSheet(category: category),
               );
+            } else {
+              RouteUtil.pushDialogRoute(context, const CategoryScreen());
             }
           },
           child: Text(category?.title ?? (() => appLocalizations.allTokens)()),

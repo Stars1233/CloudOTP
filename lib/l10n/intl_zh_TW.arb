@@ -1028,5 +1028,9 @@
   "desktopCoachLogoShortcutTitle": "快捷鍵說明",
   "desktopCoachLogoShortcutDescription": "點擊 Logo 查看所有快捷鍵。",
   "desktopCoachRightClickTitle": "右鍵選單",
-  "desktopCoachRightClickDescription": "右鍵點擊任何令牌可快速存取編輯、置頂、查看 QR Code、刪除或進入多選模式等操作。"
+  "desktopCoachRightClickDescription": "右鍵點擊任何令牌可快速存取編輯、置頂、查看 QR Code、刪除或進入多選模式等操作。",
+  "enableModalSheet": "頁面延伸至狀態列",
+  "enableModalSheetTip": "關閉後，頁面將延伸至狀態列後方而非停留在狀態列下方",
+  "clearBackupLogs": "清除備份日誌",
+  "clearBackupLogsConfirm": "確定要清除所有備份日誌嗎？"
 }

@@ -200,11 +200,16 @@ class _ActionPaneState extends State<ActionPane> implements RatioConfigurator {
       }
     }
 
-    final absoluteRatio = ratio.abs().clamp(0.0, widget.extentRatio);
-    if (ratio < 0) {
-      return -absoluteRatio;
+    final absoluteRatio = ratio.abs();
+    if (absoluteRatio <= widget.extentRatio) {
+      return ratio < 0 ? -absoluteRatio : absoluteRatio;
     }
-    return absoluteRatio;
+    final overExtent = absoluteRatio - widget.extentRatio;
+    final maxOverExtent = widget.extentRatio * 0.2;
+    final dampedOverExtent = maxOverExtent *
+        (1 - math.pow(math.e, -overExtent / maxOverExtent * 2).toDouble());
+    final result = widget.extentRatio + dampedOverExtent;
+    return ratio < 0 ? -result : result;
   }
 
   void _checkAutoTriggerThreshold(double currentRatio, double threshold) {
@@ -313,12 +318,36 @@ class _ActionPaneState extends State<ActionPane> implements RatioConfigurator {
           },
         );
       } else {
-        final factor = widget.extentRatio;
-        child = FractionallySizedBox(
-          alignment: config.alignment,
-          widthFactor: config.direction == Axis.horizontal ? factor : null,
-          heightFactor: config.direction == Axis.horizontal ? null : factor,
-          child: widget.motion,
+        child = AnimatedBuilder(
+          animation: controller!.animation,
+          builder: (context, _) {
+            final currentRatio = controller!.animation.value;
+            final factor = widget.extentRatio;
+            Alignment alignment = config.alignment;
+            if (currentRatio > widget.extentRatio && widget.extentRatio < 1.0) {
+              final overRatio = (currentRatio - widget.extentRatio) /
+                  (1 - widget.extentRatio);
+              if (config.direction == Axis.horizontal) {
+                alignment = Alignment(
+                  config.alignment.x * (1 - 2 * overRatio),
+                  config.alignment.y,
+                );
+              } else {
+                alignment = Alignment(
+                  config.alignment.x,
+                  config.alignment.y * (1 - 2 * overRatio),
+                );
+              }
+            }
+            return FractionallySizedBox(
+              alignment: alignment,
+              widthFactor:
+                  config.direction == Axis.horizontal ? factor : null,
+              heightFactor:
+                  config.direction == Axis.horizontal ? null : factor,
+              child: widget.motion,
+            );
+          },
         );
       }
     } else {

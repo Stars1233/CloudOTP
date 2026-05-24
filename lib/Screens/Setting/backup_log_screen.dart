@@ -230,21 +230,29 @@ class BackupLogScreenState extends BaseDynamicState<BackupLogScreen> {
   }
 
   clear() async {
-    final completedIds = _mergedLogs
-        .where((log) => log.lastStatus.isCompleted && log.id >= 0)
-        .map((log) => log.id)
-        .toList();
+    DialogBuilder.showConfirmDialog(
+      context,
+      title: appLocalizations.clearBackupLogs,
+      message: appLocalizations.clearBackupLogsConfirm,
+      onTapConfirm: () async {
+        final completedIds = _mergedLogs
+            .where((log) => log.lastStatus.isCompleted && log.id >= 0)
+            .map((log) => log.id)
+            .toList();
 
-    appProvider.clearAutoBackupLogs();
-    appProvider.autoBackupLoadingStatus = LoadingStatus.none;
+        appProvider.clearAutoBackupLogs();
+        appProvider.autoBackupLoadingStatus = LoadingStatus.none;
 
-    if (completedIds.isNotEmpty) {
-      await AutoBackupLogDao.deleteCompletedLogs(completedIds);
-    }
+        if (completedIds.isNotEmpty) {
+          await AutoBackupLogDao.deleteCompletedLogs(completedIds);
+        }
 
-    final remainingDbLogs = await AutoBackupLogDao.getLogs(limit: 50);
-    _mergeLogs(remainingDbLogs);
-    setState(() {});
+        final remainingDbLogs = await AutoBackupLogDao.getLogs(limit: 50);
+        _mergeLogs(remainingDbLogs);
+        setState(() {});
+      },
+      onTapCancel: () {},
+    );
   }
 
   Widget _buildLogList() {

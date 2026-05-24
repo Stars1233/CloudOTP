@@ -1028,5 +1028,9 @@
   "desktopCoachLogoShortcutTitle": "Keyboard Shortcuts",
   "desktopCoachLogoShortcutDescription": "Click the logo to view all keyboard shortcuts.",
   "desktopCoachRightClickTitle": "Right-Click Menu",
-  "desktopCoachRightClickDescription": "Right-click on any token to access actions like edit, pin, view QR code, delete, or enter multi-select mode."
+  "desktopCoachRightClickDescription": "Right-click on any token to access actions like edit, pin, view QR code, delete, or enter multi-select mode.",
+  "enableModalSheet": "Extend Page to Status Bar",
+  "enableModalSheetTip": "When disabled, pages extend behind the status bar instead of stopping below it",
+  "clearBackupLogs": "Clear Backup Logs",
+  "clearBackupLogsConfirm": "Are you sure you want to clear all backup logs?"
 }
