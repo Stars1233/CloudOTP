@@ -32,7 +32,7 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
         data: ThemeData(
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
-          tabBarTheme: const TabBarTheme(
+          tabBarTheme: const TabBarThemeData(
             splashFactory: NoSplash.splashFactory,
           ),
         ),

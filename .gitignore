@@ -5,9 +5,11 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -30,7 +32,8 @@ migrate_working_dir/
 .packages
 .pub-cache/
 .pub/
-/build/
+**/build/
+**/.plugin_symlinks/
 
 # Symbolication related
 app.*.symbols
@@ -47,6 +50,7 @@ app.*.map.json
 **/generated/
 
 cloudotp.db
+*.ipa
 
 /assets/fonts/**
 

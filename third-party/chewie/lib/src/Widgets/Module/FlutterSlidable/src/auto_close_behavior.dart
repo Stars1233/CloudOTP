@@ -352,6 +352,7 @@ class _SlidableAutoCloseBarrierNotificationSenderState
   SlidableGroupNotificationDispatcher? dispatcher;
 
   void _handleStatusChanged(AnimationStatus status) {
+    if (!mounted) return;
     //TODO(romain): There is a bug if more than one try to open at the same time.
     final willBarrierBeEnabled = status != AnimationStatus.dismissed;
     final barrierEnabled = dispatcher != null;
@@ -527,6 +528,7 @@ class _SlidableNotificationSenderState
   }
 
   void handleStatusChanged(AnimationStatus status) {
+    if (!mounted) return;
     if (widget.enabled) {
       widget.onStatusChanged(status);
     }
@@ -537,7 +539,7 @@ class _SlidableNotificationSenderState
   }
 
   void removeListeners(_SlidableNotificationSender widget) {
-    widget.controller.animation.addStatusListener(handleStatusChanged);
+    widget.controller.animation.removeStatusListener(handleStatusChanged);
   }
 
   @override

@@ -13,9 +13,10 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
+
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Models/auto_backup_log.dart';
-import 'package:cloudotp/Screens/Setting/setting_general_screen.dart';
 import 'package:cloudotp/Screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -24,12 +25,6 @@ import 'package:queue/queue.dart';
 import '../Screens/home_screen.dart';
 import '../l10n/l10n.dart';
 import 'hive_util.dart';
-
-GlobalKey<GeneralSettingScreenState> generalSettingScreenKey =
-    GlobalKey<GeneralSettingScreenState>();
-
-GeneralSettingScreenState? get generalSettingScreenState =>
-    generalSettingScreenKey.currentState;
 
 GlobalKey<MainScreenState> mainScreenKey = GlobalKey<MainScreenState>();
 
@@ -45,6 +40,29 @@ HomeScreenState? get homeScreenState =>
 //     keyboardHandlerKey.currentState;
 
 Queue autoBackupQueue = Queue();
+
+class GlobalTokenTicker {
+  static final GlobalTokenTicker _instance = GlobalTokenTicker._();
+  factory GlobalTokenTicker() => _instance;
+  GlobalTokenTicker._();
+
+  Timer? _timer;
+  final StreamController<void> _controller = StreamController.broadcast();
+
+  Stream<void> get stream => _controller.stream;
+
+  void start() {
+    _timer ??= Timer.periodic(
+        const Duration(milliseconds: 100), (_) => _controller.add(null));
+  }
+
+  void stop() {
+    _timer?.cancel();
+    _timer = null;
+  }
+}
+
+final globalTokenTicker = GlobalTokenTicker();
 
 AppProvider appProvider = AppProvider();
 
@@ -193,7 +211,20 @@ class AppProvider with ChangeNotifier {
 
   String latestVersion = "";
 
-  bool preventLock = false;
+  Timer? _preventLockTimer;
+  bool _preventLock = false;
+
+  bool get preventLock => _preventLock;
+
+  set preventLock(bool value) {
+    _preventLockTimer?.cancel();
+    _preventLock = value;
+    if (value) {
+      _preventLockTimer = Timer(const Duration(minutes: 5), () {
+        _preventLock = false;
+      });
+    }
+  }
 
   FocusNode shortcutFocusNode = FocusNode();
   FocusNode searchFocusNode = FocusNode();
@@ -338,9 +369,8 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool _showBackupLogButton = ChewieHiveUtil.getBool(
-      CloudOTPHiveUtil.showBackupLogButtonKey,
-      defaultValue: ResponsiveUtil.isLandscapeLayout(false));
+  bool _showBackupLogButton =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.showBackupLogButtonKey);
 
   bool get showBackupLogButton => _showBackupLogButton;
 
@@ -393,6 +423,17 @@ class AppProvider with ChangeNotifier {
   set hideBottombarWhenScrolling(bool value) {
     _hideBottombarWhenScrolling = value;
     ChewieHiveUtil.put(CloudOTPHiveUtil.hideBottombarWhenScrollingKey, value);
+    notifyListeners();
+  }
+
+  bool _enableModalSheet =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableModalSheetKey, defaultValue: false);
+
+  bool get enableModalSheet => _enableModalSheet;
+
+  set enableModalSheet(bool value) {
+    _enableModalSheet = value;
+    ChewieHiveUtil.put(CloudOTPHiveUtil.enableModalSheetKey, value);
     notifyListeners();
   }
 
@@ -471,6 +512,106 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  final List<ChewieThemeColorData> _customLightThemes =
+      ChewieHiveUtil.getCustomLightThemes();
+
+  List<ChewieThemeColorData> get customLightThemes => _customLightThemes;
+
+  final List<ChewieThemeColorData> _customDarkThemes =
+      ChewieHiveUtil.getCustomDarkThemes();
+
+  List<ChewieThemeColorData> get customDarkThemes => _customDarkThemes;
+
+  void addCustomLightTheme(ChewieThemeColorData theme) {
+    _customLightThemes.add(theme);
+    ChewieHiveUtil.setCustomLightThemes(_customLightThemes);
+    notifyListeners();
+  }
+
+  void updateCustomLightTheme(int index, ChewieThemeColorData theme) {
+    if (index >= 0 && index < _customLightThemes.length) {
+      _customLightThemes[index] = theme;
+      ChewieHiveUtil.setCustomLightThemes(_customLightThemes);
+      int activeIndex = ChewieHiveUtil.getLightThemeIndex();
+      int builtInCount = ChewieThemeColorData.defaultLightThemes.length;
+      if (activeIndex == builtInCount + index) {
+        _lightTheme = ChewieHiveUtil.getLightTheme();
+        chewieProvider.lightTheme = _lightTheme;
+      }
+      notifyListeners();
+    }
+  }
+
+  void deleteCustomLightTheme(int index) {
+    if (index < 0 || index >= _customLightThemes.length) return;
+    _customLightThemes.removeAt(index);
+    ChewieHiveUtil.setCustomLightThemes(_customLightThemes);
+    int activeIndex = ChewieHiveUtil.getLightThemeIndex();
+    int builtInCount = ChewieThemeColorData.defaultLightThemes.length;
+    int deletedGlobalIndex = builtInCount + index;
+    if (activeIndex == deletedGlobalIndex) {
+      setLightTheme(0);
+    } else if (activeIndex > deletedGlobalIndex) {
+      ChewieHiveUtil.setLightTheme(activeIndex - 1);
+      _lightTheme = ChewieHiveUtil.getLightTheme();
+      chewieProvider.lightTheme = _lightTheme;
+    }
+    notifyListeners();
+  }
+
+  void addCustomDarkTheme(ChewieThemeColorData theme) {
+    _customDarkThemes.add(theme);
+    ChewieHiveUtil.setCustomDarkThemes(_customDarkThemes);
+    notifyListeners();
+  }
+
+  void updateCustomDarkTheme(int index, ChewieThemeColorData theme) {
+    if (index >= 0 && index < _customDarkThemes.length) {
+      _customDarkThemes[index] = theme;
+      ChewieHiveUtil.setCustomDarkThemes(_customDarkThemes);
+      int activeIndex = ChewieHiveUtil.getDarkThemeIndex();
+      int builtInCount = ChewieThemeColorData.defaultDarkThemes.length;
+      if (activeIndex == builtInCount + index) {
+        _darkTheme = ChewieHiveUtil.getDarkTheme();
+        chewieProvider.darkTheme = _darkTheme;
+      }
+      notifyListeners();
+    }
+  }
+
+  void deleteCustomDarkTheme(int index) {
+    if (index < 0 || index >= _customDarkThemes.length) return;
+    _customDarkThemes.removeAt(index);
+    ChewieHiveUtil.setCustomDarkThemes(_customDarkThemes);
+    int activeIndex = ChewieHiveUtil.getDarkThemeIndex();
+    int builtInCount = ChewieThemeColorData.defaultDarkThemes.length;
+    int deletedGlobalIndex = builtInCount + index;
+    if (activeIndex == deletedGlobalIndex) {
+      setDarkTheme(0);
+    } else if (activeIndex > deletedGlobalIndex) {
+      ChewieHiveUtil.setDarkTheme(activeIndex - 1);
+      _darkTheme = ChewieHiveUtil.getDarkTheme();
+      chewieProvider.darkTheme = _darkTheme;
+    }
+    notifyListeners();
+  }
+
+  void setLightPrimaryColorOverride(Color? color, int paletteIndex) {
+    ChewieHiveUtil.setCustomLightPrimaryColor(color);
+    ChewieHiveUtil.setLightThemePrimaryColorIndex(paletteIndex);
+    _lightTheme = ChewieHiveUtil.getLightTheme();
+    chewieProvider.lightTheme = _lightTheme;
+    notifyListeners();
+  }
+
+  void setDarkPrimaryColorOverride(Color? color, int paletteIndex) {
+    ChewieHiveUtil.setCustomDarkPrimaryColor(color);
+    ChewieHiveUtil.setDarkThemePrimaryColorIndex(paletteIndex);
+    _darkTheme = ChewieHiveUtil.getDarkTheme();
+    chewieProvider.darkTheme = _darkTheme;
+    notifyListeners();
+  }
+
   Locale? _locale = ChewieHiveUtil.getLocale();
 
   Locale? get locale => _locale;
@@ -481,6 +622,12 @@ class AppProvider with ChangeNotifier {
       Intl.defaultLocale = value?.toString();
       notifyListeners();
       ChewieHiveUtil.setLocale(value);
+    }
+  }
+
+  void refreshSystemLocale() {
+    if (_locale == null) {
+      notifyListeners();
     }
   }
 }

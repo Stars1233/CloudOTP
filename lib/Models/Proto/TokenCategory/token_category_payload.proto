@@ -26,4 +26,8 @@ message TokenCategoryParameters {
 	optional string uid = 6;
 
 	optional string bindings = 7;
+
+	optional bool pinned = 8;
+
+	optional int32 seq = 9;
 }

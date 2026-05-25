@@ -13,10 +13,16 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:cloudotp/Database/config_dao.dart';
 import 'package:cloudotp/Screens/home_screen.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
+import 'package:hashlib/hashlib.dart';
 
 import '../Database/database_manager.dart';
 import 'constant.dart';
@@ -48,7 +54,8 @@ class CloudOTPHiveUtil {
   static const String autoHideCodeKey = "autoHideCode";
   static const String defaultHideCodeKey = "defaultHideCode";
   static const String showEyeKey = "showEye";
-  static const String issuerAndAccountShowOptionKey = "issuerAndAccountShowOption";
+  static const String issuerAndAccountShowOptionKey =
+      "issuerAndAccountShowOption";
 
   //Appearance
   static const String showCloudBackupButtonKey = "showCloudBackupButton";
@@ -60,6 +67,7 @@ class CloudOTPHiveUtil {
   static const String hideBottombarWhenScrollingKey =
       "hideBottombarWhenScrolling";
   static const String enableLandscapeInTabletKey = "enableLandscapeInTablet";
+  static const String enableModalSheetKey = "enableModalSheet";
 
   //Backup
   static const String enableAutoBackupKey = "enableAutoBackup";
@@ -69,6 +77,9 @@ class CloudOTPHiveUtil {
   static const String backupPathKey = "backupPath";
   static const String useBackupPasswordToExportImportKey =
       "useBackupPasswordToExportImport";
+  static const String enableBackupOnLaunchKey = "enableBackupOnLaunch";
+  static const String enablePeriodicBackupKey = "enablePeriodicBackup";
+  static const String periodicBackupIntervalKey = "periodicBackupInterval";
 
   //Encrypt
   static const String encryptDatabaseStatusKey = "encryptDatabaseStatus";
@@ -81,14 +92,21 @@ class CloudOTPHiveUtil {
   static const String autoLockKey = "autoLock";
   static const String autoLockTimeKey = "autoLockTime";
   static const String enableSafeModeKey = "enableSafeMode";
+  static const String hideGestureTrailKey = "hideGestureTrail";
+  static const String followSystemTextScaleKey = "followSystemTextScale";
+  static const String gestureFailedAttemptsKey = "gestureFailedAttempts";
+  static const String gestureLockoutEndKey = "gestureLockoutEnd";
 
   //System
   static const String oldVersionKey = "oldVersion";
   static const String haveShowQAuthDialogKey = "haveShowQAuthDialog";
+  static const String haveShownCoachMarkKey = "haveShownCoachMark";
+  static const String haveShownDesktopCoachMarkKey = "haveShownDesktopCoachMark";
+  static const String haveShownWelcome4Key = "haveShownWelcome4";
 
   static initConfig() async {
     await ChewieHiveUtil.put(
-        CloudOTPHiveUtil.layoutTypeKey, LayoutType.Compact.index);
+        CloudOTPHiveUtil.layoutTypeKey, LayoutType.List.index);
     await ChewieHiveUtil.put(CloudOTPHiveUtil.autoFocusSearchBarKey, false);
     await ChewieHiveUtil.put(
         CloudOTPHiveUtil.maxBackupsCountKey, defaultMaxBackupCount);
@@ -97,6 +115,9 @@ class CloudOTPHiveUtil {
         CloudOTPHiveUtil.dragToReorderKey, !ResponsiveUtil.isMobile());
     await ChewieHiveUtil.put(
         CloudOTPHiveUtil.autoMinimizeAfterClickToCopyKey, false);
+    await ChewieHiveUtil.put(CloudOTPHiveUtil.hideGestureTrailKey, false);
+    await ChewieHiveUtil.put(CloudOTPHiveUtil.showSortButtonKey, true);
+    await ChewieHiveUtil.put(CloudOTPHiveUtil.showLayoutButtonKey, true);
   }
 
   static bool canLock() => canGuestureLock() || canDatabaseLock();
@@ -111,6 +132,51 @@ class CloudOTPHiveUtil {
   static bool canDatabaseLock() =>
       getEncryptDatabaseStatus() == EncryptDatabaseStatus.customPassword &&
       DatabaseManager.isDatabaseEncrypted;
+
+  static String _generateSalt() {
+    final random = Random.secure();
+    final bytes = List.generate(16, (_) => random.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  static String _hashWithSalt(String password, String salt) =>
+      sha256.convert(utf8.encode('$salt$password')).hex();
+
+  static bool _isLegacyHash(String value) =>
+      value.length == 64 && RegExp(r'^[0-9a-f]+$').hasMatch(value);
+
+  static bool _isSaltedHash(String value) =>
+      value.length == 97 && value[32] == '\$';
+
+  static void setGesturePassword(String password) {
+    final salt = _generateSalt();
+    final hash = _hashWithSalt(password, salt);
+    ChewieHiveUtil.put(guesturePasswdKey, '$salt\$$hash');
+  }
+
+  static bool verifyGesturePassword(String input) {
+    final stored = ChewieHiveUtil.getString(guesturePasswdKey);
+    if (stored == null || stored.isEmpty) return false;
+    if (_isSaltedHash(stored)) {
+      final salt = stored.substring(0, 32);
+      final hash = stored.substring(33);
+      return hash == _hashWithSalt(input, salt);
+    }
+    if (_isLegacyHash(stored)) {
+      final legacyHash = sha256.convert(utf8.encode(input)).hex();
+      if (stored == legacyHash) {
+        setGesturePassword(input);
+        return true;
+      }
+      return false;
+    }
+    // Legacy plaintext
+    if (stored == input) {
+      setGesturePassword(input);
+      return true;
+    }
+    return false;
+  }
 
   static Future<bool> showCloudEntry() async {
     String autoBackupPassword = (await ConfigDao.getConfig()).backupPassword;
@@ -138,11 +204,59 @@ class CloudOTPHiveUtil {
     await ChewieHiveUtil.put(CloudOTPHiveUtil.maxBackupsCountKey, count);
   }
 
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const String _secureDbPasswordKey = 'cloudotp_db_password';
+
   static Future<String> regeneratePassword() async {
     String password = MockUtil.getRandomString(length: 16);
     await ChewieHiveUtil.put(
         CloudOTPHiveUtil.defaultDatabasePasswordKey, password);
+    try {
+      await _secureStorage.write(key: _secureDbPasswordKey, value: password);
+    } catch (e, t) {
+      ILogger.error("Secure storage unavailable", e, t);
+    }
     return password;
+  }
+
+  static Future<String> getDatabasePassword() async {
+    String? securePassword;
+    try {
+      securePassword =
+          await _secureStorage.read(key: _secureDbPasswordKey);
+    } catch (e, t) {
+      ILogger.error(
+          "Secure storage unavailable, falling back to Hive", e, t);
+    }
+    String? hivePassword =
+        ChewieHiveUtil.getString(CloudOTPHiveUtil.defaultDatabasePasswordKey);
+    if (securePassword != null && securePassword.isNotEmpty) {
+      if (hivePassword != securePassword) {
+        await ChewieHiveUtil.put(
+            CloudOTPHiveUtil.defaultDatabasePasswordKey, securePassword);
+      }
+      return securePassword;
+    }
+    if (hivePassword != null && hivePassword.isNotEmpty) {
+      try {
+        await _secureStorage.write(
+            key: _secureDbPasswordKey, value: hivePassword);
+      } catch (_) {}
+      return hivePassword;
+    }
+    if (securePassword == null && Platform.isWindows) {
+      try {
+        await _secureStorage.delete(key: _secureDbPasswordKey);
+        securePassword =
+            await _secureStorage.read(key: _secureDbPasswordKey);
+        if (securePassword != null && securePassword.isNotEmpty) {
+          await ChewieHiveUtil.put(
+              CloudOTPHiveUtil.defaultDatabasePasswordKey, securePassword);
+          return securePassword;
+        }
+      } catch (_) {}
+    }
+    return '';
   }
 
   static Future<String> getBackupPath() async {

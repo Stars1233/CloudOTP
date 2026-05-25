@@ -80,7 +80,7 @@ class _AboutSettingScreenState extends BaseDynamicState<AboutSettingScreen>
 
   diaplayCelebrate() {
     restore();
-    RouteUtil.pushFadeRoute(context, const EggScreen());
+    RouteUtil.pushDialogRoute(context, const EggScreen());
     setState(() {});
   }
 
@@ -268,7 +268,7 @@ class _AboutSettingScreenState extends BaseDynamicState<AboutSettingScreen>
         EntryItem(
           title: appLocalizations.officialWebsite,
           onTap: () {
-            UriUtil.launchUrlUri(context, officialWebsite);
+            UriUtil.launchUrlUri(context, cloudotpOfficialWebsite);
           },
           showLeading: true,
           leading: LucideIcons.house,
@@ -304,7 +304,7 @@ class _AboutSettingScreenState extends BaseDynamicState<AboutSettingScreen>
             UriUtil.openExternal(telegramLink);
           },
           showLeading: true,
-          leading: LucideIcons.telescope,
+          leading: LucideIcons.component,
           trailing: LucideIcons.externalLink,
         ),
       ],

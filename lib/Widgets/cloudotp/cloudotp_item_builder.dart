@@ -305,6 +305,8 @@ class QrcodeDialog {
         context: context,
         elevation: 0,
         enableDrag: true,
+        barrierColor: ChewieTheme.barrierColor,
+        duration: ChewieTheme.animationDuration,
         backgroundColor: ChewieTheme.canvasColor,
         builder: (context) => QrcodesDialogWidget(
           title: title,

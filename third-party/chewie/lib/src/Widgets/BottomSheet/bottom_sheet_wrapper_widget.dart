@@ -30,6 +30,11 @@ class BottomSheetWrapperWidget extends StatelessWidget {
         : 0;
     double preferVerticalMargin =
         height > preferHeight ? (height - preferHeight) / 2 : 0;
+    double bottomPadding = isLandScape
+        ? 0
+        : MediaQuery.of(context).viewInsets.bottom > 0
+            ? 0
+            : MediaQuery.of(context).viewPadding.bottom;
     return BackdropFilter(
       filter: ResponsiveUtil.isDesktop()
           ? ImageFilter.blur(sigmaX: 2, sigmaY: 2)
@@ -45,7 +50,17 @@ class BottomSheetWrapperWidget extends StatelessWidget {
                   : 100,
           bottom: useVerticalMargin ? preferVerticalMargin : 0,
         ),
-        child: child,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: child),
+            if (bottomPadding > 0)
+              Container(
+                height: bottomPadding,
+                color: ChewieTheme.scaffoldBackgroundColor,
+              ),
+          ],
+        ),
       ),
     );
   }

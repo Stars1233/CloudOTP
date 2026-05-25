@@ -47,10 +47,15 @@ class CategoryDao {
   static Future<int> insertCategories(List<TokenCategory> categories) async {
     if (categories.isEmpty) return 0;
     final db = await DatabaseManager.getDataBase();
+    int maxSeq = await getMaxSeq();
+    int maxId = await getMaxId();
     Batch batch = db.batch();
-    for (TokenCategory category in categories) {
-      category.seq = await getMaxSeq() + 1 + categories.indexOf(category);
-      category.id = await getMaxId() + 1 + categories.indexOf(category);
+    for (int i = 0; i < categories.length; i++) {
+      TokenCategory category = categories[i];
+      if (category.seq <= 0) {
+        category.seq = maxSeq + 1 + i;
+      }
+      category.id = maxId + 1 + i;
       if (category.uid.isEmpty) category.uid = StringUtil.generateUid();
       batch.insert(
         tableName,
@@ -184,12 +189,28 @@ class CategoryDao {
   static Future<List<OtpToken>> getTokensByCategoryUid(
     String uid, {
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
   }) async {
-    if (uid.isEmpty) return await TokenDao.listTokens(searchKey: searchKey);
+    if (uid.isEmpty) {
+      return await TokenDao.listTokens(
+          searchKey: searchKey, tags: tags, tokenType: tokenType);
+    }
     TokenCategory category = await getCategoryByUid(uid);
-    List<OtpToken> tokens =
-        await BindingDao.getTokens(category.uid, searchKey: searchKey);
+    List<OtpToken> tokens = await BindingDao.getTokens(category.uid,
+        searchKey: searchKey, tags: tags, tokenType: tokenType);
     tokens.sort((a, b) => -a.pinnedInt.compareTo(b.pinnedInt));
     return tokens;
+  }
+
+  static Future<List<String>> getCategoryUidsByName(String name) async {
+    final db = await DatabaseManager.getDataBase();
+    final maps = await db.query(
+      tableName,
+      columns: ['uid'],
+      where: 'title LIKE ?',
+      whereArgs: ['%$name%'],
+    );
+    return maps.map((m) => m['uid'] as String).toList();
   }
 }

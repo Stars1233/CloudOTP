@@ -70,7 +70,7 @@ class CustomDialogAnimations {
       ).animate(
         CurvedAnimation(
           parent: animation,
-          curve: Curves.easeInOut,
+          curve: Curves.easeOutCubic,
         ),
       ),
       child: child,

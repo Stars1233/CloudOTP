@@ -13,6 +13,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:io';
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -31,7 +32,9 @@ import '../../Utils/utils.dart';
 import '../../l10n/l10n.dart';
 
 class DatabaseDecryptScreen extends StatefulWidget {
-  const DatabaseDecryptScreen({super.key});
+  final bool autoAuth;
+
+  const DatabaseDecryptScreen({super.key, this.autoAuth = false});
 
   @override
   DatabaseDecryptScreenState createState() => DatabaseDecryptScreenState();
@@ -40,6 +43,12 @@ class DatabaseDecryptScreen extends StatefulWidget {
 class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
     with TrayListener {
   final FocusNode _focusNode = FocusNode();
+
+  @override
+  Future<void> onWindowClose() async {
+    exit(0);
+  }
+
   late InputValidateAsyncController validateAsyncController;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool _isValidated = true;
@@ -103,7 +112,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
     canAuthenticateResponseString =
         await BiometricUtil.getCanAuthenticateResponseString();
     setState(() {});
-    if (_biometricAvailable && _allowDatabaseBiometric) {
+    if (_biometricAvailable && _allowDatabaseBiometric && widget.autoAuth) {
       auth();
     }
     FocusScope.of(context).requestFocus(_focusNode);
@@ -119,10 +128,13 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
   @override
   void initState() {
     super.initState();
+    if (ResponsiveUtil.isMacOS()) {
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     chewieProvider.loadingWidgetBuilder = (size, forceDark) => LottieFiles.load(
         LottieFiles.getLoadingPath(chewieProvider.rootContext),
-        scale: 1.5);
-    initBiometricAuthentication();
+        scale: 1.5,
+        delegates: LottieFiles.loadingDelegates(ChewieTheme.primaryColor));
     trayManager.addListener(this);
     windowManager.addListener(this);
     Utils.initSimpleTray();
@@ -145,23 +157,28 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
       },
       controller: TextEditingController(),
     );
+    initBiometricAuthentication();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveUtil.isMacOS()) {
+      WidgetsBinding.instance.platformMenuDelegate.setMenus([]);
+    }
     chewieProvider.resetRootContext();
     ChewieUtils.setSafeMode(ChewieHiveUtil.getBool(
         CloudOTPHiveUtil.enableSafeModeKey,
         defaultValue: defaultEnableSafeMode));
-    return Stack(
+    Widget body = Stack(
       children: [
         MyScaffold(
           backgroundColor: ChewieTheme.scaffoldBackgroundColor,
           appBar: ResponsiveUtil.isDesktop()
               ? ResponsiveAppBar(
-                  title: appLocalizations.appName,
+                  title: appLocalizations.decryptDatabasePassword,
                   showBack: false,
-                  titleLeftMargin: 15,
+                  titleLeftMargin:
+                      ResponsiveUtil.isMacOS() ? macosTitleBarLeftMargin : 15,
                   actions: const [
                     BlankIconButton(),
                   ],
@@ -200,6 +217,7 @@ class DatabaseDecryptScreenState extends BaseWindowState<DatabaseDecryptScreen>
           ),
       ],
     );
+    return body;
   }
 
   onSubmit() async {

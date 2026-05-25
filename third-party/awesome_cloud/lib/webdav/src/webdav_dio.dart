@@ -57,6 +57,7 @@ class WdDio with DioMixin implements Dio {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
     CancelToken? cancelToken,
+    int retryCount = 0,
   }) async {
     // options
     Options options = Options(method: method);
@@ -89,6 +90,10 @@ class WdDio with DioMixin implements Dio {
     );
 
     if (resp.statusCode == 401) {
+      if (retryCount >= 3) {
+        throw newResponseError(resp);
+      }
+
       String? w3AHeader = resp.headers.value('www-authenticate');
       String? lowerW3AHeader = w3AHeader?.toLowerCase();
 
@@ -118,16 +123,7 @@ class WdDio with DioMixin implements Dio {
             pwd: self.auth.pwd,
             dParts: DigestParts(w3AHeader));
       } else {
-        await req(
-          self,
-          method,
-          path,
-          data: data,
-          optionsHandler: optionsHandler,
-          onSendProgress: onSendProgress,
-          onReceiveProgress: onReceiveProgress,
-          cancelToken: cancelToken,
-        );
+        throw newResponseError(resp);
       }
 
       // retry
@@ -140,6 +136,7 @@ class WdDio with DioMixin implements Dio {
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
         cancelToken: cancelToken,
+        retryCount: retryCount + 1,
       );
     } else if (resp.statusCode == 302) {
       // 文件位置被重定向到新路径

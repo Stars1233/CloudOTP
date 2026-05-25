@@ -114,7 +114,11 @@ class GenericContextMenuOverlayState extends State<GenericContextMenuOverlay>
             child: ColoredBox(
               color: Colors.transparent,
               child: Listener(
-                onPointerDown: (e) => _mousePos = e.localPosition,
+                onPointerDown: (e) {
+                  if (_currentMenu == null) {
+                    _mousePos = e.localPosition;
+                  }
+                },
                 child: Stack(
                   alignment: Alignment.topLeft,
                   children: [

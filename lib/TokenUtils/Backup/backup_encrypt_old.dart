@@ -14,6 +14,7 @@
  */
 
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:pointycastle/export.dart' as pointycastle;
@@ -23,7 +24,10 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'backup.dart';
 import 'backup_encrypt_interface.dart';
 
+@Deprecated('Legacy format — only used for decrypting old backups. '
+    'New backups must use BackupEncryptionV1.')
 class BackupEncryptionOld implements BackupEncryptInterface {
+  @Deprecated('Do not encrypt with this format — uses password as salt.')
   Future<String> getEncryptedData(
       String password, List<OtpToken> otpTokens) async {
     final json = jsonEncode(otpTokens.map((token) => token.toJson()).toList());
@@ -33,6 +37,7 @@ class BackupEncryptionOld implements BackupEncryptInterface {
     return encryptedData;
   }
 
+  @Deprecated('Do not encrypt with this format — uses password as salt.')
   @override
   Future<Uint8List> encrypt(Backup backup, String password) async {
     final key =
@@ -83,10 +88,9 @@ class AESStringCipher {
   }
 
   static Uint8List _generateIv(int length) {
-    final random = pointycastle.SecureRandom("Fortuna")
-      ..seed(pointycastle.KeyParameter(
-          Uint8List.fromList(List.generate(32, (_) => 1))));
-    return random.nextBytes(length);
+    final secureRandom = Random.secure();
+    return Uint8List.fromList(
+        List.generate(length, (_) => secureRandom.nextInt(256)));
   }
 
   static String encrypt(String plaintext, Uint8List key) {

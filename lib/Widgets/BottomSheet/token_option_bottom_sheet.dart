@@ -41,10 +41,12 @@ class TokenOptionBottomSheet extends StatefulWidget {
     super.key,
     required this.token,
     this.isNewToken,
+    this.onEnterMultiSelect,
   });
 
   final OtpToken token;
   final bool? isNewToken;
+  final VoidCallback? onEnterMultiSelect;
 
   @override
   TokenOptionBottomSheetState createState() => TokenOptionBottomSheetState();
@@ -127,7 +129,7 @@ class TokenOptionBottomSheetState
                 top: radius,
                 bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
             color: ChewieTheme.scaffoldBackgroundColor,
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: ListView(
@@ -204,7 +206,7 @@ class TokenOptionBottomSheetState
                           setState(() {});
                         },
                         icon: Icon(
-                          Icons.refresh_rounded,
+                          LucideIcons.refreshCcw,
                           size: 20,
                           color: ChewieTheme.bodyMedium.color,
                         ),
@@ -272,7 +274,7 @@ class TokenOptionBottomSheetState
           title: appLocalizations.copyTokenCode,
           onTap: () {
             Navigator.pop(context);
-            ChewieUtils.copy(context, getCurrentCode());
+            ChewieUtils.copy(context, getCurrentCode(), autoClear: true);
             TokenDao.incTokenCopyTimes(widget.token);
           },
         ),
@@ -281,7 +283,7 @@ class TokenOptionBottomSheetState
           title: appLocalizations.copyNextTokenCode,
           onTap: () {
             Navigator.pop(context);
-            ChewieUtils.copy(context, getNextCode());
+            ChewieUtils.copy(context, getNextCode(), autoClear: true);
             TokenDao.incTokenCopyTimes(widget.token);
           },
         ),
@@ -295,9 +297,7 @@ class TokenOptionBottomSheetState
           },
         ),
         _buildItem(
-          leading: widget.token.pinned
-              ? Icons.push_pin_rounded
-              : Icons.push_pin_outlined,
+          leading: widget.token.pinned ? LucideIcons.pinOff : LucideIcons.pin,
           title: widget.token.pinned
               ? appLocalizations.unPinToken
               : appLocalizations.pinToken,
@@ -346,6 +346,22 @@ class TokenOptionBottomSheetState
           },
         ),
         _buildItem(
+          leading: LucideIcons.share2,
+          title: appLocalizations.shareTokenUri,
+          onTap: () {
+            DialogBuilder.showConfirmDialog(
+              context,
+              title: appLocalizations.copyUriClearWarningTitle,
+              message: appLocalizations.copyUriClearWarningTip,
+              onTapConfirm: () {
+                Navigator.pop(context);
+                UriUtil.share(OtpTokenParser.toUri(widget.token).toString());
+              },
+              onTapCancel: () {},
+            );
+          },
+        ),
+        _buildItem(
           leading: LucideIcons.shapes,
           title: appLocalizations.editTokenCategory,
           onTap: () {
@@ -373,6 +389,15 @@ class TokenOptionBottomSheetState
             );
           },
         ),
+        if (widget.onEnterMultiSelect != null)
+          _buildItem(
+            leading: LucideIcons.listChecks,
+            title: appLocalizations.select,
+            onTap: () {
+              Navigator.pop(context);
+              widget.onEnterMultiSelect!();
+            },
+          ),
         if (widget.token.tokenType == OtpTokenType.HOTP)
           _buildItem(
             leading: Icons.plus_one_rounded,
@@ -382,13 +407,6 @@ class TokenOptionBottomSheetState
         _buildItem(
           leading: LucideIcons.squarePercent,
           title: appLocalizations.currentCopyTimes(widget.token.copyTimes),
-          onTap: () {},
-        ),
-        _buildItem(
-          leading: LucideIcons.rotateCcw,
-          title: appLocalizations.resetCopyTimes,
-          titleColor: Colors.red,
-          leadingColor: Colors.red,
           onTap: () {
             DialogBuilder.showConfirmDialog(
               context,
@@ -440,35 +458,39 @@ class TokenOptionBottomSheetState
     Color? backgroundColor,
     Function()? onTap,
   }) {
-    return PressableAnimation(
-      child: Material(
-        color: backgroundColor ?? ChewieTheme.cardColor,
-        borderRadius: ChewieDimens.defaultBorderRadius,
-        child: InkWell(
-          onTap: onTap,
+    return Semantics(
+      button: true,
+      label: title,
+      child: PressableAnimation(
+        child: Material(
+          color: backgroundColor ?? ChewieTheme.cardColor,
           borderRadius: ChewieDimens.defaultBorderRadius,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-                borderRadius: ChewieDimens.defaultBorderRadius),
-            child: Column(
-              children: [
-                Icon(
-                  leading,
-                  size: 24,
-                  color: leadingColor ?? ChewieTheme.bodyMedium.color,
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 20,
-                  child: AutoSizeText(
-                    title,
-                    maxLines: 1,
-                    style: ChewieTheme.bodyMedium.copyWith(
-                        color: titleColor ?? ChewieTheme.bodyMedium.color),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: ChewieDimens.defaultBorderRadius,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                  borderRadius: ChewieDimens.defaultBorderRadius),
+              child: Column(
+                children: [
+                  Icon(
+                    leading,
+                    size: 24,
+                    color: leadingColor ?? ChewieTheme.bodyMedium.color,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 20,
+                    child: AutoSizeText(
+                      title,
+                      maxLines: 1,
+                      style: ChewieTheme.bodyMedium.copyWith(
+                          color: titleColor ?? ChewieTheme.bodyMedium.color),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

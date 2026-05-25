@@ -1,0 +1,15 @@
+{
+  "originHash" : "6dfdf4729a9bdbe387c37aabd0ba7f9a0594a158cb17261d81b5eede25f6a5a5",
+  "pins" : [
+    {
+      "identity" : "launchatlogin",
+      "kind" : "remoteSourceControl",
+      "location" : "https://proxy.cloudchewie.com/proxy/github.com/sindresorhus/LaunchAtLogin",
+      "state" : {
+        "branch" : "main",
+        "revision" : "9a894d799269cb591037f9f9cb0961510d4dca81"
+      }
+    }
+  ],
+  "version" : 3
+}

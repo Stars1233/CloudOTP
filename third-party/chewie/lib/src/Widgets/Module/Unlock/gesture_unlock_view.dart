@@ -37,6 +37,8 @@ class GestureUnlockView extends StatefulWidget {
 
   final int delayTime;
 
+  final bool showLine;
+
   final Function(List<int>, UnlockStatus) onCompleted;
 
   const GestureUnlockView({
@@ -54,6 +56,7 @@ class GestureUnlockView extends StatefulWidget {
     this.solidRadiusRatio = 0.4,
     this.touchRadiusRatio = 0.6,
     this.delayTime = 500,
+    this.showLine = true,
     required this.onCompleted,
   });
 
@@ -149,7 +152,7 @@ class GestureState extends State<GestureUnlockView> {
           child: CustomPaint(
             size: Size(widget.size, widget.size),
             painter: UnlockLinePainter(
-                pathPoints: pathPoints,
+                pathPoints: widget.showLine ? pathPoints : [],
                 status: _status,
                 selectColor: widget.selectedColor,
                 failedColor: widget.failedColor,

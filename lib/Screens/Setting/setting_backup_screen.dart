@@ -17,6 +17,7 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/config_dao.dart';
 import 'package:cloudotp/Models/cloud_service_config.dart';
 import 'package:cloudotp/Screens/Backup/cloud_service_screen.dart';
+import 'package:cloudotp/Screens/Setting/backup_log_screen.dart';
 import 'package:cloudotp/TokenUtils/Cloud/webdav_cloud_service.dart';
 import 'package:cloudotp/TokenUtils/export_token_util.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
@@ -67,11 +68,15 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
   bool _useBackupPasswordToExportImport = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.useBackupPasswordToExportImportKey);
   String _autoBackupPath = "";
+  String _defaultBackupPath = "";
   String _autoBackupPassword = "";
   bool _enableCloudBackup =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableCloudBackupKey);
   CloudServiceConfig? _cloudServiceConfig;
   int _maxBackupsCount = CloudOTPHiveUtil.getMaxBackupsCount();
+  bool _enableBackupOnLaunch =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBackupOnLaunchKey,
+          defaultValue: false);
   final GlobalKey _setAutoBackupPasswordKey = GlobalKey();
   String validConfigs = "";
 
@@ -89,11 +94,15 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
         _autoBackupPath = path;
       });
     });
+    FileUtil.getBackupDir().then((path) {
+      _defaultBackupPath = path;
+    });
     loadWebDavConfig();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.jumpToAutoBackupPassword) {
         scrollToSetAutoBackupPassword();
       }
+      _checkBackupMethodsEnabled();
     });
   }
 
@@ -106,7 +115,20 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
     }
   }
 
-  @override
+  void _checkBackupMethodsEnabled() {
+    if (!_enableLocalBackup && !_enableCloudBackup) {
+      setState(() {
+        _enableLocalBackup = true;
+        ChewieHiveUtil.put(
+            CloudOTPHiveUtil.enableLocalBackupKey, true);
+      });
+      DialogBuilder.showInfoDialog(
+        context,
+        message: appLocalizations.bothBackupDisabledWarning,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ItemBuilder.buildSettingScreen(
@@ -128,16 +150,6 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
 
   bool get canBackup => _autoBackupPassword.isNotEmpty;
 
-  bool get canLocalBackup =>
-      _autoBackupPath.isNotEmpty && _autoBackupPassword.isNotEmpty;
-
-  bool get canCloudBackup => _autoBackupPassword.isNotEmpty;
-
-  bool get canImmediateBackup =>
-      canBackup &&
-      ((canLocalBackup && _enableLocalBackup) ||
-          (canCloudBackup && _enableCloudBackup));
-
   loadWebDavConfig() async {
     List<CloudServiceConfig> configs =
         await CloudServiceConfigDao.getValidConfigs();
@@ -146,9 +158,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
     });
   }
 
-  getBackupsCount() async {
-    int currentLocalBackupsCount = await ExportTokenUtil.getBackupsCount();
-    return [currentLocalBackupsCount];
+  Future<int> getBackupsCount() async {
+    return await ExportTokenUtil.getBackupsCount();
   }
 
   deleteOldBackups(int maxBackupsCount) async {
@@ -217,7 +228,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _useBackupPasswordToExportImport : false,
             title: appLocalizations.useBackupPasswordToExportImport,
             description: appLocalizations.useBackupPasswordToExportImportTip,
-            disabled: _autoBackupPassword.isEmpty,
+            disabled: !canBackup,
             onTap: () {
               setState(() {
                 _useBackupPasswordToExportImport =
@@ -237,7 +248,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableAutoBackup : false,
             title: appLocalizations.autoBackup,
             description: appLocalizations.autoBackupTip,
-            disabled: !canBackup || !canImmediateBackup,
+            disabled: !canBackup,
             onTap: () {
               setState(() {
                 _enableAutoBackup = !_enableAutoBackup;
@@ -246,9 +257,21 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          Visibility(
-            visible: canImmediateBackup,
-            child: EntryItem(
+          if (_enableAutoBackup && canBackup)
+            CheckboxItem(
+              value: _enableBackupOnLaunch,
+              title: appLocalizations.backupOnLaunch,
+              description: appLocalizations.backupOnLaunchTip,
+              onTap: () {
+                setState(() {
+                  _enableBackupOnLaunch = !_enableBackupOnLaunch;
+                  ChewieHiveUtil.put(CloudOTPHiveUtil.enableBackupOnLaunchKey,
+                      _enableBackupOnLaunch);
+                });
+              },
+            ),
+          if (canBackup)
+            EntryItem(
               title: appLocalizations.immediatelyBackup,
               description: appLocalizations.immediatelyBackupTip,
               trailing: LucideIcons.cloudUpload,
@@ -257,18 +280,17 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                     showToast: true, showLoading: true, force: true);
               },
             ),
-          ),
-          Visibility(
-            visible: canImmediateBackup,
-            child: EntryItem(
+          if (canBackup)
+            EntryItem(
               title: appLocalizations.maxBackupCount,
               description: appLocalizations.maxBackupCountTip,
               tip: _maxBackupsCount.toString(),
               onTap: () async {
                 CustomLoadingDialog.showLoading(
                     title: appLocalizations.loading);
-                List<int> counts = await getBackupsCount();
+                int currentCount = await getBackupsCount();
                 CustomLoadingDialog.dismissLoading();
+                if (!mounted) return;
                 InputValidateAsyncController validateAsyncController =
                     InputValidateAsyncController(
                   controller:
@@ -284,7 +306,7 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                     title: appLocalizations.maxBackupCount,
                     text: _maxBackupsCount.toString(),
                     message:
-                        '${appLocalizations.maxBackupCountTip}\n${appLocalizations.currentBackupCountTip(counts[0])}',
+                        '${appLocalizations.maxBackupCountTip}\n${appLocalizations.currentBackupCountTip(currentCount)}',
                     hint: appLocalizations.inputMaxBackupCount,
                     inputFormatters: [RegexInputFormatter.onlyNumber],
                     preventPop: true,
@@ -317,12 +339,12 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                           validateAsyncController.doPop?.call();
                         }
 
-                        if (count > 0 && (counts[0] > count)) {
+                        if (count > 0 && (currentCount > count)) {
                           DialogBuilder.showConfirmDialog(
                             context,
                             title: appLocalizations.maxBackupCountWarning,
                             message: appLocalizations
-                                .maxBackupCountWarningMessage(counts[0]),
+                                .maxBackupCountWarningMessage(currentCount),
                             onTapConfirm: () {
                               onValid();
                             },
@@ -339,7 +361,14 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          ),
+          if (canBackup)
+            EntryItem(
+              title: appLocalizations.backupLogs,
+              trailing: LucideIcons.history,
+              onTap: () async {
+                BackupLogScreen.show(context);
+              },
+            ),
         ],
       ),
       CaptionItem(
@@ -349,7 +378,9 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableLocalBackup : false,
             title: appLocalizations.enableLocalBackup,
             description: appLocalizations.enableLocalBackupTip,
-            disabled: !canLocalBackup,
+            disabled: !canBackup ||
+                (_enableLocalBackup &&
+                    (!_enableCloudBackup || validConfigs.isEmpty)),
             onTap: () {
               setState(() {
                 _enableLocalBackup = !_enableLocalBackup;
@@ -358,9 +389,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          Visibility(
-            visible: canBackup && _enableLocalBackup,
-            child: EntryItem(
+          if (canBackup && _enableLocalBackup)
+            EntryItem(
               title: appLocalizations.autoBackupPath,
               description: _autoBackupPath,
               trailing: LucideIcons.ellipsis,
@@ -378,10 +408,24 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 }
               },
             ),
-          ),
-          Visibility(
-            visible: canBackup && _enableLocalBackup,
-            child: EntryItem(
+          if (canBackup &&
+              _enableLocalBackup &&
+              _defaultBackupPath.isNotEmpty &&
+              _autoBackupPath != _defaultBackupPath)
+            EntryItem(
+              title: appLocalizations.restoreDefaultBackupPath,
+              description: appLocalizations.restoreDefaultBackupPathTip,
+              trailing: LucideIcons.rotateCcw,
+              onTap: () {
+                setState(() {
+                  _autoBackupPath = _defaultBackupPath;
+                  ChewieHiveUtil.put(
+                      CloudOTPHiveUtil.backupPathKey, "");
+                });
+              },
+            ),
+          if (canBackup && _enableLocalBackup)
+            EntryItem(
               title: appLocalizations.viewLocalBackup,
               trailing: LucideIcons.squareArrowOutUpRight,
               onTap: () async {
@@ -397,7 +441,6 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          ),
         ],
       ),
       CaptionItem(
@@ -407,7 +450,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
             value: canBackup ? _enableCloudBackup : false,
             title: appLocalizations.enableCloudBackup,
             description: appLocalizations.enableCloudBackupTip,
-            disabled: !canCloudBackup,
+            disabled: !canBackup ||
+                (_enableCloudBackup && !_enableLocalBackup),
             onTap: () {
               setState(() {
                 _enableCloudBackup = !_enableCloudBackup;
@@ -417,9 +461,8 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
               });
             },
           ),
-          Visibility(
-            visible: canBackup && _enableCloudBackup,
-            child: EntryItem(
+          if (canBackup && _enableCloudBackup)
+            EntryItem(
               title: appLocalizations.cloudBackupServiceSetting,
               description: validConfigs.isNotEmpty
                   ? appLocalizations.haveSetCloudBackupService(validConfigs)
@@ -434,7 +477,6 @@ class _BackupSettingScreenState extends BaseDynamicState<BackupSettingScreen>
                 );
               },
             ),
-          ),
         ],
       ),
     ];

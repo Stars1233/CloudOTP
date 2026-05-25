@@ -281,15 +281,12 @@ class FreeOTPTokenImporter implements BaseTokenImporter {
 
   static KeyParameter? decryptMasterKey(MasterKey masterKey, String password) {
     final salt = masterKey.salt;
-    debugPrint("Salt: ${base64Encode(Uint8List.fromList(salt).toList())}");
     final key = deriveKey(password, masterKey.algorithm, masterKey.iterations,
         Uint8List.fromList(salt));
-    debugPrint("DeriveKey: ${base64Encode(key.key)}");
     final master = decryptEncryptedKey(masterKey.encryptedKey, key);
     if (master == null) {
       return null;
     }
-    debugPrint("Master: ${base64Encode(master)}");
     return KeyParameter(master);
   }
 
@@ -306,7 +303,7 @@ class FreeOTPTokenImporter implements BaseTokenImporter {
     try {
       return cipher.process(encryptedData);
     } catch (e, t) {
-      debugPrint("$e\n$t");
+      ILogger.error("Failed to decrypt key", e, t);
       return null;
     }
   }
@@ -323,7 +320,7 @@ class FreeOTPTokenImporter implements BaseTokenImporter {
 
   static KeyParameter deriveKey(
       String password, String algorithm, int iterations, Uint8List salt) {
-    debugPrint("Derive key from $password, $algorithm, $iterations, $salt");
+    ILogger.info("Derive key with algorithm=$algorithm, iterations=$iterations");
     Digest digest;
     switch (algorithm) {
       case 'PBKDF2withHmacSHA1':

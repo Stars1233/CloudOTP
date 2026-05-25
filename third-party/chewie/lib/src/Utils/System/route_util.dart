@@ -23,7 +23,10 @@ class RouteUtil {
     Widget page, {
     Function(dynamic)? onThen,
     bool popAll = false,
+    bool? modalSheet,
   }) {
+    final bool effectiveModalSheet =
+        modalSheet ?? !ChewieHiveUtil.getBool("enableModalSheet", defaultValue: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ResponsiveUtil.isLandscapeLayout()) {
         pushFadeRoute(context, page, onThen: onThen);
@@ -31,11 +34,18 @@ class RouteUtil {
         if (popAll) {
           Navigator.pushAndRemoveUntil(
               context,
-              CustomCupertinoPageRoute(builder: (context) => page),
+              CustomCupertinoPageRoute(
+                  builder: (context) => page,
+                  fullscreenDialog: true,
+                  modalSheet: effectiveModalSheet),
               (_) => false).then(onThen ?? (_) => {});
         } else {
           Navigator.push(
-                  context, CustomCupertinoPageRoute(builder: (context) => page))
+                  context,
+                  CustomCupertinoPageRoute(
+                      builder: (context) => page,
+                      fullscreenDialog: true,
+                      modalSheet: effectiveModalSheet))
               .then(onThen ?? (_) => {});
         }
       }
@@ -88,7 +98,10 @@ class RouteUtil {
     Function(dynamic)? onThen,
     bool useFade = false,
     bool popAll = false,
+    bool? modalSheet,
   }) {
+    final bool effectiveModalSheet =
+        modalSheet ?? !ChewieHiveUtil.getBool("enableModalSheet", defaultValue: false);
     if (ResponsiveUtil.isLandscapeLayout()) {
       if (DialogNavigatorHelper.isMounted()) {
         DialogNavigatorHelper.pushPage(page);
@@ -108,7 +121,8 @@ class RouteUtil {
       if (useFade) {
         pushFadeRoute(context, page, onThen: onThen, popAll: popAll);
       } else {
-        pushCupertinoRoute(context, page, onThen: onThen, popAll: popAll);
+        pushCupertinoRoute(context, page,
+            onThen: onThen, popAll: popAll, modalSheet: effectiveModalSheet);
       }
     }
   }

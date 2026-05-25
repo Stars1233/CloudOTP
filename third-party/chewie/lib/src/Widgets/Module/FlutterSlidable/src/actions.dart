@@ -144,6 +144,10 @@ class SlidableAction extends StatelessWidget {
     this.simple = false,
     this.borderRadius = BorderRadius.zero,
     this.padding,
+    this.autoTriggerBackgroundColor,
+    this.autoTriggerIcon,
+    this.autoTriggerLabel,
+    this.autoTriggerIconAndTextColor,
   })  : assert(flex > 0),
         assert(icon != null || label != null);
 
@@ -185,21 +189,51 @@ class SlidableAction extends StatelessWidget {
   /// Padding of the OutlinedButton
   final EdgeInsets? padding;
 
+  /// Background color when auto-trigger threshold is reached.
+  final Color? autoTriggerBackgroundColor;
+
+  /// Icon when auto-trigger threshold is reached.
+  final IconData? autoTriggerIcon;
+
+  /// Label when auto-trigger threshold is reached.
+  final String? autoTriggerLabel;
+
+  /// Icon and text color when auto-trigger threshold is reached.
+  final Color? autoTriggerIconAndTextColor;
+
   @override
   Widget build(BuildContext context) {
+    final actionPaneData = ActionPane.of(context);
+    final progress = actionPaneData?.autoTriggerProgress ?? 0.0;
+
+    final effectiveBg = autoTriggerBackgroundColor != null && progress > 0
+        ? Color.lerp(backgroundColor, autoTriggerBackgroundColor!, progress)!
+        : backgroundColor;
+    final effectiveIcon =
+        autoTriggerIcon != null && progress >= 0.7 ? autoTriggerIcon! : icon;
+    final effectiveLabel =
+        autoTriggerLabel != null && progress >= 0.7 ? autoTriggerLabel! : label;
+    final effectiveIconAndTextColor =
+        autoTriggerIconAndTextColor != null && progress > 0
+            ? Color.lerp(
+                iconAndTextColor ?? Theme.of(context).iconTheme.color,
+                autoTriggerIconAndTextColor!,
+                progress)!
+            : iconAndTextColor;
+
     final children = <Widget>[];
 
-    if (icon != null) {
+    if (effectiveIcon != null) {
       children.add(
         Icon(
-          icon,
-          color: iconAndTextColor ?? Theme.of(context).iconTheme.color,
+          effectiveIcon,
+          color: effectiveIconAndTextColor ?? Theme.of(context).iconTheme.color,
           size: Theme.of(context).iconTheme.size,
         ),
       );
     }
 
-    if (!simple && label != null) {
+    if (!simple && effectiveLabel != null) {
       if (children.isNotEmpty) {
         children.add(
           SizedBox(height: spacing),
@@ -208,10 +242,10 @@ class SlidableAction extends StatelessWidget {
 
       children.add(
         Text(
-          label!,
+          effectiveLabel,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyMedium?.apply(
-                color: iconAndTextColor,
+                color: effectiveIconAndTextColor,
               ),
         ),
       );
@@ -235,7 +269,7 @@ class SlidableAction extends StatelessWidget {
       padding: padding,
       onPressed: onPressed,
       autoClose: autoClose,
-      backgroundColor: backgroundColor,
+      backgroundColor: effectiveBg,
       foregroundColor: foregroundColor,
       flex: flex,
       child: child,

@@ -82,15 +82,10 @@ class GeneralSettingScreenState extends BaseDynamicState<GeneralSettingScreen>
     _currentTrayOption = getTrayOption();
   }
 
-  refreshLauchAtStartup() {
-    setState(() {
-      launchAtStartup =
-          ChewieHiveUtil.getBool(ChewieHiveUtil.launchAtStartupKey);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    launchAtStartup =
+        ChewieHiveUtil.getBool(ChewieHiveUtil.launchAtStartupKey);
     return ItemBuilder.buildSettingScreen(
       context: context,
       title: appLocalizations.generalSetting,
@@ -198,8 +193,8 @@ class GeneralSettingScreenState extends BaseDynamicState<GeneralSettingScreen>
                   await FileOutput.clearLogs();
                   await getLogSize();
                   IToast.showTop(appLocalizations.clearLogSuccess);
-                } catch (e, t) {
-                  ILogger.error("Failed to clear logs", e, t);
+                } catch (e) {
+                  debugPrint("Failed to clear logs: $e");
                   IToast.showTop(appLocalizations.clearLogFailed);
                 } finally {
                   CustomLoadingDialog.dismissLoading();

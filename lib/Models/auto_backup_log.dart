@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Utils/app_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../l10n/l10n.dart';
 import 'cloud_service_config.dart';
@@ -56,23 +57,27 @@ enum AutoBackupStatus {
       case AutoBackupStatus.pending:
         return Colors.grey;
       case AutoBackupStatus.encrypting:
-        return ChewieTheme.primaryColor;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.encryptFailed:
         return Colors.red;
+      case AutoBackupStatus.encrpytSuccess:
+        return ChewieTheme.successColor;
       case AutoBackupStatus.saving:
-        return ChewieTheme.primaryColor;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.saveFailed:
         return Colors.red;
+      case AutoBackupStatus.saveSuccess:
+        return ChewieTheme.successColor;
       case AutoBackupStatus.uploading:
-        return ChewieTheme.primaryColor;
+        return ChewieTheme.successColor;
       case AutoBackupStatus.uploadFailed:
         return Colors.red;
+      case AutoBackupStatus.uploadSuccess:
+        return ChewieTheme.successColor;
       case AutoBackupStatus.complete:
-        return Colors.green;
+        return ChewieTheme.primaryColor;
       case AutoBackupStatus.failed:
         return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 }
@@ -112,7 +117,9 @@ enum AutoBackupTriggerType {
   categoriesUpdatedForToken,
   cloudServiceConfigInserted,
   cloudServiceConfigUpdated,
-  cloudServiceConfigDeleted;
+  cloudServiceConfigDeleted,
+  appStartup,
+  scheduled;
 
   String get label {
     switch (this) {
@@ -152,8 +159,45 @@ enum AutoBackupTriggerType {
         return appLocalizations.triggerAutoBackupByCloudServiceConfigUpdated;
       case AutoBackupTriggerType.cloudServiceConfigDeleted:
         return appLocalizations.triggerAutoBackupByCloudServiceConfigDeleted;
+      case AutoBackupTriggerType.appStartup:
+        return appLocalizations.triggerAutoBackupByAppStartup;
+      case AutoBackupTriggerType.scheduled:
+        return appLocalizations.triggerAutoBackupByScheduled;
       default:
         return appLocalizations.triggerAutoBackupByOther;
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case AutoBackupTriggerType.manual:
+        return LucideIcons.hand;
+      case AutoBackupTriggerType.configInited:
+      case AutoBackupTriggerType.configUpdated:
+        return LucideIcons.settings;
+      case AutoBackupTriggerType.tokenInserted:
+      case AutoBackupTriggerType.tokensInserted:
+      case AutoBackupTriggerType.tokenUpdated:
+      case AutoBackupTriggerType.tokensUpdated:
+      case AutoBackupTriggerType.tokenDeleted:
+        return LucideIcons.keyRound;
+      case AutoBackupTriggerType.categoryInserted:
+      case AutoBackupTriggerType.categoriesInserted:
+      case AutoBackupTriggerType.categoryUpdated:
+      case AutoBackupTriggerType.categoriesUpdated:
+      case AutoBackupTriggerType.categoryDeleted:
+      case AutoBackupTriggerType.categoriesUpdatedForToken:
+        return LucideIcons.folderOpen;
+      case AutoBackupTriggerType.cloudServiceConfigInserted:
+      case AutoBackupTriggerType.cloudServiceConfigUpdated:
+      case AutoBackupTriggerType.cloudServiceConfigDeleted:
+        return LucideIcons.cloud;
+      case AutoBackupTriggerType.appStartup:
+        return LucideIcons.power;
+      case AutoBackupTriggerType.scheduled:
+        return LucideIcons.clock;
+      case AutoBackupTriggerType.other:
+        return LucideIcons.circleHelp;
     }
   }
 }

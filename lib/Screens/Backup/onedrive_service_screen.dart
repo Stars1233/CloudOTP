@@ -199,6 +199,7 @@ class _OneDriveServiceScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeOneDrive,
         description: appLocalizations.cloudTypeOneDriveTip,
         value: _oneDriveCloudServiceConfig?.enabled ?? false,

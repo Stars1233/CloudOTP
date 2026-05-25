@@ -146,7 +146,10 @@ class BoxCloud extends BaseCloudService {
   }
 
   @override
-  Future<BoxResponse> pullById(String id) async {
+  Future<BoxResponse> pullById(
+    String id, {
+    Function(int, int)? onProgress,
+  }) async {
     try {
       final url = Uri.parse("https://api.box.com/2.0/files/$id/content");
       CloudLogger.info(serviceName, "Pulling file by ID: $id");
@@ -158,23 +161,17 @@ class BoxCloud extends BaseCloudService {
           serviceName,
           "Redirected to download URL: $downloadUrl",
         );
-        final binary = await http.get(downloadUrl);
-        if (binary.statusCode != 200) {
-          CloudLogger.error(
-            serviceName,
-            "Failed to download file: ${binary.statusCode} ${binary.reasonPhrase}",
-          );
-          return BoxResponse.error(
-            message: "Failed to download file: ${binary.reasonPhrase}",
-          );
-        }
+        final bodyBytes = await BaseCloudService.downloadFromUrl(
+          downloadUrl,
+          onProgress: onProgress,
+        );
         CloudLogger.info(
           serviceName,
-          "File downloaded successfully: ${binary.bodyBytes.length} bytes.",
+          "File downloaded successfully: ${bodyBytes.length} bytes.",
         );
         return BoxResponse.success(
           message: "Download success.",
-          bodyBytes: binary.bodyBytes,
+          bodyBytes: bodyBytes,
         );
       } else if (isSuccess(resp)) {
         CloudLogger.info(serviceName, "Downloaded file");

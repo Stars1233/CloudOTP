@@ -16,6 +16,7 @@
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/token_category_binding_dao.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../Database/category_dao.dart';
 import '../../Database/token_dao.dart';
@@ -29,9 +30,11 @@ class SelectTokenBottomSheet extends StatefulWidget {
   const SelectTokenBottomSheet({
     super.key,
     required this.category,
+    this.onChanged,
   });
 
   final TokenCategory category;
+  final VoidCallback? onChanged;
 
   @override
   SelectTokenBottomSheetState createState() => SelectTokenBottomSheetState();
@@ -77,7 +80,7 @@ class SelectTokenBottomSheetState
                   top: radius,
                   bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
               color: ChewieTheme.scaffoldBackgroundColor,
-              border: ChewieTheme.border,
+              border: ChewieTheme.responsiveBorder,
               boxShadow: ChewieTheme.defaultBoxShadow,
             ),
             child: Column(
@@ -86,10 +89,13 @@ class SelectTokenBottomSheetState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildHeader(),
-                Container(
-                  constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height - 320),
-                  child: _buildButtons(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Container(
+                    constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height - 320),
+                    child: _buildButtons(),
+                  ),
                 ),
                 _buildFooter(),
               ],
@@ -101,15 +107,31 @@ class SelectTokenBottomSheetState
   }
 
   _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration:
-          BoxDecoration(borderRadius: BorderRadius.vertical(top: radius)),
-      alignment: Alignment.center,
-      child: Text(
-        textAlign: TextAlign.center,
-        appLocalizations.setTokenForCategory(widget.category.title),
-        style: ChewieTheme.titleLarge,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 10),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: ChewieTheme.primaryColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(LucideIcons.keyRound,
+                color: ChewieTheme.primaryColor, size: 17),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              appLocalizations.setTokenForCategory(widget.category.title),
+              style: ChewieTheme.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -128,38 +150,51 @@ class SelectTokenBottomSheetState
 
   _buildFooter() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       alignment: Alignment.center,
       child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded(flex: 2, child: SizedBox(height: 50)),
           Expanded(
-            flex: 1,
-            child: RoundIconTextButton(
-              background: ChewieTheme.primaryColor,
-              text: appLocalizations.save,
-              onPressed: () async {
-                List<int> selectedIndexes = controller.selectedIndexes.toList();
-                List<String> tokenUids =
-                    selectedIndexes.map((e) => tokens[e].uid).toList();
-                List<String> unSelectedUids = oldSelectedUids
-                    .where((element) => !tokenUids.contains(element))
-                    .toList();
-                List<String> newSelectedUids = tokenUids
-                    .where((element) => !oldSelectedUids.contains(element))
-                    .toList();
-                await BindingDao.bingdingsForCategory(
-                    widget.category.uid, newSelectedUids);
-                await BindingDao.unBingdingsForCategory(
-                    widget.category.uid, unSelectedUids);
-                await CategoryDao.updateCategory(widget.category);
-                homeScreenState?.changeTokensForCategory(widget.category);
-                IToast.showTop(appLocalizations.saveSuccess);
-                Navigator.of(context).pop();
-              },
-              fontSizeDelta: 2,
+            child: SizedBox(
+              height: 45,
+              child: RoundIconTextButton(
+                text: appLocalizations.cancel,
+                onPressed: () => Navigator.of(context).pop(),
+                fontSizeDelta: 2,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: SizedBox(
+              height: 45,
+              child: RoundIconTextButton(
+                background: ChewieTheme.primaryColor,
+                color: Colors.white,
+                text: appLocalizations.save,
+                onPressed: () async {
+                  List<int> selectedIndexes =
+                      controller.selectedIndexes.toList();
+                  List<String> tokenUids =
+                      selectedIndexes.map((e) => tokens[e].uid).toList();
+                  List<String> unSelectedUids = oldSelectedUids
+                      .where((element) => !tokenUids.contains(element))
+                      .toList();
+                  List<String> newSelectedUids = tokenUids
+                      .where((element) => !oldSelectedUids.contains(element))
+                      .toList();
+                  await BindingDao.bingdingsForCategory(
+                      widget.category.uid, newSelectedUids);
+                  await BindingDao.unBingdingsForCategory(
+                      widget.category.uid, unSelectedUids);
+                  await CategoryDao.updateCategory(widget.category);
+                  homeScreenState?.changeTokensForCategory(widget.category);
+                  widget.onChanged?.call();
+                  IToast.showTop(appLocalizations.saveSuccess);
+                  if (mounted) Navigator.of(context).pop();
+                },
+                fontSizeDelta: 2,
+              ),
             ),
           ),
         ],

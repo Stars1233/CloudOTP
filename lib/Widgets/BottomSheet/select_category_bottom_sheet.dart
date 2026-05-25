@@ -17,6 +17,7 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/token_category_binding_dao.dart';
 import 'package:cloudotp/Screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../Database/category_dao.dart';
 import '../../Models/opt_token.dart';
@@ -91,7 +92,7 @@ class SelectCategoryBottomSheetState
                 top: radius,
                 bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
             color: ChewieTheme.scaffoldBackgroundColor,
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: Column(
@@ -100,8 +101,10 @@ class SelectCategoryBottomSheetState
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildHeader(),
-              const SizedBox(height: 10),
-              _buildButtons(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: _buildButtons(),
+              ),
               _buildFooter(),
             ],
           ),
@@ -111,17 +114,34 @@ class SelectCategoryBottomSheetState
   }
 
   _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      alignment: Alignment.center,
-      decoration:
-          BoxDecoration(borderRadius: BorderRadius.vertical(top: radius)),
-      child: Text(
-        textAlign: TextAlign.center,
-        widget.token.issuer.isNotEmpty
-            ? appLocalizations.setCategoryForTokenDetail(widget.token.issuer)
-            : appLocalizations.setCategoryForToken,
-        style: ChewieTheme.titleLarge,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 10),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: ChewieTheme.primaryColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(LucideIcons.tag,
+                color: ChewieTheme.primaryColor, size: 17),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.token.issuer.isNotEmpty
+                  ? appLocalizations
+                      .setCategoryForTokenDetail(widget.token.issuer)
+                  : appLocalizations.setCategoryForToken,
+              style: ChewieTheme.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -155,49 +175,62 @@ class SelectCategoryBottomSheetState
 
   _buildFooter() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       alignment: Alignment.center,
       child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded(flex: 2, child: SizedBox(height: 50)),
+          Expanded(
+            child: SizedBox(
+              height: 45,
+              child: RoundIconTextButton(
+                text: appLocalizations.cancel,
+                onPressed: () => Navigator.of(context).pop(),
+                fontSizeDelta: 2,
+              ),
+            ),
+          ),
+          if (categories.isNotEmpty) const SizedBox(width: 10),
           if (categories.isNotEmpty)
             Expanded(
-              flex: 1,
-              child: RoundIconTextButton(
-                background: ChewieTheme.primaryColor,
-                text: widget.isEditingToken
-                    ? appLocalizations.confirm
-                    : appLocalizations.save,
-                onPressed: () async {
-                  List<int> selectedIndexes =
-                      controller.selectedIndexes.toList();
-                  List<String> allSelectedCategoryUids =
-                      selectedIndexes.map((e) => categories[e].uid).toList();
-                  List<String> unselectedCategoryUids = oldCategoryUids
-                      .where((element) =>
-                          !allSelectedCategoryUids.contains(element))
-                      .toList();
-                  List<String> newSelectedCategoryUids = allSelectedCategoryUids
-                      .where((element) => !oldCategoryUids.contains(element))
-                      .toList();
-                  Navigator.of(context).pop();
-                  widget.onCategoryChanged?.call(allSelectedCategoryUids);
-                  if (!widget.isEditingToken) {
-                    await BindingDao.bingdingsForToken(
-                        widget.token.uid, newSelectedCategoryUids);
-                    await BindingDao.unBingdingsForToken(
-                        widget.token.uid, unselectedCategoryUids);
-                    homeScreenState?.changeCategoriesForToken(
-                      widget.token,
-                      unselectedCategoryUids,
-                      newSelectedCategoryUids,
-                    );
-                    IToast.showTop(appLocalizations.saveSuccess);
-                  }
-                },
-                fontSizeDelta: 2,
+              child: SizedBox(
+                height: 45,
+                child: RoundIconTextButton(
+                  background: ChewieTheme.primaryColor,
+                  color: Colors.white,
+                  text: widget.isEditingToken
+                      ? appLocalizations.confirm
+                      : appLocalizations.save,
+                  onPressed: () async {
+                    List<int> selectedIndexes =
+                        controller.selectedIndexes.toList();
+                    List<String> allSelectedCategoryUids =
+                        selectedIndexes.map((e) => categories[e].uid).toList();
+                    List<String> unselectedCategoryUids = oldCategoryUids
+                        .where((element) =>
+                            !allSelectedCategoryUids.contains(element))
+                        .toList();
+                    List<String> newSelectedCategoryUids =
+                        allSelectedCategoryUids
+                            .where(
+                                (element) => !oldCategoryUids.contains(element))
+                            .toList();
+                    Navigator.of(context).pop();
+                    widget.onCategoryChanged?.call(allSelectedCategoryUids);
+                    if (!widget.isEditingToken) {
+                      await BindingDao.bingdingsForToken(
+                          widget.token.uid, newSelectedCategoryUids);
+                      await BindingDao.unBingdingsForToken(
+                          widget.token.uid, unselectedCategoryUids);
+                      homeScreenState?.changeCategoriesForToken(
+                        widget.token,
+                        unselectedCategoryUids,
+                        newSelectedCategoryUids,
+                      );
+                      IToast.showTop(appLocalizations.saveSuccess);
+                    }
+                  },
+                  fontSizeDelta: 2,
+                ),
               ),
             ),
         ],

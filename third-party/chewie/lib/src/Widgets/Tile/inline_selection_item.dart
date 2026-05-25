@@ -188,7 +188,7 @@ class InlineSelectionItemState<T extends DropdownMixin>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (widget.showLeading) Icon(widget.leading, size: 20),
+                if (widget.showLeading) _buildLeadingIcon(),
                 SizedBox(width: widget.showLeading ? 10 : 5),
                 Expanded(child: _buildTitleDescription()),
                 const SizedBox(width: 50),
@@ -205,6 +205,19 @@ class InlineSelectionItemState<T extends DropdownMixin>
           // ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLeadingIcon() {
+    final color = ChewieTheme.primaryColor;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Icon(widget.leading, size: 15, color: color),
     );
   }
 
@@ -296,9 +309,9 @@ class InlineSelectionItemState<T extends DropdownMixin>
         splashColor: ChewieTheme.splashColor,
         highlightColor: ChewieTheme.highlightColor,
         selectedColor: ChewieTheme.hoverColor,
-        selectedIconColor: ChewieTheme.successColor,
+        selectedIconColor: ChewieTheme.primaryColor,
       ),
-      closedFillColor: ChewieTheme.canvasColor,
+      closedFillColor: ChewieTheme.scaffoldBackgroundColor,
       expandedFillColor: ChewieTheme.scaffoldBackgroundColor,
       listItemStyle: ChewieTheme.bodyMedium,
       closedSuffixIcon:

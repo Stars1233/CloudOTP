@@ -14,6 +14,7 @@
  */
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:cloudotp/Database/config_dao.dart';
 import 'package:cloudotp/Models/cloud_service_config.dart';
 import 'package:cloudotp/Screens/Backup/aliyundrive_service_screen.dart';
 import 'package:cloudotp/Screens/Backup/box_service_screen.dart';
@@ -23,6 +24,8 @@ import 'package:cloudotp/Screens/Backup/huawei_service_screen.dart';
 import 'package:cloudotp/Screens/Backup/onedrive_service_screen.dart';
 import 'package:cloudotp/Screens/Backup/s3_service_screen.dart';
 import 'package:cloudotp/Screens/Backup/webdav_service_screen.dart';
+import 'package:cloudotp/Screens/Setting/setting_backup_screen.dart';
+import 'package:cloudotp/Screens/Setting/setting_navigation_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:lucide_icons/lucide_icons.dart';
@@ -50,6 +53,9 @@ class _CloudServiceScreenState extends BaseDynamicState<CloudServiceScreen>
   final GroupButtonController _typeController = GroupButtonController();
   CloudServiceType _currentType = CloudServiceType.Webdav;
   late TabController tabController;
+  String _autoBackupPassword = "";
+
+  bool get canBackup => _autoBackupPassword.isNotEmpty;
 
   @override
   void initState() {
@@ -59,6 +65,11 @@ class _CloudServiceScreenState extends BaseDynamicState<CloudServiceScreen>
       vsync: this,
     );
     _typeController.selectIndex(_currentType.index);
+    ConfigDao.getConfig().then((config) {
+      setState(() {
+        _autoBackupPassword = config.backupPassword;
+      });
+    });
   }
 
   @override
@@ -101,6 +112,64 @@ class _CloudServiceScreenState extends BaseDynamicState<CloudServiceScreen>
   }
 
   _buildBody() {
+    if (!canBackup) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: ChewieTheme.primaryColor.withAlpha(20),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  LucideIcons.keyRound,
+                  size: 26,
+                  color: ChewieTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                appLocalizations.haveNotSetBackupPassword,
+                style: ChewieTheme.bodyMedium.copyWith(
+                  color: ChewieTheme.bodyMedium.color?.withAlpha(150),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              RoundIconTextButton(
+                height: 38,
+                text: appLocalizations.goToSetBackupPassword,
+                background: ChewieTheme.primaryColor,
+                onPressed: () {
+                  if (ResponsiveUtil.isLandscapeLayout()) {
+                    RouteUtil.pushDialogRoute(
+                        context, const SettingNavigationScreen(initPageIndex: 3));
+                  } else {
+                    RouteUtil.pushCupertinoRoute(
+                      context,
+                      const BackupSettingScreen(
+                          jumpToAutoBackupPassword: true),
+                      onThen: (_) {
+                        ConfigDao.getConfig().then((config) {
+                          setState(() {
+                            _autoBackupPassword = config.backupPassword;
+                          });
+                        });
+                      },
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

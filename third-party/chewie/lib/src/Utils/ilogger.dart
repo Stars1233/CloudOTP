@@ -176,8 +176,10 @@ class FileOutput extends LogOutput {
 
   static Future<void> clearLogs() async {
     List<File> logs = await getLogs();
-    for (File file in logs) {
-      if (file.existsSync()) file.deleteSync();
+    for (File logFile in logs) {
+      try {
+        if (logFile.existsSync()) logFile.deleteSync();
+      } catch (_) {}
     }
   }
 

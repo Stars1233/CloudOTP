@@ -31,6 +31,7 @@
   "reload": "Reload",
   "loadErrorType": "Error Type: {type}",
   "loadUnkownError": "Unknown Error",
+  "more": "More",
   "setting": "Settings",
   "generalSetting": "General",
   "language": "Language",
@@ -156,7 +157,10 @@
   "autoBackup": "Enable Auto Backup",
   "autoBackupTip": "Automatically back up to the specified location when tokens or categories change; effective after setting a backup password",
   "autoBackupPath": "Local Backup Location",
+  "restoreDefaultBackupPath": "Restore Default Location",
+  "restoreDefaultBackupPathTip": "Reset backup location to the built-in internal storage path",
   "backupLogs": "Backup Logs",
+  "backupLogSubtitle": "View automatic backup history",
   "noBackupLogs": "No Backup Logs Available",
   "haveNotSetBackupPassword": "Backup password not set, cannot back up",
   "notSetBackupPasswordTip": "Please set a backup password before using the backup feature.",
@@ -206,12 +210,20 @@
   "triggerAutoBackupByCloudServiceConfigInserted": "Cloud Service Added",
   "triggerAutoBackupByCloudServiceConfigUpdated": "Cloud Service Updated",
   "triggerAutoBackupByCloudServiceConfigDeleted": "Cloud Service Deleted",
+  "triggerAutoBackupByAppStartup": "App Startup",
+  "triggerAutoBackupByScheduled": "Scheduled Backup",
+  "backupOnLaunch": "Backup on Launch",
+  "backupOnLaunchTip": "Automatically backup once when the app launches",
+  "periodicBackup": "Periodic Backup",
+  "periodicBackupTip": "Automatically backup at set intervals",
+  "periodicBackupInterval": "Backup Interval",
   "immediatelyBackup": "Backup Now",
   "immediatelyBackupTip": "Immediately back up to the specified location and cloud service",
   "enableCloudBackup": "Enable Cloud Backup",
   "enableCloudBackupTip": "Once cloud backup is enabled, the backup file will be uploaded to the cloud service during backup",
   "enableLocalBackup": "Enable Local Backup",
   "enableLocalBackupTip": "Once local backup is enabled, the backup file will be saved to the specified directory; we recommend enabling local backup even if you have enabled cloud backup",
+  "bothBackupDisabledWarning": "Both local and cloud backup are disabled. Local backup has been automatically enabled to ensure your data is protected.",
   "cloudBackupServiceSetting": "Cloud Backup Service Settings",
   "cloudBackupServiceSettingTip": "Configure cloud backup service",
   "notCloudBackupService": "Cloud Backup Service Not Configured",
@@ -589,8 +601,28 @@
   "clipboardNoImage": "No image in clipboard",
   "importSuccess": "Import successful",
   "copySuccess": "Copied to clipboard",
-  "importResultTip": "{parseSuccess} tokens parsed successfully, {importSuccess} tokens imported successfully",
-  "importCategoryResultTip": "{parseSuccess} categories found, {importSuccess} categories imported successfully",
+  "importTokenResult": "Parsed {parseSuccess} tokens, imported {importSuccess}",
+  "@importTokenResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importTokenResultWithError": "Parsed {parseSuccess} tokens ({parseFailed} failed), imported {importSuccess}",
+  "@importTokenResultWithError": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "parseFailed": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importCategoryResult": "Parsed {parseSuccess} categories, imported {importSuccess}",
+  "@importCategoryResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
   "importFailed": "Import failed",
   "searchIconName": "Search icon name",
   "setIconForToken": "Choose token icon",
@@ -599,6 +631,7 @@
   "setCategoryForTokenDetail": "Choose category for token \"{issuer}\"",
   "setTokenForCategory": "Choose tokens for category \"{category}\"",
   "category": "Category",
+  "categoryAndIcon": "Category & Icon",
   "addCategory": "Add new category",
   "inputCategory": "Enter category name",
   "categoryNameCannotBeEmpty": "Category name cannot be empty",
@@ -652,6 +685,15 @@
   "createTimeDESCOrder": "Creation time descending",
   "lastCopyTimeASCOrder": "Last copy time ascending",
   "lastCopyTimeDESCOrder": "Last copy time descending",
+  "layoutType": "Layout",
+  "layoutTypeSubtitle": "Choose how your tokens are displayed",
+  "sortType": "Sort by",
+  "sortTypeSubtitle": "Choose the order in which tokens appear",
+  "sortGroupDefault": "Default",
+  "sortGroupAlphabetical": "By name",
+  "sortGroupCopyTimes": "By copy count",
+  "sortGroupLastCopy": "By last copy time",
+  "sortGroupCreate": "By creation time",
   "simpleLayoutType": "Simple",
   "compactLayoutType": "Compact",
   "tileLayoutType": "Tile",
@@ -659,7 +701,9 @@
   "listLayoutType": "List",
   "allTokens": "All",
   "noToken": "No tokens available",
+  "noTokenInCategory": "No tokens in this category",
   "noTokenContainingSearchKey": "No tokens found containing search keyword \"{key}\"",
+  "addExistingToken": "Add existing token",
   "copyTokenCode": "Copy code",
   "copyNextTokenCode": "Copy next code",
   "editToken": "Edit details",
@@ -704,8 +748,289 @@
   "cloudBackupSettings": "Cloud Backup",
   "databaseEncryptionSettings": "Database Encryption",
   "gestureLockSettings": "Gesture Lock",
+  "hideGestureTrail": "Hide Gesture Trail",
+  "hideGestureTrailTip": "Hide the drawn pattern when unlocking",
   "autoLockSettings": "Auto Lock",
   "projectRepoAbout": "Project Repository",
   "appAbout": "App",
-  "contactAbout": "Contact"
+  "contactAbout": "Contact",
+  "menuFile": "File",
+  "menuEdit": "Edit",
+  "menuView": "View",
+  "menuWindow": "Window",
+  "menuHelp": "Help",
+  "quit": "Quit",
+  "minimize": "Minimize",
+  "zoom": "Zoom",
+  "notificationPermissionDenied": "Notification permission has been denied. Please enable it in System Settings to receive desktop notifications.",
+  "notificationPermissionRequest": "Desktop notification permission is required. Go to System Settings to enable it?",
+  "goToSettings": "Go to Settings",
+  "menuTokens": "Tokens",
+  "menuSortOrder": "Sort Order",
+  "importPreview": "Import Preview",
+  "importReady": "Ready",
+  "importDuplicate": "Duplicate",
+  "importError": "Error",
+  "importSelectedCount": "Import {count} tokens",
+  "@importSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSelectAll": "Select All",
+  "importDeselectAll": "Deselect All",
+  "importInvalidData": "Invalid token data",
+  "importNoTokens": "No tokens to import",
+  "importCategoryNew": "New",
+  "importCategoryExisting": "Existing",
+  "importCategoryContains": "Contains: {names} ({count} tokens)",
+  "@importCategoryContains": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importCategoryContainsMore": "Contains: {names}... ({count} tokens)",
+  "@importCategoryContainsMore": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedCategoryCount": "Import {count} categories",
+  "@importSelectedCategoryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedBothCount": "Import {tokenCount} tokens and {categoryCount} categories",
+  "@importSelectedBothCount": {
+    "placeholders": {
+      "tokenCount": {"type": "int"},
+      "categoryCount": {"type": "int"}
+    }
+  },
+  "importOverwriteExisting": "Overwrite",
+  "importOverwrite": "Overwrite",
+  "importMergeStrategy": "Merge Strategy",
+  "importKeepLocal": "Keep Local",
+  "importOverwriteLocal": "Overwrite Local",
+  "tokenCount": "Tokens",
+  "categoryCount": "Categories",
+  "themeEditor": "Theme Editor",
+  "themeName": "Theme Name",
+  "themeNameHint": "Enter theme name",
+  "themeNameEmpty": "Theme name cannot be empty",
+  "chooseBaseTheme": "Choose Base Theme",
+  "editTheme": "Edit Theme",
+  "deleteTheme": "Delete Theme",
+  "deleteThemeConfirm": "Are you sure to delete this theme?",
+  "duplicateTheme": "Duplicate Theme",
+  "exportTheme": "Export Theme",
+  "importTheme": "Import Theme",
+  "importFromClipboard": "Import from Clipboard",
+  "importFromFile": "Import from File",
+  "exportToClipboard": "Export to Clipboard",
+  "exportToFile": "Export to File",
+  "themeImportSuccess": "Theme imported successfully",
+  "themeImportFailed": "Failed to import theme",
+  "themeExportSuccess": "Theme exported successfully",
+  "colorGroupBackground": "Background",
+  "colorGroupText": "Text",
+  "colorGroupAccent": "Accent",
+  "colorGroupButtons": "Buttons",
+  "colorGroupAppBar": "App Bar",
+  "colorGroupSurfaces": "Surfaces",
+  "colorGroupScrollbar": "Scrollbar",
+  "colorGroupStatus": "Status",
+  "accentColor": "Accent Color",
+  "resetToDefault": "Default",
+  "customColor": "Custom",
+  "webDavHttpWarning": "Warning: HTTP is not encrypted. Your credentials may be intercepted. Please use HTTPS.",
+  "shareTokenUri": "Share Token URI",
+  "toggleCodeVisibility": "Toggle code visibility",
+  "tokenProgressLabel": "Time remaining for code",
+  "multiSelectCount": "{count} selected",
+  "@multiSelectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deselectAll": "Deselect All",
+  "batchDeleteTitle": "Delete Selected Tokens",
+  "batchDeleteMessage": "Are you sure you want to delete {count} tokens? This action cannot be undone.",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchDeleteSuccess": "Successfully deleted {count} tokens",
+  "@batchDeleteSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "setCategoryForTokens": "Set category for {count} tokens",
+  "@setCategoryForTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachMarkSkip": "Skip",
+  "coachMarkSearchTitle": "Tap to Search",
+  "coachMarkSearchDescription": "Tap the app title to quickly open the search bar and find your tokens.",
+  "coachMarkSwipeTitle": "Swipe for Actions",
+  "coachMarkSwipeDescription": "Swipe a token left to pin/unpin, or swipe right for QR code, edit, and more.",
+  "coachMarkCategoryTitle": "Manage Category Tokens",
+  "coachMarkCategoryDescription": "Long-press a category tab to select which tokens belong to it.",
+  "coachMarkMultiSelectTitle": "Multi-Select Mode",
+  "coachMarkMultiSelectDescription": "Tap the more menu and choose \"Select\" to enter multi-select mode for batch operations.",
+  "showGuidedTour": "Feature Guide",
+  "showGuidedTourDescription": "Show the feature guide tour again",
+  "coachMarkNext": "Next",
+  "coachMarkGotIt": "Got it",
+  "coachMarkDeleteSampleTitle": "Delete Sample Data",
+  "coachMarkDeleteSampleMessage": "The guide is complete. Would you like to delete the sample tokens and categories?",
+  "alreadyPinnedSelectedTokens": "Pinned {count} tokens",
+  "@alreadyPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyUnPinnedSelectedTokens": "Unpinned {count} tokens",
+  "@alreadyUnPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureShowcase": "Features",
+  "featureShowcaseTitle": "Discover CloudOTP",
+  "featureShowcaseStartTour": "Start Feature Guide",
+  "featureTokenTitle": "Multi-Token Support",
+  "featureTokenDescription": "Supports 5 OTP types with SHA1, SHA256, SHA512 algorithms and 5–8 digit codes.",
+  "featureTokenTOTPDesc": "Time-based",
+  "featureTokenHOTPDesc": "Counter-based",
+  "featureTokenMOTPDesc": "Mobile OTP",
+  "featureTokenSteamDesc": "Steam Guard",
+  "featureTokenYandexDesc": "Yandex",
+  "featureCloudTitle": "Cloud Backup",
+  "featureCloudDescription": "Back up to 8 cloud services with auto-backup, encryption, and backup history.",
+  "featureCloudAuto": "Auto Backup",
+  "featureCloudEncrypted": "Encrypted",
+  "featureCloudLog": "Backup Log",
+  "featureIconTitle": "Smart Icons",
+  "featureIconDescription": "Auto-match brand logos from {count}+ icons. Pick or search for the perfect icon.",
+  "@featureIconDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureSecurityTitle": "Security First",
+  "featureSecurityDescription": "Multiple layers of protection with industry-standard encryption keep your tokens safe.",
+  "featureSecurityEncryption": "Database Encryption",
+  "featureSecurityBiometric": "Biometric Unlock",
+  "featureSecurityGesture": "Gesture Lock",
+  "featureSecurityAutoLock": "Auto Lock",
+  "featureSecuritySafeMode": "Safe Mode",
+  "featureSecurityBackupEncrypt": "Backup Encryption",
+  "featureSecurityOpenSource": "Open Source & Auditable",
+  "featurePlatformTitle": "Cross-Platform",
+  "featurePlatformDescription": "Runs on all your devices — Android, iOS, Windows, macOS, and Linux.",
+  "featurePlatformSync": "Cross-Device Sync",
+  "featurePlatformResponsive": "Responsive Layout",
+  "featureImportSection": "Import",
+  "featureExportSection": "Export",
+  "featureImportScan": "Scan QR",
+  "featureImportClipboard": "From Clipboard",
+  "featureExportEncrypted": "Encrypted File",
+  "featureExportUri": "URI File",
+  "featureExportCloudOTPQR": "CloudOTP QR",
+  "featureExportGoogleQR": "Google Auth QR",
+  "featureImportExportTitle": "Easy Migration",
+  "featureImportExportDescription": "Import from 9+ authenticator apps and export in multiple formats.",
+  "featureConvenienceTitle": "Smart & Efficient",
+  "featureConvenienceDescription": "Packed with convenient features for the best experience.",
+  "featureQuickSearch": "Quick Search",
+  "featureSort": "Sort & Filter",
+  "featureCategories": "Categories",
+  "featureMultiSelect": "Multi-Select",
+  "featurePinTop": "Pin to Top",
+  "featureSwipe": "Swipe Actions",
+  "featureDragReorder": "Drag Reorder",
+  "featureAutoCopy": "Auto Copy",
+  "featureQRScanner": "QR Scanner",
+  "featureCustomizeTitle": "Personalization",
+  "featureCustomizeDescription": "Choose from multiple layout styles, themes, fonts, and icon packs to make CloudOTP truly yours.",
+  "featureGlassEffect": "Glass Effect",
+  "featureCustomFont": "Custom Fonts",
+  "featureMultiLang": "4 Languages",
+  "featureThemeColors": "Theme Colors",
+  "featureLayoutStyles": "Layout Styles",
+  "featureCustomThemeEditor": "Custom Theme Editor",
+  "welcomeTitle": "Welcome to\nCloudOTP 4.0",
+  "welcomeSubtitle": "Your tokens, secured everywhere",
+  "welcomeNextButton": "Next",
+  "welcomeStartGuide": "Start Feature Guide",
+  "welcomeGetStarted": "Get Started",
+  "welcomeSkip": "Skip",
+  "welcomeStartExploring": "Start Exploring",
+  "sampleCategoryName": "Example",
+  "coachMarkSortTitle": "Sort Your Tokens",
+  "coachMarkSortDescription": "Tap the sort button to organize your tokens by name, creation date, copy frequency, and more.",
+  "coachMarkLayoutTitle": "Switch Layout",
+  "coachMarkLayoutDescription": "Tap the layout button to switch between Simple, Compact, List, and Spotlight views.",
+  "coachMarkScanTitle": "Add New Token",
+  "coachMarkScanDescription": "Tap the QR code button to scan a QR code and quickly add a new token.",
+  "coachMarkCloudBackupTitle": "Cloud Backup",
+  "coachMarkCloudBackupDescription": "Tap the cloud backup button to quickly back up your tokens to the cloud service.",
+  "coachMarkBackupLogTitle": "Backup Logs",
+  "coachMarkBackupLogDescription": "Tap the backup log button to view backup history and check the status of each backup.",
+  "desktopCoachSearchTitle": "Search Tokens",
+  "desktopCoachSearchDescription": "Use the search bar to quickly find tokens.",
+  "desktopCoachAddTokenTitle": "Add Token",
+  "desktopCoachAddTokenDescription": "Click to add a new token.",
+  "desktopCoachCategoryTitle": "Manage Categories",
+  "desktopCoachCategoryDescription": "Click to manage token categories for better organization.",
+  "desktopCoachQrScanTitle": "Scan QR Code",
+  "desktopCoachQrScanDescription": "Click to scan QR codes from screen or image files to add tokens.",
+  "desktopCoachImportTitle": "Import & Export",
+  "desktopCoachImportDescription": "Click to import or export your tokens.",
+  "desktopCoachImportThirdTitle": "Import from Third Party",
+  "desktopCoachImportThirdDescription": "Click to import tokens from other authenticator apps like Google Authenticator, Aegis, 2FAS, etc.",
+  "desktopCoachCloudBackupTitle": "Cloud Backup",
+  "desktopCoachCloudBackupDescription": "Click to configure and manage your cloud backup services.",
+  "desktopCoachBackupLogTitle": "Backup Logs",
+  "desktopCoachBackupLogDescription": "Click to view the history of your automatic and manual backup operations.",
+  "desktopCoachSortTitle": "Sort Tokens",
+  "desktopCoachSortDescription": "Click to change the sort order of your tokens.",
+  "desktopCoachLayoutTitle": "Switch Layout",
+  "desktopCoachLayoutDescription": "Click to switch between Simple, Compact, List, and Spotlight views.",
+  "desktopCoachFeatureShowcaseTitle": "Feature Showcase",
+  "desktopCoachFeatureShowcaseDescription": "Click to review all the features of CloudOTP 4.0 at any time.",
+  "desktopCoachSettingTitle": "Settings",
+  "desktopCoachSettingDescription": "Click to open the settings panel.",
+  "desktopCoachLogoShortcutTitle": "Keyboard Shortcuts",
+  "desktopCoachLogoShortcutDescription": "Click the logo to view all keyboard shortcuts.",
+  "desktopCoachRightClickTitle": "Right-Click Menu",
+  "desktopCoachRightClickDescription": "Right-click on any token to access actions like edit, pin, view QR code, delete, or enter multi-select mode.",
+  "enableModalSheet": "Extend Page to Status Bar",
+  "enableModalSheetTip": "When disabled, pages extend behind the status bar instead of stopping below it",
+  "clearBackupLogs": "Clear Backup Logs",
+  "clearBackupLogsConfirm": "Are you sure you want to clear all backup logs?"
 }

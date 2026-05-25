@@ -45,7 +45,7 @@ class NotificationManager {
     );
 
     _queue.add(entry);
-    Future.delayed(Duration.zero, () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _overlayState?.addNotification(entry);
     });
   }

@@ -857,6 +857,7 @@ class SliverReorderableGridState extends State<SliverReorderableGrid>
         SliverChildBuilderDelegate(
       _itemBuilder,
       childCount: widget.itemCount,
+      addAutomaticKeepAlives: false,
     );
     return SliverWaterfallFlow(
       delegate: childrenDelegate,

@@ -17,6 +17,7 @@ import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:cloudotp/Database/token_dao.dart';
 import 'package:cloudotp/Models/opt_token.dart';
 import 'package:cloudotp/Models/token_category_binding.dart';
+import 'package:cloudotp/Utils/utils.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import 'database_manager.dart';
@@ -66,6 +67,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
@@ -81,6 +83,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
@@ -116,6 +119,7 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
@@ -131,12 +135,15 @@ class BindingDao {
       );
     }
     List<dynamic> results = await batch.commit();
+    Utils.initTray();
     return results.length;
   }
 
   static Future<List<OtpToken>> getTokens(
     String categoryUid, {
     String searchKey = "",
+    List<String> tags = const [],
+    String? tokenType,
   }) async {
     final db = await DatabaseManager.getDataBase();
     List<Map<String, dynamic>> maps = await db.query(
@@ -150,12 +157,27 @@ class BindingDao {
     uids.removeWhere((e) => !StringUtil.isUid(e));
     List<OtpToken> tokens = [];
     for (String uid in uids) {
-      OtpToken? token = await TokenDao.getTokenByUid(uid, searchKey: searchKey);
+      OtpToken? token = await TokenDao.getTokenByUid(uid,
+          searchKey: searchKey, tags: tags, tokenType: tokenType);
       if (token != null) {
         tokens.add(token);
       }
     }
     return tokens;
+  }
+
+  static Future<Set<String>> getTokenUidsByCategoryUids(
+      List<String> categoryUids) async {
+    if (categoryUids.isEmpty) return {};
+    final db = await DatabaseManager.getDataBase();
+    final placeholders = categoryUids.map((_) => '?').join(',');
+    final maps = await db.query(
+      tableName,
+      columns: ["token_uid"],
+      where: "category_uid IN ($placeholders)",
+      whereArgs: categoryUids,
+    );
+    return maps.map((m) => m["token_uid"] as String).toSet();
   }
 
   static Future<List<String>> getTokenUids(String categoryUid) async {
@@ -182,7 +204,7 @@ class BindingDao {
     List<String> uids =
         List.generate(maps.length, (i) => maps[i]["category_uid"]);
     uids.removeWhere((e) => !StringUtil.isUid(e));
-    return uids;
+    return uids.toSet().toList();
   }
 
   static Future<List<TokenCategoryBinding>> listBindings() async {

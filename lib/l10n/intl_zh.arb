@@ -31,6 +31,7 @@
   "reload": "重新加载",
   "loadErrorType": "错误类型：{type}",
   "loadUnkownError": "未知错误",
+  "more": "更多",
   "setting": "设置",
   "generalSetting": "通用",
   "language": "语言",
@@ -156,7 +157,10 @@
   "autoBackup": "启用自动备份",
   "autoBackupTip": "当令牌或分类发生更改时自动备份至指定位置；设置备份密码后生效",
   "autoBackupPath": "本地备份位置",
+  "restoreDefaultBackupPath": "恢复默认位置",
+  "restoreDefaultBackupPathTip": "将备份位置重置为内置的默认存储路径",
   "backupLogs": "备份日志",
+  "backupLogSubtitle": "查看自动备份历史记录",
   "noBackupLogs": "暂无备份日志",
   "haveNotSetBackupPassword": "尚未设置备份密码，无法备份",
   "notSetBackupPasswordTip": "请设置备份密码后使用备份功能",
@@ -206,12 +210,20 @@
   "triggerAutoBackupByCloudServiceConfigInserted": "添加云服务",
   "triggerAutoBackupByCloudServiceConfigUpdated": "修改云服务",
   "triggerAutoBackupByCloudServiceConfigDeleted": "删除云服务",
+  "triggerAutoBackupByAppStartup": "应用启动",
+  "triggerAutoBackupByScheduled": "定时备份",
+  "backupOnLaunch": "启动时备份",
+  "backupOnLaunchTip": "每次启动应用时自动备份一次",
+  "periodicBackup": "定时备份",
+  "periodicBackupTip": "按设定的时间间隔自动进行备份",
+  "periodicBackupInterval": "备份间隔",
   "immediatelyBackup": "立即备份",
   "immediatelyBackupTip": "立即备份到指定位置和云服务",
   "enableCloudBackup": "启用云备份",
   "enableCloudBackupTip": "启用云备份后，备份时会将备份文件上传至云服务",
   "enableLocalBackup": "启用本地备份",
   "enableLocalBackupTip": "启用本地备份后，备份时会将备份文件保存至指定目录；即使您启用了云备份，我们也建议您启用本地备份",
+  "bothBackupDisabledWarning": "本地备份和云备份均已关闭，已自动启用本地备份以确保您的数据安全。",
   "cloudBackupServiceSetting": "云备份服务设置",
   "cloudBackupServiceSettingTip": "设置云备份服务",
   "notCloudBackupService": "尚未设置云备份服务",
@@ -589,8 +601,28 @@
   "clipboardNoImage": "剪贴板中无图片",
   "importSuccess": "导入成功",
   "copySuccess": "已复制到剪贴板",
-  "importResultTip": "解析成功{parseSuccess}个令牌，导入成功{importSuccess}个令牌",
-  "importCategoryResultTip": "共包含{parseSuccess}个分类，导入成功{importSuccess}个分类",
+  "importTokenResult": "解析 {parseSuccess} 个令牌，导入 {importSuccess} 个",
+  "@importTokenResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importTokenResultWithError": "解析 {parseSuccess} 个令牌（失败 {parseFailed} 个），导入 {importSuccess} 个",
+  "@importTokenResultWithError": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "parseFailed": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
+  "importCategoryResult": "解析 {parseSuccess} 个分类，导入 {importSuccess} 个",
+  "@importCategoryResult": {
+    "placeholders": {
+      "parseSuccess": {"type": "int"},
+      "importSuccess": {"type": "int"}
+    }
+  },
   "importFailed": "导入失败",
   "searchIconName": "搜索图标名称",
   "setIconForToken": "选择令牌图标",
@@ -599,6 +631,7 @@
   "setCategoryForTokenDetail": "选择令牌「{issuer}」的分类",
   "setTokenForCategory": "选择分类为「{category}」的令牌",
   "category": "分类",
+  "categoryAndIcon": "分类和图标",
   "addCategory": "新建分类",
   "inputCategory": "输入分类名称",
   "categoryNameCannotBeEmpty": "分类名称不能为空",
@@ -652,6 +685,15 @@
   "createTimeDESCOrder": "创建时间降序",
   "lastCopyTimeASCOrder": "最后复制时间升序",
   "lastCopyTimeDESCOrder": "最后复制时间降序",
+  "layoutType": "布局",
+  "layoutTypeSubtitle": "选择令牌的展示方式",
+  "sortType": "排序方式",
+  "sortTypeSubtitle": "选择令牌的排列顺序",
+  "sortGroupDefault": "默认",
+  "sortGroupAlphabetical": "按名称",
+  "sortGroupCopyTimes": "按复制次数",
+  "sortGroupLastCopy": "按最近复制时间",
+  "sortGroupCreate": "按创建时间",
   "simpleLayoutType": "简洁",
   "compactLayoutType": "紧凑",
   "tileLayoutType": "平铺",
@@ -659,7 +701,9 @@
   "listLayoutType": "列表",
   "allTokens": "全部",
   "noToken": "暂无令牌",
+  "noTokenInCategory": "该分类下暂无令牌",
   "noTokenContainingSearchKey": "暂无包含搜索词\"{key}\"的令牌",
+  "addExistingToken": "添加已有令牌",
   "copyTokenCode": "复制代码",
   "copyNextTokenCode": "复制下一个代码",
   "editToken": "编辑详情",
@@ -704,8 +748,289 @@
   "cloudBackupSettings": "云备份",
   "databaseEncryptionSettings": "数据库加密",
   "gestureLockSettings": "手势锁",
+  "hideGestureTrail": "隐藏手势轨迹",
+  "hideGestureTrailTip": "解锁时隐藏绘制的图案",
   "autoLockSettings": "自动锁定",
   "projectRepoAbout": "项目仓库",
   "appAbout": "APP",
-  "contactAbout": "联系我们"
+  "contactAbout": "联系我们",
+  "menuFile": "文件",
+  "menuEdit": "编辑",
+  "menuView": "视图",
+  "menuWindow": "窗口",
+  "menuHelp": "帮助",
+  "quit": "退出",
+  "minimize": "最小化",
+  "zoom": "缩放",
+  "notificationPermissionDenied": "通知权限已被拒绝，无法显示桌面通知。请在系统设置中开启通知权限。",
+  "notificationPermissionRequest": "需要通知权限以显示桌面通知。是否前往系统设置开启？",
+  "goToSettings": "前往设置",
+  "menuTokens": "令牌",
+  "menuSortOrder": "排序方式",
+  "importPreview": "导入预览",
+  "importReady": "可导入",
+  "importDuplicate": "已存在",
+  "importError": "错误",
+  "importSelectedCount": "导入 {count} 个令牌",
+  "@importSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSelectAll": "全选",
+  "importDeselectAll": "取消全选",
+  "importInvalidData": "无效的令牌数据",
+  "importNoTokens": "没有可导入的令牌",
+  "importCategoryNew": "新增",
+  "importCategoryExisting": "已存在",
+  "importCategoryContains": "包含: {names} ({count}个令牌)",
+  "@importCategoryContains": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importCategoryContainsMore": "包含: {names}…等({count}个令牌)",
+  "@importCategoryContainsMore": {
+    "placeholders": {
+      "names": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedCategoryCount": "导入 {count} 个分类",
+  "@importSelectedCategoryCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importSelectedBothCount": "导入 {tokenCount} 个令牌和 {categoryCount} 个分类",
+  "@importSelectedBothCount": {
+    "placeholders": {
+      "tokenCount": {"type": "int"},
+      "categoryCount": {"type": "int"}
+    }
+  },
+  "importOverwriteExisting": "覆盖已存在",
+  "importOverwrite": "覆盖",
+  "importMergeStrategy": "合并策略",
+  "importKeepLocal": "保留本地",
+  "importOverwriteLocal": "覆盖本地",
+  "tokenCount": "令牌",
+  "categoryCount": "分类",
+  "themeEditor": "主题编辑器",
+  "themeName": "主题名称",
+  "themeNameHint": "输入主题名称",
+  "themeNameEmpty": "主题名称不能为空",
+  "chooseBaseTheme": "选择基础主题",
+  "editTheme": "编辑主题",
+  "deleteTheme": "删除主题",
+  "deleteThemeConfirm": "确定要删除该主题吗？",
+  "duplicateTheme": "复制主题",
+  "exportTheme": "导出主题",
+  "importTheme": "导入主题",
+  "importFromClipboard": "从剪贴板导入",
+  "importFromFile": "从文件导入",
+  "exportToClipboard": "导出到剪贴板",
+  "exportToFile": "导出到文件",
+  "themeImportSuccess": "主题导入成功",
+  "themeImportFailed": "主题导入失败",
+  "themeExportSuccess": "主题导出成功",
+  "colorGroupBackground": "背景",
+  "colorGroupText": "文字",
+  "colorGroupAccent": "强调色",
+  "colorGroupButtons": "按钮",
+  "colorGroupAppBar": "导航栏",
+  "colorGroupSurfaces": "表面",
+  "colorGroupScrollbar": "滚动条",
+  "colorGroupStatus": "状态",
+  "accentColor": "强调色",
+  "resetToDefault": "默认",
+  "customColor": "自定义",
+  "webDavHttpWarning": "警告：HTTP 连接未加密，您的凭据可能被截获，请使用 HTTPS。",
+  "shareTokenUri": "分享令牌URI",
+  "toggleCodeVisibility": "切换验证码可见性",
+  "tokenProgressLabel": "验证码剩余时间",
+  "multiSelectCount": "已选择 {count} 个",
+  "@multiSelectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deselectAll": "取消全选",
+  "batchDeleteTitle": "删除选中的令牌",
+  "batchDeleteMessage": "确定要删除 {count} 个令牌吗？此操作不可撤销。",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchDeleteSuccess": "成功删除 {count} 个令牌",
+  "@batchDeleteSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "setCategoryForTokens": "为 {count} 个令牌设置分类",
+  "@setCategoryForTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachMarkSkip": "跳过",
+  "coachMarkSearchTitle": "点击搜索",
+  "coachMarkSearchDescription": "点击应用标题即可打开搜索栏，快速查找令牌。",
+  "coachMarkSwipeTitle": "滑动操作",
+  "coachMarkSwipeDescription": "向左滑动令牌可置顶/取消置顶，向右滑动可查看二维码、编辑等更多操作。",
+  "coachMarkCategoryTitle": "管理分类令牌",
+  "coachMarkCategoryDescription": "长按分类标签可选择该分类中包含的令牌。",
+  "coachMarkMultiSelectTitle": "多选模式",
+  "coachMarkMultiSelectDescription": "点击更多菜单中的「选择」进入多选模式，进行批量删除、导出、分类等操作。",
+  "showGuidedTour": "功能引导",
+  "showGuidedTourDescription": "重新显示功能引导教程",
+  "coachMarkNext": "下一步",
+  "coachMarkGotIt": "知道了",
+  "coachMarkDeleteSampleTitle": "删除示例数据",
+  "coachMarkDeleteSampleMessage": "引导已完成。是否删除示例令牌和分类？",
+  "alreadyPinnedSelectedTokens": "已置顶 {count} 个令牌",
+  "@alreadyPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyUnPinnedSelectedTokens": "已取消置顶 {count} 个令牌",
+  "@alreadyUnPinnedSelectedTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureShowcase": "功能特色",
+  "featureShowcaseTitle": "探索 CloudOTP",
+  "featureShowcaseStartTour": "开始功能引导",
+  "featureTokenTitle": "多种令牌支持",
+  "featureTokenDescription": "支持 5 种 OTP 令牌类型，SHA1、SHA256、SHA512 算法及 5-8 位验证码。",
+  "featureTokenTOTPDesc": "基于时间",
+  "featureTokenHOTPDesc": "基于计数",
+  "featureTokenMOTPDesc": "移动 OTP",
+  "featureTokenSteamDesc": "Steam 令牌",
+  "featureTokenYandexDesc": "Yandex",
+  "featureCloudTitle": "云端备份",
+  "featureCloudDescription": "支持 8 种云服务备份，自动备份、加密保护、备份历史记录一应俱全。",
+  "featureCloudAuto": "自动备份",
+  "featureCloudEncrypted": "加密存储",
+  "featureCloudLog": "备份日志",
+  "featureIconTitle": "智能图标",
+  "featureIconDescription": "从 {count}+ 品牌图标中自动匹配令牌图标，也可手动搜索选择。",
+  "@featureIconDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "featureSecurityTitle": "安全优先",
+  "featureSecurityDescription": "多重安全防护，采用业界标准加密算法保障令牌安全。",
+  "featureSecurityEncryption": "数据库加密",
+  "featureSecurityBiometric": "生物识别",
+  "featureSecurityGesture": "手势锁",
+  "featureSecurityAutoLock": "自动锁定",
+  "featureSecuritySafeMode": "安全模式",
+  "featureSecurityBackupEncrypt": "备份加密",
+  "featureSecurityOpenSource": "开源透明，代码可审计",
+  "featurePlatformTitle": "全平台支持",
+  "featurePlatformDescription": "在所有设备上运行 — Android、iOS、Windows、macOS、Linux。",
+  "featurePlatformSync": "跨设备同步",
+  "featurePlatformResponsive": "响应式布局",
+  "featureImportSection": "导入",
+  "featureExportSection": "导出",
+  "featureImportScan": "扫码导入",
+  "featureImportClipboard": "剪贴板导入",
+  "featureExportEncrypted": "加密文件",
+  "featureExportUri": "URI 文件",
+  "featureExportCloudOTPQR": "CloudOTP 二维码",
+  "featureExportGoogleQR": "Google 二维码",
+  "featureImportExportTitle": "轻松迁移",
+  "featureImportExportDescription": "支持从 9 种以上认证器导入，多种格式导出。",
+  "featureConvenienceTitle": "智能高效",
+  "featureConvenienceDescription": "丰富的便捷功能，带来最佳使用体验。",
+  "featureQuickSearch": "快速搜索",
+  "featureSort": "排序筛选",
+  "featureCategories": "智能分类",
+  "featureMultiSelect": "多选操作",
+  "featurePinTop": "置顶令牌",
+  "featureSwipe": "滑动操作",
+  "featureDragReorder": "拖拽排序",
+  "featureAutoCopy": "自动复制",
+  "featureQRScanner": "二维码扫描",
+  "featureCustomizeTitle": "个性定制",
+  "featureCustomizeDescription": "提供多种布局、主题、字体和图标包选择，打造专属的 CloudOTP。",
+  "featureGlassEffect": "毛玻璃效果",
+  "featureCustomFont": "自定义字体",
+  "featureMultiLang": "4 种语言",
+  "featureThemeColors": "主题色",
+  "featureLayoutStyles": "布局样式",
+  "featureCustomThemeEditor": "自定义主题编辑器",
+  "welcomeTitle": "欢迎使用\nCloudOTP 4.0",
+  "welcomeSubtitle": "你的令牌，随处安全",
+  "welcomeNextButton": "下一步",
+  "welcomeStartGuide": "开始功能引导",
+  "welcomeGetStarted": "开始使用",
+  "welcomeSkip": "跳过",
+  "welcomeStartExploring": "开始探索",
+  "sampleCategoryName": "示例",
+  "coachMarkSortTitle": "排序令牌",
+  "coachMarkSortDescription": "点击排序按钮，按名称、创建时间、复制次数等方式对令牌进行排序。",
+  "coachMarkLayoutTitle": "切换布局",
+  "coachMarkLayoutDescription": "点击布局按钮，在简洁、紧凑、列表和聚焦四种视图之间切换。",
+  "coachMarkScanTitle": "添加新令牌",
+  "coachMarkScanDescription": "点击二维码按钮扫描二维码，快速添加新令牌。",
+  "coachMarkCloudBackupTitle": "云备份",
+  "coachMarkCloudBackupDescription": "点击云备份按钮，将令牌快速备份到云服务。",
+  "coachMarkBackupLogTitle": "备份日志",
+  "coachMarkBackupLogDescription": "点击备份日志按钮，查看备份历史和每次备份的状态。",
+  "desktopCoachSearchTitle": "搜索令牌",
+  "desktopCoachSearchDescription": "使用搜索栏快速查找令牌。",
+  "desktopCoachAddTokenTitle": "添加令牌",
+  "desktopCoachAddTokenDescription": "点击添加新令牌。",
+  "desktopCoachCategoryTitle": "管理分类",
+  "desktopCoachCategoryDescription": "点击管理令牌分类，便于整理归类。",
+  "desktopCoachQrScanTitle": "扫描二维码",
+  "desktopCoachQrScanDescription": "点击从屏幕截图或图片文件中扫描二维码以添加令牌。",
+  "desktopCoachImportTitle": "导入与导出",
+  "desktopCoachImportDescription": "点击导入或导出你的令牌数据。",
+  "desktopCoachImportThirdTitle": "从第三方导入",
+  "desktopCoachImportThirdDescription": "点击从其他验证器应用导入令牌，支持 Google Authenticator、Aegis、2FAS 等。",
+  "desktopCoachCloudBackupTitle": "云备份",
+  "desktopCoachCloudBackupDescription": "点击配置和管理你的云备份服务。",
+  "desktopCoachBackupLogTitle": "备份日志",
+  "desktopCoachBackupLogDescription": "点击查看自动备份和手动备份的历史记录。",
+  "desktopCoachSortTitle": "排序令牌",
+  "desktopCoachSortDescription": "点击更改令牌的排序方式。",
+  "desktopCoachLayoutTitle": "切换布局",
+  "desktopCoachLayoutDescription": "点击在简洁、紧凑、列表和聚焦视图之间切换。",
+  "desktopCoachFeatureShowcaseTitle": "功能特色",
+  "desktopCoachFeatureShowcaseDescription": "点击随时查看 CloudOTP 4.0 的所有功能特色。",
+  "desktopCoachSettingTitle": "设置",
+  "desktopCoachSettingDescription": "点击打开设置面板。",
+  "desktopCoachLogoShortcutTitle": "快捷键帮助",
+  "desktopCoachLogoShortcutDescription": "点击 Logo 查看所有快捷键。",
+  "desktopCoachRightClickTitle": "右键菜单",
+  "desktopCoachRightClickDescription": "右键点击任何令牌可快速访问编辑、置顶、查看二维码、删除或进入多选模式等操作。",
+  "enableModalSheet": "页面延伸至状态栏",
+  "enableModalSheetTip": "关闭后，页面将延伸至状态栏后方而非停留在状态栏下方",
+  "clearBackupLogs": "清除备份日志",
+  "clearBackupLogsConfirm": "确定要清除所有备份日志吗？"
 }

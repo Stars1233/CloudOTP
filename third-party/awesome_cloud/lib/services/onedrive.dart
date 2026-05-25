@@ -147,25 +147,19 @@ class OneDrive extends BaseCloudService {
   }
 
   @override
-  Future<OneDriveResponse> pullById(String id) async {
+  Future<OneDriveResponse> pullById(
+    String id, {
+    Function(int, int)? onProgress,
+  }) async {
     try {
       final pullUri = Uri.parse("$apiEndpoint/me/drive/items/$id/content");
 
-      final resp = await get(pullUri);
-
-      if (isSuccess(resp)) {
-        CloudLogger.info(serviceName, "Pull file successfully");
-        return OneDriveResponse.fromResponse(
-          response: resp,
-          message: "Pull file successfully.",
-        );
-      } else {
-        CloudLogger.errorResponse(serviceName, "Pull file failed", resp);
-        return OneDriveResponse.fromResponse(
-          response: resp,
-          message: "Error when pulling file.",
-        );
-      }
+      final bodyBytes = await getStreamed(pullUri, onProgress: onProgress);
+      CloudLogger.info(serviceName, "Pull file successfully");
+      return OneDriveResponse.success(
+        bodyBytes: bodyBytes,
+        message: "Pull file successfully.",
+      );
     } catch (err, trace) {
       CloudLogger.error(serviceName, "Pull file error", err, trace);
       return OneDriveResponse.error(message: "Pull file error: $err");

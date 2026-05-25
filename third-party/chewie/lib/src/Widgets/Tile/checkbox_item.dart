@@ -16,9 +16,11 @@ class CheckboxItem extends SearchableStatefulWidget {
   final double trailingLeftMargin;
   final double padding;
   final bool disabled;
+  final bool ink;
 
   const CheckboxItem({
     super.key,
+    this.ink = true,
     this.radius = 8,
     this.roundTop = false,
     this.roundBottom = false,
@@ -57,6 +59,7 @@ class CheckboxItem extends SearchableStatefulWidget {
       trailingLeftMargin: trailingLeftMargin,
       padding: padding,
       disabled: disabled,
+      ink: ink,
     );
   }
 
@@ -68,10 +71,11 @@ class CheckboxItemState extends SearchableState<CheckboxItem> {
   double get _effectivePadding =>
       widget.description.isNotEmpty ? widget.padding : widget.padding - 3;
 
-  BorderRadius get _borderRadius => BorderRadius.vertical(
+  BorderRadius get _borderRadius =>
+      BorderRadius.vertical(
         top: widget.roundTop ? Radius.circular(widget.radius) : Radius.zero,
         bottom:
-            widget.roundBottom ? Radius.circular(widget.radius) : Radius.zero,
+        widget.roundBottom ? Radius.circular(widget.radius) : Radius.zero,
       );
 
   @override
@@ -80,35 +84,48 @@ class CheckboxItemState extends SearchableState<CheckboxItem> {
     if (!shouldShow) return const SizedBox.shrink();
     return InkAnimation(
       borderRadius: _borderRadius,
-      ink: false,
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              top: _effectivePadding,
-              bottom: _effectivePadding,
-              left: 6,
-              right: 4,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: _buildRowChildren(),
-            ),
-          ),
-          // _buildBottomDivider(),
-        ],
+      ink: widget.ink,
+      color: Colors.transparent,
+      onTap: widget.disabled ? null : () {
+        HapticFeedback.lightImpact();
+        widget.onTap?.call();
+      },
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: _effectivePadding,
+          bottom: _effectivePadding,
+          left: 6,
+          right: 4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _buildRowChildren(),
+        ),
       ),
     );
   }
 
   List<Widget> _buildRowChildren() {
     return [
-      if (widget.showLeading) Icon(widget.leading, size: 20),
+      if (widget.showLeading) _buildLeadingIcon(),
       const SizedBox(width: 5),
       Expanded(child: _buildTextContent()),
       SizedBox(width: widget.trailingLeftMargin),
       _buildSwitch(),
     ];
+  }
+
+  Widget _buildLeadingIcon() {
+    final color = ChewieTheme.primaryColor;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Icon(widget.leading, size: 15, color: color),
+    );
   }
 
   Widget _buildTextContent() {
@@ -162,21 +179,12 @@ class CheckboxItemState extends SearchableState<CheckboxItem> {
           onChanged: widget.disabled
               ? null
               : (_) {
-                  HapticFeedback.lightImpact();
-                  widget.onTap?.call();
-                },
+            HapticFeedback.lightImpact();
+            widget.onTap?.call();
+          },
         ),
       ),
     );
   }
 
-// Widget _buildBottomDivider() {
-//   return Container(
-//     height: 0,
-//     margin: const EdgeInsets.symmetric(horizontal: 10),
-//     decoration: BoxDecoration(
-//       border: widget.roundBottom ? null : ChewieTheme.bottomDivider,
-//     ),
-//   );
-// }
 }

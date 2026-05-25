@@ -130,6 +130,7 @@ class AliyunDriveCloudService extends CloudService {
       path,
       driveId: driveId,
       remotePath: _aliyunDrivePath,
+      onProgress: onProgress,
     );
     return response.isSuccess ? response.bodyBytes : null;
   }
@@ -176,6 +177,7 @@ class AliyunDriveCloudService extends CloudService {
       _aliyunDrivePath,
       fileName,
       driveId: driveId,
+      onProgress: onProgress,
     );
     deleteOldBackup();
     return response.isSuccess;

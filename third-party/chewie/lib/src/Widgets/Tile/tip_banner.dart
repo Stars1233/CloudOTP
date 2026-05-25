@@ -22,7 +22,7 @@ class TipBanner extends StatelessWidget {
     this.backgroundColor,
     this.textColor,
     this.padding = const EdgeInsets.all(12),
-    this.margin = const EdgeInsets.symmetric(horizontal: 8),
+    this.margin = const EdgeInsets.symmetric(horizontal: 0),
   });
 
   factory TipBanner.info(

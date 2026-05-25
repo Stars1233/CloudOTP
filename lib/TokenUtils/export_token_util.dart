@@ -105,6 +105,39 @@ class ExportTokenUtil {
     }
   }
 
+  static exportSelectedTokensUri(List<OtpToken> tokens) async {
+    if (tokens.isEmpty) return;
+    CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
+    String content = await compute((_) async {
+      List<String> uris =
+          tokens.map((e) => OtpTokenParser.toUri(e).toString()).toList();
+      return uris.join("\n");
+    }, null);
+    String? filePath = await FileUtil.saveFile(
+      dialogTitle: appLocalizations.exportUriFileTitle,
+      fileName: ExportTokenUtil.getExportFileName("txt"),
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+    );
+    if (filePath != null) {
+      File(filePath).writeAsStringSync(content);
+    }
+    CustomLoadingDialog.dismissLoading();
+    if (filePath != null) {
+      IToast.showTop(appLocalizations.exportSuccess);
+    }
+  }
+
+  static String getTokensUriString(List<OtpToken> tokens) {
+    return tokens.map((e) => OtpTokenParser.toUri(e).toString()).join("\n");
+  }
+
+  static shareSelectedTokensUri(List<OtpToken> tokens) {
+    if (tokens.isEmpty) return;
+    String content = getTokensUriString(tokens);
+    UriUtil.share(content);
+  }
+
   static Future<Uint8List?> getUint8List({
     String? password,
   }) async {
@@ -127,6 +160,43 @@ class ExportTokenUtil {
       }, null);
     } catch (e, t) {
       ILogger.error("Failed to export data to Uint8List", e, t);
+      if (e is BackupBaseException) {
+        IToast.showTop(e.intlMessage);
+      }
+      return null;
+    }
+  }
+
+  static Future<Uint8List?> getUint8ListForTokens({
+    required List<OtpToken> tokens,
+    String? password,
+  }) async {
+    try {
+      String tmpPassword = password ?? await ConfigDao.getBackupPassword();
+      List<TokenCategory> categories = await CategoryDao.listCategories();
+      for (TokenCategory category in categories) {
+        category.bindings = await BindingDao.getTokenUids(category.uid);
+      }
+      Set<String> tokenUids = tokens.map((t) => t.uid).toSet();
+      categories = categories.where((c) {
+        return c.bindings.any((uid) => tokenUids.contains(uid));
+      }).toList();
+      for (var c in categories) {
+        c.bindings =
+            c.bindings.where((uid) => tokenUids.contains(uid)).toList();
+      }
+      return await compute((_) async {
+        Backup backup = Backup(
+          tokens: tokens,
+          categories: categories,
+        );
+        BackupEncryptionV1 backupEncryption = BackupEncryptionV1();
+        Uint8List encryptedData =
+            await backupEncryption.encrypt(backup, tmpPassword);
+        return encryptedData;
+      }, null);
+    } catch (e, t) {
+      ILogger.error("Failed to export selected tokens to Uint8List", e, t);
       if (e is BackupBaseException) {
         IToast.showTop(e.intlMessage);
       }
@@ -253,7 +323,7 @@ class ExportTokenUtil {
     ProgressDialog? dialog;
     if (showLoading) {
       dialog = showProgressDialog(
-        appLocalizations.backuping,
+        appLocalizations.encryptingBackupFileShort,
         showProgress: false,
       );
     }
@@ -270,6 +340,12 @@ class ExportTokenUtil {
         if (canLocalBackup) {
           try {
             log.addStatus(AutoBackupStatus.saving);
+            if (showLoading && dialog != null) {
+              dialog.updateMessage(
+                msg: appLocalizations.savingBackupFileShort,
+                showProgress: false,
+              );
+            }
             String backupPath = await CloudOTPHiveUtil.getBackupPath();
             Directory directory = Directory(backupPath);
             if (!directory.existsSync()) {
@@ -291,14 +367,19 @@ class ExportTokenUtil {
         if (canCloudBackup) {
           if (cloudServices != null && cloudServices.isNotEmpty) {
             bool uploadStatus = false;
-            for (CloudService cloudService in cloudServices) {
+            final count = cloudServices.length;
+            for (int i = 0; i < count; i++) {
+              final cloudService = cloudServices[i];
               try {
                 log.addStatus(AutoBackupStatus.uploading,
                     type: cloudService.type);
                 if (showLoading && dialog != null) {
+                  final serviceMsg = count > 1
+                      ? "${appLocalizations.cloudPushingTo(cloudService.type.label)} (${i + 1}/$count)"
+                      : appLocalizations
+                          .cloudPushingTo(cloudService.type.label);
                   dialog.updateMessage(
-                    msg: appLocalizations
-                        .cloudPushingTo(cloudService.type.label),
+                    msg: serviceMsg,
                     showProgress: true,
                   );
                   dialog.updateProgress(progress: 0);
@@ -411,7 +492,7 @@ class ExportTokenUtil {
     ProgressDialog? dialog;
     if (showLoading) {
       dialog = showProgressDialog(
-        appLocalizations.backuping,
+        appLocalizations.encryptingBackupFileShort,
         showProgress: false,
       );
     }
@@ -424,6 +505,7 @@ class ExportTokenUtil {
         if (showLoading && dialog != null) {
           dialog.updateMessage(
               msg: appLocalizations.cloudPushing, showProgress: true);
+          dialog.updateProgress(progress: 0);
         }
         bool uploadStatus = await cloudService.uploadFile(
           ExportTokenUtil.getExportFileName("bin"),
@@ -456,7 +538,12 @@ class ExportTokenUtil {
   }
 
   static Future<int> getBackupsCount() async {
-    return (await getLocalBackups()).length;
+    final lists = await getLocalBackups();
+    int total = 0;
+    for (final list in lists) {
+      total += list.length;
+    }
+    return total;
   }
 
   static Future<List<FileSystemEntity>> getLocalBackupsByPath(
@@ -503,6 +590,7 @@ class ExportTokenUtil {
 
   static Future<List<dynamic>?> exportToGoogleAuthentcatorQrcodes({
     bool showLoading = true,
+    List<OtpToken>? selectedTokens,
   }) async {
     if (showLoading) {
       CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
@@ -511,7 +599,7 @@ class ExportTokenUtil {
     int passCount = 0;
     List<OtpMigrationPayload> payloads = [];
     try {
-      List<OtpToken> tokens = await TokenDao.listTokens();
+      List<OtpToken> tokens = selectedTokens ?? await TokenDao.listTokens();
       OtpMigrationPayload payload = OtpMigrationPayload.create();
       String preRes = "";
       for (OtpToken token in tokens) {
@@ -556,6 +644,7 @@ class ExportTokenUtil {
 
   static Future<List<String>?> exportToQrcodes({
     bool showLoading = true,
+    List<OtpToken>? selectedTokens,
   }) async {
     if (showLoading) {
       CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
@@ -566,7 +655,7 @@ class ExportTokenUtil {
     int batchId = Random().nextInt(1000000000) * -1;
     try {
       //Tokens
-      List<OtpToken> tokens = await TokenDao.listTokens();
+      List<OtpToken> tokens = selectedTokens ?? await TokenDao.listTokens();
       CloudOtpTokenPayload payload = CloudOtpTokenPayload.create();
       String preRes = "";
       for (OtpToken token in tokens) {
@@ -581,24 +670,26 @@ class ExportTokenUtil {
         }
       }
       if (preRes.isNotEmpty) payloads.add(payload);
-      //Categories
-      List<TokenCategory> categories = await CategoryDao.listCategories();
-      TokenCategoryPayload categoryPayload = TokenCategoryPayload.create();
-      preRes = "";
-      for (TokenCategory category in categories) {
-        TokenCategoryParameters parameters =
-            await category.toCategoryParameters();
-        categoryPayload.categoryParameters.add(parameters);
-        String currentRes = base64Encode(categoryPayload.writeToBuffer());
-        if (currentRes.bytesLength > maxBytesLength) {
-          categoryPayloads.add(categoryPayload);
-          preRes = currentRes = "";
-          categoryPayload = TokenCategoryPayload.create();
-        } else {
-          preRes = currentRes;
+      //Categories (skip when exporting selected tokens only)
+      if (selectedTokens == null) {
+        List<TokenCategory> categories = await CategoryDao.listCategories();
+        TokenCategoryPayload categoryPayload = TokenCategoryPayload.create();
+        preRes = "";
+        for (TokenCategory category in categories) {
+          TokenCategoryParameters parameters =
+              await category.toCategoryParameters();
+          categoryPayload.categoryParameters.add(parameters);
+          String currentRes = base64Encode(categoryPayload.writeToBuffer());
+          if (currentRes.bytesLength > maxBytesLength) {
+            categoryPayloads.add(categoryPayload);
+            preRes = currentRes = "";
+            categoryPayload = TokenCategoryPayload.create();
+          } else {
+            preRes = currentRes;
+          }
         }
+        if (preRes.isNotEmpty) categoryPayloads.add(categoryPayload);
       }
-      if (preRes.isNotEmpty) categoryPayloads.add(categoryPayload);
       for (CloudOtpTokenPayload payload in payloads) {
         payload.version = 1;
         payload.batchSize = payloads.length + categoryPayloads.length;

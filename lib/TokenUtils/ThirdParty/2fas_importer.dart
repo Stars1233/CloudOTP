@@ -92,13 +92,9 @@ class TwoFASToken {
 
   OtpToken toOtpToken() {
     OtpToken token = OtpToken.init();
-    token.uid = serviceTypeID;
     token.issuer = otp.issuer;
     token.account = otp.account;
     token.secret = secret;
-    // token.counterString = otp.digits > 0
-    //     ? otp.digits.toString()
-    //     : token.tokenType.defaultDigits.toString();
     token.digits = otp.digits > 0
         ? OtpDigits.fromString(otp.digits.toString())
         : token.tokenType.defaultDigits;
@@ -110,10 +106,10 @@ class TwoFASToken {
     return token;
   }
 
-  List<TokenCategoryBinding> getBindings() {
+  List<TokenCategoryBinding> getBindings(String tokenUid) {
     return [
       TokenCategoryBinding(
-        tokenUid: serviceTypeID,
+        tokenUid: tokenUid,
         categoryUid: groupId,
       ),
     ];
@@ -219,7 +215,10 @@ class TwoFASTokenImporter implements BaseTokenImporter {
     }
     categories = twoFASGroups.map((e) => e.toTokenCategory()).toList();
     tokens = twoFASTokens.map((e) => e.toOtpToken()).toList();
-    bindings = twoFASTokens.expand((e) => e.getBindings()).toList();
+    bindings = [];
+    for (int i = 0; i < twoFASTokens.length; i++) {
+      bindings.addAll(twoFASTokens[i].getBindings(tokens[i].uid));
+    }
     await BaseTokenImporter.importResult(
         ImporterResult(tokens, categories, bindings));
   }

@@ -46,11 +46,23 @@ class TokenLayout extends StatefulWidget {
     super.key,
     required this.token,
     required this.layoutType,
+    this.multiSelectMode = false,
+    this.isSelected = false,
+    this.onToggleSelect,
+    this.onEnterMultiSelect,
   });
 
   final OtpToken token;
 
   final LayoutType layoutType;
+
+  final bool multiSelectMode;
+
+  final bool isSelected;
+
+  final VoidCallback? onToggleSelect;
+
+  final VoidCallback? onEnterMultiSelect;
 
   @override
   State<TokenLayout> createState() => TokenLayoutState();
@@ -88,9 +100,59 @@ class TokenLayoutNotifier extends ChangeNotifier {
 
 class TokenLayoutState extends BaseDynamicState<TokenLayout>
     with TickerProviderStateMixin {
-  Timer? _timer;
+  StreamSubscription? _tickerSubscription;
 
   TokenLayoutNotifier tokenLayoutNotifier = TokenLayoutNotifier();
+
+  late final AnimationController _entranceController;
+  late final Animation<double> _entranceAnimation;
+
+  AnimationController? _wobbleController;
+  late Animation<double> _wobbleAnimation;
+
+  int _lastTimeStep = -1;
+
+  SlidableController? _slidableController;
+
+  Future<void> openEndActionPane() async {
+    await _slidableController?.openEndActionPane();
+  }
+
+  Future<void> closeSlidable() async {
+    await _slidableController?.close();
+  }
+
+  void replayEntrance() {
+    _entranceController.reset();
+    _entranceController.forward();
+  }
+
+  void _startWobble() {
+    if (_wobbleController != null) return;
+    _wobbleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    final phase = (widget.token.uid.hashCode % 1000) / 1000.0;
+    _wobbleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: 0.008), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.008, end: -0.008), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -0.008, end: 0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _wobbleController!,
+      curve: Curves.easeInOut,
+    ));
+    Future.delayed(Duration(milliseconds: (phase * 300).toInt()), () {
+      if (_wobbleController != null && mounted) {
+        _wobbleController!.repeat();
+      }
+    });
+  }
+
+  void _stopWobble() {
+    _wobbleController?.dispose();
+    _wobbleController = null;
+  }
 
   final ValueNotifier<double> progressNotifier = ValueNotifier(0);
 
@@ -110,9 +172,26 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _entranceController.dispose();
+    _tickerSubscription?.cancel();
+    _stopWobble();
+    _slidableController?.dispose();
+    _slidableController = null;
     tokenLayoutNotifier.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant TokenLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.multiSelectMode && !oldWidget.multiSelectMode) {
+      _startWobble();
+    } else if (!widget.multiSelectMode && oldWidget.multiSelectMode) {
+      _stopWobble();
+    }
+    if (widget.layoutType != oldWidget.layoutType) {
+      _slidableController?.close();
+    }
   }
 
   updateInfo({
@@ -128,6 +207,15 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   @override
   void initState() {
     super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _entranceAnimation = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOutBack,
+    );
+    _entranceController.forward();
     updateCode();
     progressNotifier.value = currentProgress;
     resetTimer();
@@ -135,7 +223,9 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   resetTimer() {
     tokenLayoutNotifier.haveToResetHOTP = false;
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _tickerSubscription?.cancel();
+    globalTokenTicker.start();
+    _tickerSubscription = globalTokenTicker.stream.listen((_) {
       if (mounted) {
         progressNotifier.value = currentProgress;
         if (remainingMilliseconds <= 180 && appProvider.autoHideCode) {
@@ -152,7 +242,23 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
 
   @override
   Widget build(BuildContext context) {
-    return _buildContextMenuRegion();
+    return AnimatedBuilder(
+      animation: _entranceAnimation,
+      builder: (context, child) {
+        final value = _entranceAnimation.value;
+        return Transform.translate(
+          offset: Offset(0, 40 * (1 - value)),
+          child: Transform.scale(
+            scale: 0.75 + 0.25 * value,
+            child: Opacity(
+              opacity: value.clamp(0.0, 1.0),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: RepaintBoundary(child: _buildContextMenuRegion()),
+    );
   }
 
   String getCurrentCode() {
@@ -166,6 +272,14 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   FlutterContextMenu _buildContextMenuButtons() {
     return FlutterContextMenu(
       entries: [
+        if (widget.onEnterMultiSelect != null) ...[
+          FlutterContextMenuItem(
+            iconData: LucideIcons.listChecks,
+            appLocalizations.select,
+            onPressed: () => widget.onEnterMultiSelect?.call(),
+          ),
+          FlutterContextMenuItem.divider(),
+        ],
         FlutterContextMenuItem(
           iconData: LucideIcons.copy,
           appLocalizations.copyTokenCode,
@@ -214,6 +328,11 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
               onPressed: _processCopyUri,
             ),
             FlutterContextMenuItem(
+              iconData: LucideIcons.share2,
+              appLocalizations.shareTokenUri,
+              onPressed: _processShareUri,
+            ),
+            FlutterContextMenuItem(
               iconData: LucideIcons.copySlash,
               appLocalizations.copyNextTokenCode,
               onPressed: _processCopyNextCode,
@@ -238,31 +357,24 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
   }
 
   _buildContextMenuRegion() {
-    return ContextMenuRegion(
-      key: ValueKey("contextMenuRegion${widget.token.keyString}"),
-      enable: ResponsiveUtil.isDesktop(),
-      enableOnLongPress: false,
-      contextMenu: _buildContextMenuButtons(),
-      child: Selector<AppProvider, bool>(
-        selector: (context, provider) => provider.dragToReorder,
-        builder: (context, dragToReorder, child) =>
-            Selector<AppProvider, IssuerAndAccountShowOption>(
+    return Semantics(
+      label: '${widget.token.issuer} ${widget.token.account}',
+      hint: appLocalizations.copyTokenCode,
+      button: true,
+      child: ContextMenuRegion(
+        key: ValueKey("contextMenuRegion${widget.token.keyString}"),
+        enable: ResponsiveUtil.isDesktop() && !widget.multiSelectMode,
+        enableOnLongPress: false,
+        contextMenu: _buildContextMenuButtons(),
+        child: Selector<AppProvider, IssuerAndAccountShowOption>(
           selector: (context, provider) => provider.issuerAndAccountShowOption,
           builder: (context, issuerAndAccountShowOption, child) {
-            return GestureDetector(
-              onLongPress: dragToReorder && !ResponsiveUtil.isDesktop()
-                  ? () {
-                showContextMenu();
-                HapticFeedback.lightImpact();
-              }
-                  : null,
-              child: PressableAnimation(
-                child: _buildBody(
-                  issuerAndAccountShowOption: issuerAndAccountShowOption,
-                ),
-              ),
+            final body = _buildBody(
+              issuerAndAccountShowOption: issuerAndAccountShowOption,
             );
-          }
+            if (widget.multiSelectMode) return body;
+            return PressableAnimation(child: body);
+          },
         ),
       ),
     );
@@ -274,27 +386,36 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     double startExtentRatio = 0.16,
     double endExtentRatio = 0.64,
   }) {
+    _slidableController ??= SlidableController(this);
     return Slidable(
+      controller: _slidableController,
       groupTag: "TokenLayout",
-      enabled: !ResponsiveUtil.isWideDevice(),
+      enabled: !widget.multiSelectMode && !ResponsiveUtil.isWideDevice(),
       startActionPane: ActionPane(
         extentRatio: startExtentRatio,
         motion: const ScrollMotion(),
+        onAutoTrigger: () => _processPin(),
+        autoTriggerThreshold: startExtentRatio * 2.5,
         children: [
           SlidableAction(
             onPressed: (context) => _processPin(),
             backgroundColor: widget.token.pinned
                 ? ChewieTheme.primaryColor
                 : ChewieTheme.cardColor,
+            autoTriggerBackgroundColor: ChewieTheme.primaryColor,
+            autoTriggerIconAndTextColor: Colors.white,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             foregroundColor: ChewieTheme.primaryColor,
             icon: widget.token.pinned
-                ? Icons.push_pin_rounded
-                : Icons.push_pin_outlined,
+                ? LucideIcons.pin
+                : LucideIcons.pinOff,
+            autoTriggerIcon: widget.token.pinned
+                ? LucideIcons.pinOff
+                : LucideIcons.pin,
             label: widget.token.pinned
                 ? appLocalizations.unPinTokenShort
                 : appLocalizations.pinTokenShort,
-            simple: simple,
+            simple: true,
             spacing: 8,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             iconAndTextColor: widget.token.pinned ? Colors.white : null,
@@ -305,72 +426,157 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       endActionPane: ActionPane(
         extentRatio: endExtentRatio,
         motion: const ScrollMotion(),
-        children: [
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => _processViewQrCode(),
-            backgroundColor: ChewieTheme.cardColor,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.qrCode,
-            label: appLocalizations.viewTokenQrCodeShort,
-            spacing: 8,
-            simple: simple,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-          ),
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => _processEdit(),
-            backgroundColor: ChewieTheme.cardColor,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.pencilLine,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            label: appLocalizations.editTokenShort,
-            simple: simple,
-            spacing: 8,
-          ),
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => showContextMenu(),
-            backgroundColor: ChewieTheme.cardColor,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.ellipsisVertical,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            label: appLocalizations.moreOptionShort,
-            simple: simple,
-            spacing: 8,
-          ),
-          const SizedBox(width: 6),
-          SlidableAction(
-            onPressed: (context) => _processDelete(),
-            backgroundColor: Colors.red,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            foregroundColor: ChewieTheme.primaryColor,
-            icon: LucideIcons.trash2,
-            simple: simple,
-            label: appLocalizations.deleteTokenShort,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            spacing: 8,
-            iconAndTextColor: Colors.white,
-          ),
-        ],
+        children: simple
+            ? [
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => _processViewQrCode(),
+                  backgroundColor: ChewieTheme.cardColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.qrCode,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => _processEdit(),
+                  backgroundColor: ChewieTheme.cardColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.pencilLine,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => showContextMenu(),
+                  backgroundColor: ChewieTheme.cardColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.ellipsisVertical,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                // const SizedBox(width: 6),
+                // SlidableAction(
+                //   onPressed: (context) => widget.onEnterMultiSelect?.call(),
+                //   backgroundColor: ChewieTheme.cardColor,
+                //   borderRadius: const BorderRadius.all(Radius.circular(12)),
+                //   foregroundColor: ChewieTheme.primaryColor,
+                //   icon: LucideIcons.listChecks,
+                //   simple: true,
+                //   padding: const EdgeInsets.symmetric(horizontal: 4),
+                // ),
+                const SizedBox(width: 6),
+                SlidableAction(
+                  onPressed: (context) => _processDelete(),
+                  backgroundColor: Colors.red,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  foregroundColor: ChewieTheme.primaryColor,
+                  icon: LucideIcons.trash2,
+                  simple: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  iconAndTextColor: Colors.white,
+                ),
+              ]
+            : [
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: _processViewQrCode,
+                          icon: LucideIcons.qrCode,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: () => widget.onEnterMultiSelect?.call(),
+                          icon: LucideIcons.listChecks,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: _processEdit,
+                          icon: LucideIcons.pencilLine,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: _buildGridActionButton(
+                          onPressed: showContextMenu,
+                          icon: LucideIcons.ellipsisVertical,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _buildGridActionButton(
+                    onPressed: _processDelete,
+                    icon: LucideIcons.trash2,
+                    backgroundColor: Colors.red,
+                    iconAndTextColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
       ),
       child: child,
+    );
+  }
+
+  Widget _buildGridActionButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    Color? backgroundColor,
+    Color? iconAndTextColor,
+  }) {
+    final bg = backgroundColor ?? ChewieTheme.cardColor;
+    final fgColor = iconAndTextColor ?? Theme.of(context).iconTheme.color;
+    return SizedBox.expand(
+      child: OutlinedButton(
+        onPressed: () {
+          onPressed();
+          Slidable.of(context)?.close();
+        },
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          backgroundColor: bg,
+          foregroundColor: fgColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          side: BorderSide.none,
+        ),
+        child:
+            Icon(icon, color: fgColor, size: Theme.of(context).iconTheme.size),
+      ),
     );
   }
 
   _buildBody({
     required IssuerAndAccountShowOption issuerAndAccountShowOption,
   }) {
+    Widget body;
     switch (widget.layoutType) {
       case LayoutType.Simple:
-        return _buildSimpleLayout(
+        body = _buildSimpleLayout(
           issuerAndAccountShowOption: issuerAndAccountShowOption,
         );
       case LayoutType.Compact:
-        return _buildCompactLayout(
+        body = _buildCompactLayout(
           issuerAndAccountShowOption: issuerAndAccountShowOption,
         );
       // case LayoutType.Tile:
@@ -380,46 +586,86 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       //     child: _buildTileLayout(),
       //   );
       case LayoutType.List:
-        return _buildSlidable(
+        body = _buildSlidable(
           simple: true,
           child: _buildListLayout(
             issuerAndAccountShowOption: issuerAndAccountShowOption,
           ),
         );
       case LayoutType.Spotlight:
-        return _buildSlidable(
+        body = _buildSlidable(
           startExtentRatio: 0.21,
-          endExtentRatio: 0.8,
+          endExtentRatio: 0.50,
           child: _buildSpotlightLayout(
             issuerAndAccountShowOption: issuerAndAccountShowOption,
           ),
         );
     }
+    if (widget.multiSelectMode) {
+      Widget result = Stack(
+        children: [
+          body,
+          Positioned(
+            top: 6,
+            right: 6,
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? ChewieTheme.primaryColor
+                      : ChewieTheme.cardColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.isSelected
+                        ? ChewieTheme.primaryColor
+                        : Colors.grey,
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(2),
+                child: Icon(
+                  LucideIcons.check,
+                  size: 14,
+                  color: widget.isSelected ? Colors.white : Colors.transparent,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      if (_wobbleController != null) {
+        return AnimatedBuilder(
+          animation: _wobbleAnimation,
+          builder: (context, child) => Transform.rotate(
+            angle: _wobbleAnimation.value,
+            child: child,
+          ),
+          child: result,
+        );
+      }
+      return result;
+    }
+    return body;
   }
 
   showContextMenu() {
-    if (ResponsiveUtil.isLandscapeLayout()) {
-      BottomSheetBuilder.showBottomSheet(
-        context,
-        responsive: true,
-        (context) => TokenOptionBottomSheet(token: widget.token),
-      );
-    } else {
-      BottomSheetBuilder.showBottomSheet(
-        context,
-        responsive: true,
-        (context) => TokenOptionBottomSheet(token: widget.token),
-      );
-    }
+    BottomSheetBuilder.showBottomSheet(
+      context,
+      responsive: true,
+      (context) => TokenOptionBottomSheet(
+        token: widget.token,
+        onEnterMultiSelect: widget.onEnterMultiSelect,
+      ),
+    );
   }
 
   _processCopyCode() {
-    ChewieUtils.copy(context, getCurrentCode());
+    ChewieUtils.copy(context, getCurrentCode(), autoClear: true);
     TokenDao.incTokenCopyTimes(widget.token);
   }
 
   _processCopyNextCode() {
-    ChewieUtils.copy(context, getNextCode());
+    ChewieUtils.copy(context, getNextCode(), autoClear: true);
     TokenDao.incTokenCopyTimes(widget.token);
   }
 
@@ -473,6 +719,18 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
       message: appLocalizations.copyUriClearWarningTip,
       onTapConfirm: () {
         ChewieUtils.copy(context, OtpTokenParser.toUri(widget.token));
+      },
+      onTapCancel: () {},
+    );
+  }
+
+  _processShareUri() {
+    DialogBuilder.showConfirmDialog(
+      context,
+      title: appLocalizations.copyUriClearWarningTitle,
+      message: appLocalizations.copyUriClearWarningTip,
+      onTapConfirm: () {
+        UriUtil.share(OtpTokenParser.toUri(widget.token).toString());
       },
       onTapCancel: () {},
     );
@@ -538,6 +796,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
           selector: (context, provider) => provider.showEye,
           builder: (context, showEye, child) => showEye
               ? CircleIconButton(
+                  tooltip: appLocalizations.toggleCodeVisibility,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     tokenLayoutNotifier.codeVisiable =
@@ -568,6 +827,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             tokenLayoutNotifier.haveToResetHOTP,
         builder: (context, haveToResetHOTP, child) => haveToResetHOTP
             ? CircleIconButton(
+                tooltip: appLocalizations.refreshHOTP,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   widget.token.counterString =
@@ -579,7 +839,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 },
                 padding: EdgeInsets.all(padding),
                 icon: Icon(
-                  Icons.refresh_rounded,
+                  LucideIcons.rotateCw,
                   size: 20,
                   color: color ?? ChewieTheme.labelMedium.color,
                 ),
@@ -632,6 +892,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                 constraints: const BoxConstraints(minHeight: 2, maxHeight: 2),
                 child: LinearProgressIndicator(
                   value: progress,
+                  semanticsLabel: appLocalizations.tokenProgressLabel,
                   minHeight: 2,
                   color: progress > autoCopyNextCodeProgressThrehold
                       ? ChewieTheme.primaryColor
@@ -660,6 +921,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                     builder: (context, value, child) {
                       return CircularProgressIndicator(
                         value: progressNotifier.value,
+                        semanticsLabel: appLocalizations.tokenProgressLabel,
                         color: progressNotifier.value >
                                 autoCopyNextCodeProgressThrehold
                             ? ChewieTheme.primaryColor
@@ -692,12 +954,26 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
     );
   }
 
+  bool _showingNextCode = false;
+
   updateCode() {
-    if (appProvider.autoDisplayNextCode &&
-        currentProgress < autoCopyNextCodeProgressThrehold) {
-      tokenLayoutNotifier.code = getNextCode();
-    } else {
-      tokenLayoutNotifier.code = getCurrentCode();
+    if (!isHOTP && !isYandex && widget.token.period > 0) {
+      final shouldShowNext = appProvider.autoDisplayNextCode &&
+          currentProgress < autoCopyNextCodeProgressThrehold;
+      final currentTimeStep =
+          DateTime.now().millisecondsSinceEpoch ~/ (widget.token.period * 1000);
+      final timeStepChanged = currentTimeStep != _lastTimeStep;
+      final nextCodeStateChanged = shouldShowNext != _showingNextCode;
+      if (!timeStepChanged && !nextCodeStateChanged) return;
+      _lastTimeStep = currentTimeStep;
+      _showingNextCode = shouldShowNext;
+    }
+    final newCode = (appProvider.autoDisplayNextCode &&
+            currentProgress < autoCopyNextCodeProgressThrehold)
+        ? getNextCode()
+        : getCurrentCode();
+    if (newCode != tokenLayoutNotifier.code) {
+      tokenLayoutNotifier.code = newCode;
     }
   }
 
@@ -744,7 +1020,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           borderRadius: ChewieDimens.defaultBorderRadius,
           child: Stack(
             alignment: Alignment.bottomCenter,
@@ -816,7 +1092,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           customBorder: const RoundedRectangleBorder(
               borderRadius: ChewieDimens.defaultBorderRadius),
           child: Stack(
@@ -880,13 +1156,15 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
                           if (isHOTP) _buildHOTPRefreshButton(padding: 4),
                           if (!isHOTP) _buildEyeButton(padding: 4),
                           CircleIconButton(
+                            tooltip: appLocalizations.moreOptionShort,
                             padding: const EdgeInsets.all(4),
                             icon: Icon(
                               LucideIcons.ellipsisVertical,
                               color: ChewieTheme.labelSmall.color,
                               size: 20,
                             ),
-                            onTap: showContextMenu,
+                            onTap:
+                                widget.multiSelectMode ? null : showContextMenu,
                           ),
                         ],
                       ),
@@ -918,7 +1196,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           borderRadius: ChewieDimens.defaultBorderRadius,
           child: Container(
             decoration: const BoxDecoration(
@@ -1010,7 +1288,7 @@ class TokenLayoutState extends BaseDynamicState<TokenLayout>
             borderRadius: ChewieDimens.defaultBorderRadius),
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          onTap: _processTap,
+          onTap: widget.multiSelectMode ? widget.onToggleSelect : _processTap,
           borderRadius: ChewieDimens.defaultBorderRadius,
           child: Container(
             decoration: const BoxDecoration(

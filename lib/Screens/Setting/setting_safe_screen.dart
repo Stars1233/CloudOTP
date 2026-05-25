@@ -55,6 +55,9 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
   bool _enableSafeMode = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.enableSafeModeKey,
       defaultValue: defaultEnableSafeMode);
+  bool _hideGestureTrail = ChewieHiveUtil.getBool(
+      CloudOTPHiveUtil.hideGestureTrailKey,
+      defaultValue: false);
   bool _allowGuestureBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
   bool _allowDatabaseBiometric = ChewieHiveUtil.getBool(
@@ -117,7 +120,6 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
     return CaptionItem(
       title: appLocalizations.gestureLockSettings,
       children: [
-        const SizedBox(height: 10),
         CheckboxItem(
           disabled: _encryptedAndCustomPassword,
           value: _enableGuesturePasswd,
@@ -125,9 +127,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
           description: appLocalizations.enableGestureLockTip,
           onTap: onEnablePinTapped,
         ),
-        Visibility(
-          visible: _geusturePasswdAvailable,
-          child: EntryItem(
+        if (_geusturePasswdAvailable)
+          EntryItem(
             title: _hasGuesturePasswd
                 ? appLocalizations.changeGestureLock
                 : appLocalizations.setGestureLock,
@@ -136,10 +137,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
                 : appLocalizations.haveToSetGestureLockTip,
             onTap: onChangePinTapped,
           ),
-        ),
-        Visibility(
-          visible: _gesturePasswdAvailableAndSet && _biometricAvailable,
-          child: CheckboxItem(
+        if (_gesturePasswdAvailableAndSet && _biometricAvailable)
+          CheckboxItem(
             value: _allowGuestureBiometric,
             title: appLocalizations.biometricUnlock,
             disabled: canAuthenticateResponse?.isSuccess != true,
@@ -147,7 +146,19 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
                 appLocalizations.biometricUnlockTip,
             onTap: onBiometricTapped,
           ),
-        ),
+        if (_gesturePasswdAvailableAndSet)
+          CheckboxItem(
+            value: _hideGestureTrail,
+            title: appLocalizations.hideGestureTrail,
+            description: appLocalizations.hideGestureTrailTip,
+            onTap: () {
+              setState(() {
+                _hideGestureTrail = !_hideGestureTrail;
+                ChewieHiveUtil.put(
+                    CloudOTPHiveUtil.hideGestureTrailKey, _hideGestureTrail);
+              });
+            },
+          ),
       ],
     );
   }
@@ -156,9 +167,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
     return CaptionItem(
       title: appLocalizations.databaseEncryptionSettings,
       children: [
-        Visibility(
-          visible: DatabaseManager.isDatabaseEncrypted,
-          child: EntryItem(
+        if (DatabaseManager.isDatabaseEncrypted)
+          EntryItem(
             title: appLocalizations.editEncryptDatabasePassword,
             description: appLocalizations.encryptDatabaseTip,
             tip: _encryptDatabaseStatus == EncryptDatabaseStatus.defaultPassword
@@ -199,10 +209,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
               );
             },
           ),
-        ),
-        Visibility(
-          visible: _encryptedAndCustomPassword,
-          child: EntryItem(
+        if (_encryptedAndCustomPassword)
+          EntryItem(
             title: appLocalizations.clearEncryptDatabasePassword,
             description: appLocalizations.clearEncryptDatabasePasswordTip,
             trailing: LucideIcons.refreshCcw,
@@ -235,10 +243,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
               );
             },
           ),
-        ),
-        Visibility(
-          visible: _encryptedAndCustomPassword && _biometricAvailable,
-          child: CheckboxItem(
+        if (_encryptedAndCustomPassword && _biometricAvailable)
+          CheckboxItem(
             value: _allowDatabaseBiometric,
             disabled: canAuthenticateResponse?.isSuccess != true,
             description: canAuthenticateResponseString ??
@@ -266,7 +272,6 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
                   _allowDatabaseBiometric);
             },
           ),
-        ),
       ],
     );
   }
@@ -281,9 +286,8 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
           description: appLocalizations.autoLockTip,
           onTap: onEnableAutoLockTapped,
         ),
-        Visibility(
-          visible: _autoLock,
-          child: Selector<AppProvider, AutoLockTime>(
+        if (_autoLock)
+          Selector<AppProvider, AutoLockTime>(
             selector: (context, appProvider) => appProvider.autoLockTime,
             builder: (context, autoLockTime, child) =>
                 InlineSelectionItem<AutoLockOption>(
@@ -294,12 +298,9 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
               onChanged: (autoLockOption) {
                 if (autoLockOption == null) return;
                 appProvider.autoLockTime = autoLockOption.autoLockTime;
-                ChewieHiveUtil.put(CloudOTPHiveUtil.autoLockTimeKey,
-                    autoLockOption.autoLockTime);
               },
             ),
           ),
-        ),
       ],
     );
   }
@@ -323,12 +324,6 @@ class _SafeSettingScreenState extends BaseDynamicState<SafeSettingScreen>
     canAuthenticateResponse = await BiometricUtil.canAuthenticate();
     canAuthenticateResponseString =
         await BiometricUtil.getCanAuthenticateResponseString();
-    bool exist = await BiometricUtil.exists();
-    if (!exist) {
-      _allowDatabaseBiometric = false;
-      ChewieHiveUtil.put(
-          CloudOTPHiveUtil.allowDatabaseBiometricKey, _allowDatabaseBiometric);
-    }
     setState(() {});
   }
 

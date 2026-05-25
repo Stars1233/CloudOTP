@@ -13,6 +13,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -62,5 +64,15 @@ abstract class BaseWindowState<T extends StatefulWidget>
     setState(() {
       isMaximized = false;
     });
+  }
+
+  @override
+  Future<void> onWindowClose() async {
+    if (ChewieHiveUtil.getBool(ChewieHiveUtil.showTrayKey) &&
+        ChewieHiveUtil.getBool(ChewieHiveUtil.enableCloseToTrayKey)) {
+      await windowManager.hide();
+    } else {
+      exit(0);
+    }
   }
 }

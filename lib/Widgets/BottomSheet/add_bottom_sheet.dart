@@ -46,8 +46,8 @@ class AddBottomSheet extends StatefulWidget {
 class AddBottomSheetState extends BaseDynamicState<AddBottomSheet>
     with WidgetsBindingObserver {
   final MobileScannerController scannerController =
-      MobileScannerController(useNewCameraSelector: true);
-  StreamSubscription<Object?>? _subscription;
+      MobileScannerController();
+  StreamSubscription<BarcodeCapture>? _subscription;
   static const double _defaultZoomFactor = 0.43;
   double _zoomFactor = _defaultZoomFactor;
   final double _scaleSensitivity = 0.005;
@@ -135,7 +135,7 @@ class AddBottomSheetState extends BaseDynamicState<AddBottomSheet>
                 top: radius,
                 bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero),
             color: ChewieTheme.scaffoldBackgroundColor,
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: SingleChildScrollView(
@@ -248,7 +248,7 @@ class AddBottomSheetState extends BaseDynamicState<AddBottomSheet>
                     child: MobileScanner(
                       key: scannerKey,
                       controller: scannerController,
-                      placeholderBuilder: (context, child) {
+                      placeholderBuilder: (context) {
                         return RotatedBox(
                           quarterTurns: 4 - turns,
                           child: ColoredBox(
@@ -278,7 +278,7 @@ class AddBottomSheetState extends BaseDynamicState<AddBottomSheet>
                           ),
                         );
                       },
-                      errorBuilder: (context, error, child) {
+                      errorBuilder: (context, error) {
                         return RotatedBox(
                           quarterTurns: 4 - turns,
                           child: ScannerErrorWidget(error: error),
@@ -398,6 +398,8 @@ class SwitchCameraButton extends StatelessWidget {
             icon = const Icon(Icons.camera_front_rounded,
                 color: Colors.white, size: 32);
           case CameraFacing.back:
+          case CameraFacing.external:
+          case CameraFacing.unknown:
             icon = const Icon(Icons.camera_rear_rounded,
                 color: Colors.white, size: 32);
         }

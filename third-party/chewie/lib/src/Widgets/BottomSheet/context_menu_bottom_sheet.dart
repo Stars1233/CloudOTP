@@ -49,7 +49,7 @@ class ContextMenuBottomSheetState extends State<ContextMenuBottomSheet> {
               top: radius,
               bottom: ResponsiveUtil.isWideDevice() ? radius : Radius.zero,
             ),
-            border: ChewieTheme.border,
+            border: ChewieTheme.responsiveBorder,
             boxShadow: ChewieTheme.defaultBoxShadow,
           ),
           child: Column(
@@ -61,7 +61,7 @@ class ContextMenuBottomSheetState extends State<ContextMenuBottomSheet> {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 36),
                     Container(
                       width: 50,
                       height: 5,
@@ -72,12 +72,21 @@ class ContextMenuBottomSheetState extends State<ContextMenuBottomSheet> {
                     ),
                   ],
                 ),
-              for (var config in widget.menu.entries)
-                _buildConfigItem(
-                  config as FlutterContextMenuItem,
-                  config == widget.menu.entries.first,
-                  config == widget.menu.entries.last,
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    14, ResponsiveUtil.isWideDevice() ? 14 : 0, 14, 14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var config in widget.menu.entries)
+                      _buildConfigItem(
+                        config as FlutterContextMenuItem,
+                        config == widget.menu.entries.first,
+                        config == widget.menu.entries.last,
+                      ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),
@@ -92,64 +101,77 @@ class ContextMenuBottomSheetState extends State<ContextMenuBottomSheet> {
   ]) {
     Color? textColor;
     if (config == null || config.type == MenuItemType.divider) {
-      return const MyDivider(width: 1.5, vertical: 12, horizontal: 16);
+      return const MyDivider(width: 1.5, vertical: 4, horizontal: 4);
     } else {
+      Color iconColor = ChewieTheme.primaryColor;
       switch (config.status) {
         case MenuItemStatus.success:
           textColor = ChewieTheme.successColor;
+          iconColor = ChewieTheme.successColor;
           break;
         case MenuItemStatus.warning:
           textColor = ChewieTheme.warningColor;
+          iconColor = ChewieTheme.warningColor;
           break;
         case MenuItemStatus.error:
           textColor = ChewieTheme.errorColor;
+          iconColor = ChewieTheme.errorColor;
           break;
         default:
           textColor = null;
+          iconColor = ChewieTheme.primaryColor;
           break;
       }
-      var borderRadius = BorderRadius.vertical(
-        top: isFirst
-            ? ResponsiveUtil.isWideDevice()
-                ? radius
-                : Radius.zero
-            : Radius.zero,
-        bottom: isLast
-            ? ResponsiveUtil.isWideDevice()
-                ? radius
-                : Radius.zero
-            : Radius.zero,
-      );
-      return Material(
-        color: ChewieTheme.scaffoldBackgroundColor,
-        borderRadius: borderRadius,
-        child: InkWell(
-          borderRadius: borderRadius,
-          onTap: () {
-            Navigator.of(context).pop();
-            config.onPressed?.call();
-          },
-          child: Container(
-            decoration: BoxDecoration(borderRadius: borderRadius),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              children: [
-                if (config.type != MenuItemType.checkbox &&
-                    config.iconData != null) ...[
-                  Icon(config.iconData, size: 24, color: textColor),
-                  const SizedBox(width: 10),
-                ],
-                if (config.type == MenuItemType.checkbox && config.checked)
-                  Icon(Icons.check_rounded, size: 20, color: textColor),
-                if (config.type == MenuItemType.checkbox && !config.checked)
-                  const SizedBox(width: 20, height: 20),
-                if (config.iconData != null) const SizedBox(width: 10),
-                Text(
+      return GestureDetector(
+        onTap: () {
+          Navigator.of(context).pop();
+          config.onPressed?.call();
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: ChewieTheme.canvasColor,
+            borderRadius: ChewieDimens.borderRadius12,
+          ),
+          child: Row(
+            children: [
+              if (config.type != MenuItemType.checkbox &&
+                  config.iconData != null) ...[
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: iconColor.withAlpha(30),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(config.iconData, size: 17, color: iconColor),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (config.type == MenuItemType.checkbox && config.checked) ...[
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: iconColor.withAlpha(30),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(Icons.check_rounded, size: 17, color: iconColor),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (config.type == MenuItemType.checkbox && !config.checked) ...[
+                const SizedBox(width: 34, height: 34),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Text(
                   config.label,
                   style: ChewieTheme.bodyLarge.apply(color: textColor),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );

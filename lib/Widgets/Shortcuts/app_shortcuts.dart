@@ -19,14 +19,6 @@ class AppShortcuts extends StatelessWidget {
           .map((e) => MapEntry(e.triggerForPlatform(), e.intent))),
       child: Actions(
         actions: <Type, Action<Intent>>{
-          EscapeIntent: CallbackAction<EscapeIntent>(
-            onInvoke: (intent) {
-              if (Navigator.of(chewieProvider.rootContext).canPop()) {
-                Navigator.of(chewieProvider.rootContext).pop();
-              }
-              return null;
-            },
-          ),
           LockIntent: CallbackAction(
             onInvoke: (_) {
               ShortcutsUtil.lock(context);
@@ -54,14 +46,20 @@ class AppShortcuts extends StatelessWidget {
           AddTokenIntent: CallbackAction(
             onInvoke: (_) {
               RouteUtil.pushDialogRoute(
-                  chewieProvider.rootContext, const AddTokenScreen());
+                chewieProvider.rootContext,
+                const AddTokenScreen(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
+              );
               return null;
             },
           ),
           ImportExportIntent: CallbackAction(
             onInvoke: (_) {
               RouteUtil.pushDialogRoute(
-                  chewieProvider.rootContext, const ImportExportTokenScreen());
+                chewieProvider.rootContext,
+                const ImportExportTokenScreen(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
+              );
               return null;
             },
           ),
@@ -74,7 +72,10 @@ class AppShortcuts extends StatelessWidget {
           CategoryIntent: CallbackAction(
             onInvoke: (_) {
               RouteUtil.pushDialogRoute(
-                  chewieProvider.rootContext, const CategoryScreen());
+                chewieProvider.rootContext,
+                const CategoryScreen(),
+                onThen: (_) => ShortcutsUtil.restoreFocus(),
+              );
               return null;
             },
           ),

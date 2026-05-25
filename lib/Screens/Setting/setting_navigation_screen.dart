@@ -95,7 +95,6 @@ class _SettingNavigationScreenState
     switch (index) {
       case 0:
         page = GeneralSettingScreen(
-          key: generalSettingScreenKey,
           showTitleBar: false,
           searchText: _searchText,
           searchConfig: _searchConfig,

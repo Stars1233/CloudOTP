@@ -164,12 +164,12 @@ class WindowButton extends StatelessWidget {
     return selectedAnimated;
   }
 
+  bool get _isWindowChromeButton => false;
+
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return emptyWidget;
-    } else {
-      if (Platform.isMacOS) {
+    if (_isWindowChromeButton) {
+      if (kIsWeb || Platform.isMacOS) {
         return emptyWidget;
       }
     }
@@ -315,6 +315,9 @@ class StayOnTopWindowButton extends WindowButton {
 }
 
 class MinimizeWindowButton extends WindowButton {
+  @override
+  bool get _isWindowChromeButton => true;
+
   MinimizeWindowButton({
     super.key,
     super.colors,
@@ -330,6 +333,9 @@ class MinimizeWindowButton extends WindowButton {
 }
 
 class MaximizeWindowButton extends WindowButton {
+  @override
+  bool get _isWindowChromeButton => true;
+
   MaximizeWindowButton({
     super.key,
     super.colors,
@@ -347,6 +353,9 @@ class MaximizeWindowButton extends WindowButton {
 }
 
 class RestoreWindowButton extends WindowButton {
+  @override
+  bool get _isWindowChromeButton => true;
+
   RestoreWindowButton({
     super.key,
     super.colors,
@@ -368,6 +377,9 @@ final _defaultCloseButtonColors = WindowButtonColors(
     iconMouseOver: const Color(0xFFFFFFFF));
 
 class CloseWindowButton extends WindowButton {
+  @override
+  bool get _isWindowChromeButton => true;
+
   CloseWindowButton({
     super.key,
     WindowButtonColors? colors,

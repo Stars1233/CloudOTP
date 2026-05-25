@@ -155,7 +155,7 @@ class _WebDavServiceScreenState extends BaseDynamicState<WebDavServiceScreen>
   }
 
   _buildBody() {
-    return Column(
+    return ListView(
       children: [
         if (_configInitialized) _enableInfo(),
         if (_configInitialized) _accountInfo(),
@@ -170,6 +170,7 @@ class _WebDavServiceScreenState extends BaseDynamicState<WebDavServiceScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: CheckboxItem(
+        ink: false,
         title: appLocalizations.enable + appLocalizations.cloudTypeWebDav,
         value: _webDavCloudServiceConfig?.enabled ?? false,
         onTap: () {
@@ -202,6 +203,9 @@ class _WebDavServiceScreenState extends BaseDynamicState<WebDavServiceScreen>
                 }
                 if (!RegexUtil.isUrlOrIp(text)) {
                   return appLocalizations.webDavServerInvalid;
+                }
+                if (text.startsWith('http://')) {
+                  return appLocalizations.webDavHttpWarning;
                 }
                 return null;
               },

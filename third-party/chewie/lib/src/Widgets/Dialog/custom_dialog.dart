@@ -81,7 +81,7 @@ class CustomInfoDialog {
         context: context,
         barrierLabel: '',
         barrierColor: ChewieTheme.barrierColor,
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: ChewieTheme.animationDuration,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return CustomDialogAnimations.fromBottom(
             animation,
@@ -188,7 +188,7 @@ class CustomConfirmDialog {
         context: context,
         barrierLabel: '',
         barrierColor: ChewieTheme.barrierColor,
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: ChewieTheme.animationDuration,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return CustomDialogAnimations.fromBottom(
             animation,
@@ -219,12 +219,15 @@ class CustomConfirmDialog {
 }
 
 class CustomLoadingDialog {
+  static final ValueNotifier<String?> _titleNotifier = ValueNotifier(null);
+
   static void showLoading({
     bool barrierDismissible = false,
     String? title,
     double size = 40,
     double scale = 1,
   }) {
+    _titleNotifier.value = title;
     showGeneralDialog(
       barrierColor: ChewieTheme.barrierColor,
       barrierDismissible: barrierDismissible,
@@ -237,11 +240,15 @@ class CustomLoadingDialog {
         animation: animation,
         child: LoadingDialogWidget(
           dismissible: barrierDismissible,
-          title: title,
+          titleNotifier: _titleNotifier,
           size: size,
         ),
       ),
     );
+  }
+
+  static void updateTitle(String title) {
+    _titleNotifier.value = title;
   }
 
   static Future<void> dismissLoading() async {

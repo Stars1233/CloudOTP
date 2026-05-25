@@ -19,10 +19,10 @@ Future<T?> showContextMenu<T>(
   bool allowSnapshotting = true,
   bool maintainState = false,
   FocusNode? focusNode,
+  bool useRootNavigator = true,
 }) async {
   final menuState = ContextMenuState(menu: contextMenu);
-  return await Navigator.push<T>(
-    context,
+  return await Navigator.of(context, rootNavigator: useRootNavigator).push<T>(
     PageRouteBuilder<T>(
       pageBuilder: (context, animation, secondaryAnimation) {
         return Stack(

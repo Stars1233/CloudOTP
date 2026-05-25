@@ -394,7 +394,7 @@ class AegisTokenImporter implements BaseTokenImporter {
       try {
         return decryptSlot(slot, passwordBytes);
       } catch (e) {
-        return null;
+        continue;
       }
     }
     return null;

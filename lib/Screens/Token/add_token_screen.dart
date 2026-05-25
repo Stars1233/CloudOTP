@@ -173,7 +173,7 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
             _isEditing ? appLocalizations.editToken : appLocalizations.addToken,
         showBack: !ResponsiveUtil.isLandscapeLayout(),
         titleLeftMargin: ResponsiveUtil.isLandscapeLayout() ? 15 : 5,
-        desktopActions: [
+        landscapeActions: [
           ToolButton(
             context: context,
             icon: LucideIcons.check,
@@ -195,8 +195,11 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
           ),
         ],
       ),
-      body: EasyRefresh(
-        child: _buildBody(),
+      body: SafeArea(
+        top: false,
+        child: EasyRefresh(
+          child: _buildBody(),
+        ),
       ),
     );
   }
@@ -263,9 +266,8 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
               if (!_showAdvancedInfo && !isSteam && !isYandex)
                 _showAdvancedInfoButton(),
               if (_showAdvancedInfo && !isSteam && !isYandex) _advancedInfo(),
-              const SizedBox(height: 10),
-              ..._categoryInfo(),
-              if (_isEditing) ..._copyTimesInfo(),
+              _categoryInfo(),
+              if (_isEditing) _copyTimesInfo(),
               if (_isEditing) ..._deleteButton(),
               SizedBox(height: _isEditing ? 0 : 30),
             ],
@@ -425,66 +427,70 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
       );
     }
 
-    return [
-      EntryItem(
-        tipWidth: 300,
-        title: appLocalizations.editTokenCategory,
-        trailing: LucideIcons.shapes,
-        tipWidget: selectedCategoryUids.isNotEmpty
-            ? Wrap(
-                spacing: 5,
-                runSpacing: 5,
-                children: selectedCategoryUids
-                    .map(
-                      (e) => RoundIconTextButton(
-                        height: 32,
-                        radius: 6,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        background: ChewieTheme.primaryColor,
-                        text: categories
-                            .firstWhere((element) => element.uid == e)
-                            .title,
-                        onPressed: selectCategory,
-                      ),
-                    )
-                    .toList(),
-              )
-            : null,
-        onTap: selectCategory,
-      ),
-      EntryItem(
-        tipWidth: 120,
-        title: appLocalizations.autoMatchTokenIcon,
-        trailing: LucideIcons.refreshCcw,
-        onTap: () {
-          setState(() {
-            customedImage = false;
-            _otpToken.imagePath =
-                TokenImageUtil.matchBrandLogo(_otpToken) ?? "";
-          });
-        },
-      ),
-      EntryItem(
-        tipWidth: 300,
-        title: appLocalizations.editTokenIcon,
-        tip: _otpToken.imagePath.notNullOrEmpty ? _otpToken.imagePath : "",
-        onTap: () {
-          BottomSheetBuilder.showBottomSheet(
-            context,
-            responsive: true,
-            (context) => SelectIconBottomSheet(
-              token: _otpToken,
-              onSelected: (path) {
-                customedImage = true;
-                _otpToken.imagePath = path;
-                setState(() {});
-              },
-            ),
-          );
-        },
-      ),
-    ];
+    return CaptionItem(
+      title: appLocalizations.categoryAndIcon,
+      children: [
+        EntryItem(
+          tipWidth: 300,
+          title: appLocalizations.editTokenCategory,
+          trailing: LucideIcons.shapes,
+          tipWidget: selectedCategoryUids.isNotEmpty
+              ? Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  alignment: WrapAlignment.end,
+                  children: selectedCategoryUids
+                      .map(
+                        (e) => RoundIconTextButton(
+                          height: 32,
+                          radius: 6,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          background: ChewieTheme.primaryColor,
+                          text: categories
+                              .firstWhere((element) => element.uid == e)
+                              .title,
+                          onPressed: selectCategory,
+                        ),
+                      )
+                      .toList(),
+                )
+              : null,
+          onTap: selectCategory,
+        ),
+        EntryItem(
+          tipWidth: 120,
+          title: appLocalizations.autoMatchTokenIcon,
+          trailing: LucideIcons.refreshCcw,
+          onTap: () {
+            setState(() {
+              customedImage = false;
+              _otpToken.imagePath =
+                  TokenImageUtil.matchBrandLogo(_otpToken) ?? "";
+            });
+          },
+        ),
+        EntryItem(
+          tipWidth: 300,
+          title: appLocalizations.editTokenIcon,
+          tip: _otpToken.imagePath.notNullOrEmpty ? _otpToken.imagePath : "",
+          onTap: () {
+            BottomSheetBuilder.showBottomSheet(
+              context,
+              responsive: true,
+              (context) => SelectIconBottomSheet(
+                token: _otpToken,
+                onSelected: (path) {
+                  customedImage = true;
+                  _otpToken.imagePath = path;
+                  setState(() {});
+                },
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   _showAdvancedInfoButton() {
@@ -496,8 +502,8 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
         radius: 12,
         text: appLocalizations.showAdvancedInfo,
         icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: ChewieTheme.bodySmall?.color,
+          LucideIcons.chevronDown,
+          color: ChewieTheme.bodySmall.color,
         ),
         textStyle: ChewieTheme.titleMedium,
         fontSizeDelta: 2,
@@ -613,8 +619,8 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
               radius: 12,
               text: appLocalizations.hideAdvancedInfo,
               icon: Icon(
-                Icons.keyboard_arrow_up_rounded,
-                color: ChewieTheme.bodySmall?.color,
+                LucideIcons.chevronUp,
+                color: ChewieTheme.bodySmall.color,
               ),
               textStyle: ChewieTheme.titleMedium,
               fontSizeDelta: 2,
@@ -631,35 +637,38 @@ class _AddTokenScreenState extends BaseDynamicState<AddTokenScreen>
   }
 
   _copyTimesInfo() {
-    return [
-      EntryItem(
-        tipWidth: 300,
-        title: appLocalizations.resetCopyTimes,
-        tip: appLocalizations.currentCopyTimes(_otpToken.copyTimes),
-        onTap: () {
-          DialogBuilder.showConfirmDialog(
-            context,
-            title: appLocalizations.resetCopyTimesTitle,
-            message: appLocalizations.resetCopyTimesMessage(_otpToken.title),
-            onTapConfirm: () async {
-              await TokenDao.resetSingleTokenCopyTimes(_otpToken);
-              homeScreenState?.resetCopyTimesSingle(_otpToken);
-              IToast.showTop(appLocalizations.resetSuccess);
-              setState(() {});
-            },
-            onTapCancel: () {},
-          );
-        },
-      ),
-      EntryItem(
-        tipWidth: 300,
-        title: appLocalizations.lastCopyTime,
-        tip: _otpToken.lastCopyTimeStamp == 0
-            ? appLocalizations.neverCopied
-            : TimeUtil.timestampToDateString(_otpToken.lastCopyTimeStamp),
-        onTap: () {},
-      ),
-    ];
+    return CaptionItem(
+      title: appLocalizations.copyTimes,
+      children: [
+        EntryItem(
+          tipWidth: 300,
+          title: appLocalizations.resetCopyTimes,
+          tip: appLocalizations.currentCopyTimes(_otpToken.copyTimes),
+          onTap: () {
+            DialogBuilder.showConfirmDialog(
+              context,
+              title: appLocalizations.resetCopyTimesTitle,
+              message: appLocalizations.resetCopyTimesMessage(_otpToken.title),
+              onTapConfirm: () async {
+                await TokenDao.resetSingleTokenCopyTimes(_otpToken);
+                homeScreenState?.resetCopyTimesSingle(_otpToken);
+                IToast.showTop(appLocalizations.resetSuccess);
+                setState(() {});
+              },
+              onTapCancel: () {},
+            );
+          },
+        ),
+        EntryItem(
+          tipWidth: 300,
+          title: appLocalizations.lastCopyTime,
+          tip: _otpToken.lastCopyTimeStamp == 0
+              ? appLocalizations.neverCopied
+              : TimeUtil.timestampToDateString(_otpToken.lastCopyTimeStamp),
+          onTap: () {},
+        ),
+      ],
+    );
   }
 
   _deleteButton() {

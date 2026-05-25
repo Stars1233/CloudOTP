@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 class LoadingDialogWidget extends StatefulWidget {
   final bool dismissible;
 
-  final String? title;
+  final ValueNotifier<String?> titleNotifier;
 
   final double size;
 
   const LoadingDialogWidget({
     super.key,
     this.dismissible = false,
-    this.title,
+    required this.titleNotifier,
     this.size = 40,
   });
 
@@ -27,25 +27,29 @@ class LoadingDialogWidgetState extends State<LoadingDialogWidget> {
       children: [
         PopScope(
           canPop: widget.dismissible,
-          onPopInvoked: (_) => Future.value(widget.dismissible),
+          onPopInvokedWithResult: (_, __) => Future.value(widget.dismissible),
           child: Container(
             decoration: ChewieTheme.defaultDecoration.copyWith(
               color: ChewieTheme.scaffoldBackgroundColor,
+              border: ChewieTheme.responsiveBorder,
             ),
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                chewieProvider.loadingWidgetBuilder(widget.size, false),
-                if (widget.title != null) const SizedBox(height: 16),
-                if (widget.title != null)
-                  Text(
-                    widget.title!,
-                    style: ChewieTheme.labelLarge,
-                  ),
-              ],
+            child: ValueListenableBuilder<String?>(
+              valueListenable: widget.titleNotifier,
+              builder: (context, title, _) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  chewieProvider.loadingWidgetBuilder(widget.size, false),
+                  if (title != null) const SizedBox(height: 16),
+                  if (title != null)
+                    Text(
+                      title,
+                      style: ChewieTheme.labelLarge,
+                    ),
+                ],
+              ),
             ),
           ),
         )

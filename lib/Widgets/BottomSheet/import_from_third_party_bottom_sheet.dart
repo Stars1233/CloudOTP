@@ -59,8 +59,11 @@ class ImportFromThirdPartyBottomSheetState
                 const SizedBox(width: 5),
               ],
       ),
-      body: EasyRefresh(
-        child: _buildBody(),
+      body: SafeArea(
+        top: false,
+        child: EasyRefresh(
+          child: _buildBody(),
+        ),
       ),
     );
   }
@@ -87,7 +90,7 @@ class ImportFromThirdPartyBottomSheetState
             if (ResponsiveUtil.isMobile()) {
               BottomSheetBuilder.showBottomSheet(
                 context,
-                enableDrag: false,
+                enableDrag: true,
                 responsive: true,
                 (context) => const AddBottomSheet(onlyShowScanner: true),
               );
@@ -210,7 +213,7 @@ class ImportFromThirdPartyBottomSheetState
           title: appLocalizations.importFromWinauth,
           dialogTitle: appLocalizations.importFromWinauthTitle,
           description: appLocalizations.importFromWinauthTip,
-          allowedExtensions: ['zip', 'txt'],
+          allowedExtensions: ['txt'],
           onImport: (path) {
             WinauthTokenImporter().importFromPath(path);
           },

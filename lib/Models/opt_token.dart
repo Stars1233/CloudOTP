@@ -80,6 +80,7 @@ enum OtpTokenType {
       case "STEAM":
         return OtpTokenType.Steam;
       case "YAOTP":
+      case "YANDEX":
         return OtpTokenType.Yandex;
       default:
         throw Exception("Invalid OtpTokenType");
@@ -462,7 +463,7 @@ class OtpToken {
 
   @override
   String toString() {
-    return "OtpToken($id, $uid, $seq, $issuer, $secret, $account, $imagePath, $tokenType, $algorithm, $digits, $counterString, $periodString, $pinned, $createTimeStamp, $editTimeStamp, $remark, $copyTimes, $lastCopyTimeStamp, $pin, $description)";
+    return "OtpToken($id, $uid, $seq, $issuer, [REDACTED], $account, $imagePath, $tokenType, $algorithm, $digits, $counterString, $periodString, $pinned, $createTimeStamp, $editTimeStamp, $remark, $copyTimes, $lastCopyTimeStamp, [REDACTED], $description)";
   }
 
   OtpToken({
@@ -534,6 +535,7 @@ class OtpToken {
       'pin': pin,
       'last_copy_timestamp': lastCopyTimeStamp,
       "description": description,
+      'tags': tags.join(','),
     };
   }
 
@@ -559,7 +561,10 @@ class OtpToken {
       lastCopyTimeStamp: map['last_copy_timestamp'] ?? 0,
       pin: map['pin'],
       description: map['description'] ?? "",
-    );
+    )..tags = (map['tags'] as String? ?? '')
+        .split(',')
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   String toJson() {

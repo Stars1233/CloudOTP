@@ -50,9 +50,8 @@ class _AppearanceSettingScreenState
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.showLayoutButtonKey);
   bool showSortButton =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.showSortButtonKey);
-  bool showBackupLogButton = ChewieHiveUtil.getBool(
-      CloudOTPHiveUtil.showBackupLogButtonKey,
-      defaultValue: ResponsiveUtil.isLandscapeLayout());
+  bool showBackupLogButton =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.showBackupLogButtonKey);
   bool showCloudBackupButton = ChewieHiveUtil.getBool(
       CloudOTPHiveUtil.showCloudBackupButtonKey,
       defaultValue: true);
@@ -64,6 +63,8 @@ class _AppearanceSettingScreenState
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideAppbarWhenScrollingKey);
   bool hideBottombarWhenScrolling =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideBottombarWhenScrollingKey);
+  bool enableModalSheet =
+      ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableModalSheetKey, defaultValue: false);
   final GlobalKey _setAutoBackupPasswordKey = GlobalKey();
   bool hideProgressBar =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.hideProgressBarKey);
@@ -182,22 +183,22 @@ class _AppearanceSettingScreenState
       title: appLocalizations.sideBarSettings,
       children: [
         CheckboxItem(
-          title: appLocalizations.showBackupLogButton,
-          value: showBackupLogButton,
-          onTap: () {
-            setState(() {
-              showBackupLogButton = !showBackupLogButton;
-              appProvider.showBackupLogButton = showBackupLogButton;
-            });
-          },
-        ),
-        CheckboxItem(
           title: appLocalizations.showCloudBackupButton,
           value: showCloudBackupButton,
           onTap: () {
             setState(() {
               showCloudBackupButton = !showCloudBackupButton;
               appProvider.showCloudBackupButton = showCloudBackupButton;
+            });
+          },
+        ),
+        CheckboxItem(
+          title: appLocalizations.showBackupLogButton,
+          value: showBackupLogButton,
+          onTap: () {
+            setState(() {
+              showBackupLogButton = !showBackupLogButton;
+              appProvider.showBackupLogButton = showBackupLogButton;
             });
           },
         ),
@@ -308,6 +309,17 @@ class _AppearanceSettingScreenState
               hideBottombarWhenScrolling = !hideBottombarWhenScrolling;
               appProvider.hideBottombarWhenScrolling =
                   hideBottombarWhenScrolling;
+            });
+          },
+        ),
+        CheckboxItem(
+          value: enableModalSheet,
+          title: appLocalizations.enableModalSheet,
+          description: appLocalizations.enableModalSheetTip,
+          onTap: () {
+            setState(() {
+              enableModalSheet = !enableModalSheet;
+              appProvider.enableModalSheet = enableModalSheet;
             });
           },
         ),

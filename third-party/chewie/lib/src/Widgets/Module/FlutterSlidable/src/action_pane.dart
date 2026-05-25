@@ -12,6 +12,7 @@ class ActionPaneData {
     required this.direction,
     required this.fromStart,
     required this.children,
+    this.autoTriggerProgress = 0.0,
   });
 
   /// The total extent of this [ActionPane] relatively to the enclosing
@@ -31,6 +32,9 @@ class ActionPaneData {
 
   /// The actions for this pane.
   final List<Widget> children;
+
+  /// Progress toward auto-trigger threshold (0.0 = at extentRatio, 1.0 = at threshold).
+  final double autoTriggerProgress;
 }
 
 /// An action pane.
@@ -52,6 +56,8 @@ class ActionPane extends StatefulWidget {
     this.dragDismissible = true,
     this.openThreshold,
     this.closeThreshold,
+    this.onAutoTrigger,
+    this.autoTriggerThreshold,
     required this.children,
   })  : assert(extentRatio > 0 && extentRatio <= 1),
         assert(
@@ -92,6 +98,14 @@ class ActionPane extends StatefulWidget {
   /// By default this value is half the [extentRatio].
   final double? closeThreshold;
 
+  /// Callback invoked when the user drags past the [autoTriggerThreshold]
+  /// and releases.
+  final VoidCallback? onAutoTrigger;
+
+  /// The ratio threshold beyond which [onAutoTrigger] is called.
+  /// Defaults to `extentRatio * 2.0` if [onAutoTrigger] is set.
+  final double? autoTriggerThreshold;
+
   /// The actions for this pane.
   final List<Widget> children;
 
@@ -112,6 +126,7 @@ class _ActionPaneState extends State<ActionPane> implements RatioConfigurator {
   late double openThreshold;
   late double closeThreshold;
   bool showMotion = true;
+  bool _hasTriggeredAutoTriggerHaptic = false;
 
   @override
   double get extentRatio => widget.extentRatio;
@@ -164,11 +179,51 @@ class _ActionPaneState extends State<ActionPane> implements RatioConfigurator {
       return ratio;
     }
 
-    final absoluteRatio = ratio.abs().clamp(0.0, widget.extentRatio);
-    if (ratio < 0) {
-      return -absoluteRatio;
+    if (widget.onAutoTrigger != null) {
+      final effectiveThreshold =
+          widget.autoTriggerThreshold ?? widget.extentRatio * 2.0;
+      final absoluteRatio = ratio.abs();
+
+      if (absoluteRatio <= widget.extentRatio) {
+        _checkAutoTriggerThreshold(absoluteRatio, effectiveThreshold);
+        return ratio < 0 ? -absoluteRatio : absoluteRatio;
+      } else {
+        final overExtent = absoluteRatio - widget.extentRatio;
+        final maxOverExtent = effectiveThreshold - widget.extentRatio;
+        final dampedOverExtent = maxOverExtent *
+            (1 -
+                math.pow(math.e, -overExtent / maxOverExtent * 2).toDouble());
+        final clampedResult =
+            (widget.extentRatio + dampedOverExtent).clamp(0.0, effectiveThreshold);
+        _checkAutoTriggerThreshold(clampedResult, effectiveThreshold);
+        return ratio < 0 ? -clampedResult : clampedResult;
+      }
     }
-    return absoluteRatio;
+
+    final absoluteRatio = ratio.abs();
+    if (absoluteRatio <= widget.extentRatio) {
+      return ratio < 0 ? -absoluteRatio : absoluteRatio;
+    }
+    final overExtent = absoluteRatio - widget.extentRatio;
+    final maxOverExtent = widget.extentRatio * 0.2;
+    final dampedOverExtent = maxOverExtent *
+        (1 - math.pow(math.e, -overExtent / maxOverExtent * 2).toDouble());
+    final result = widget.extentRatio + dampedOverExtent;
+    return ratio < 0 ? -result : result;
+  }
+
+  void _checkAutoTriggerThreshold(double currentRatio, double threshold) {
+    final hapticThreshold =
+        widget.extentRatio + (threshold - widget.extentRatio) * 0.7;
+
+    if (currentRatio >= hapticThreshold && !_hasTriggeredAutoTriggerHaptic) {
+      _hasTriggeredAutoTriggerHaptic = true;
+      HapticFeedback.mediumImpact();
+    } else if (currentRatio < hapticThreshold &&
+        _hasTriggeredAutoTriggerHaptic) {
+      _hasTriggeredAutoTriggerHaptic = false;
+      HapticFeedback.lightImpact();
+    }
   }
 
   @override
@@ -182,12 +237,20 @@ class _ActionPaneState extends State<ActionPane> implements RatioConfigurator {
       if (controller!.isDismissibleReady) {
         controller!.dismissGesture.value = DismissGesture(gesture);
       } else {
-        // If the dismissible is not ready, the animation will stop.
-        // So we prefere to open the action pane instead.
         controller!.openCurrentActionPane();
       }
+      _hasTriggeredAutoTriggerHaptic = false;
       return;
     }
+
+    if (widget.onAutoTrigger != null && _hasTriggeredAutoTriggerHaptic) {
+      HapticFeedback.heavyImpact();
+      widget.onAutoTrigger!();
+      controller!.close();
+      _hasTriggeredAutoTriggerHaptic = false;
+      return;
+    }
+    _hasTriggeredAutoTriggerHaptic = false;
 
     if ((gesture is OpeningGesture && openThreshold <= extentRatio) ||
         gesture is StillGesture &&
@@ -218,15 +281,81 @@ class _ActionPaneState extends State<ActionPane> implements RatioConfigurator {
     Widget? child;
 
     if (showMotion) {
-      final factor = widget.extentRatio;
-      child = FractionallySizedBox(
-        alignment: config.alignment,
-        widthFactor: config.direction == Axis.horizontal ? factor : null,
-        heightFactor: config.direction == Axis.horizontal ? null : factor,
-        child: widget.motion,
-      );
+      if (widget.onAutoTrigger != null) {
+        child = AnimatedBuilder(
+          animation: controller!.animation,
+          builder: (context, _) {
+            final currentRatio = controller!.animation.value;
+            final factor = currentRatio > widget.extentRatio
+                ? currentRatio
+                : widget.extentRatio;
+            final effectiveThreshold =
+                widget.autoTriggerThreshold ?? widget.extentRatio * 2.0;
+            final overRange = effectiveThreshold - widget.extentRatio;
+            final progress = overRange > 0
+                ? ((currentRatio - widget.extentRatio) / overRange)
+                    .clamp(0.0, 1.0)
+                : 0.0;
+
+            return _ActionPaneScope(
+              actionPaneData: ActionPaneData(
+                alignment: config.alignment,
+                direction: config.direction,
+                fromStart: config.isStartActionPane,
+                extentRatio: widget.extentRatio,
+                children: widget.children,
+                autoTriggerProgress: progress,
+              ),
+              child: FractionallySizedBox(
+                alignment: config.alignment,
+                widthFactor:
+                    config.direction == Axis.horizontal ? factor : null,
+                heightFactor:
+                    config.direction == Axis.horizontal ? null : factor,
+                child: widget.motion,
+              ),
+            );
+          },
+        );
+      } else {
+        child = AnimatedBuilder(
+          animation: controller!.animation,
+          builder: (context, _) {
+            final currentRatio = controller!.animation.value;
+            final factor = widget.extentRatio;
+            Alignment alignment = config.alignment;
+            if (currentRatio > widget.extentRatio && widget.extentRatio < 1.0) {
+              final overRatio = (currentRatio - widget.extentRatio) /
+                  (1 - widget.extentRatio);
+              if (config.direction == Axis.horizontal) {
+                alignment = Alignment(
+                  config.alignment.x * (1 - 2 * overRatio),
+                  config.alignment.y,
+                );
+              } else {
+                alignment = Alignment(
+                  config.alignment.x,
+                  config.alignment.y * (1 - 2 * overRatio),
+                );
+              }
+            }
+            return FractionallySizedBox(
+              alignment: alignment,
+              widthFactor:
+                  config.direction == Axis.horizontal ? factor : null,
+              heightFactor:
+                  config.direction == Axis.horizontal ? null : factor,
+              child: widget.motion,
+            );
+          },
+        );
+      }
     } else {
       child = widget.dismissible;
+    }
+
+    if (widget.onAutoTrigger != null && showMotion) {
+      return child!;
     }
 
     return _ActionPaneScope(

@@ -13,6 +13,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
@@ -33,15 +34,24 @@ class PinChangeScreen extends StatefulWidget {
 }
 
 class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
+  static const int _maxVerifyAttempts = 5;
+  static const int _verifyLockoutSeconds = 60;
+  int _verifyFailedAttempts = 0;
+  bool _verifyLockedOut = false;
+  Timer? _verifyLockoutTimer;
+  int _verifyLockoutRemaining = 0;
+
   String _gesturePassword = "";
-  final String? _oldPassword =
-      ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey);
   bool _isEditMode =
-      ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey) != null &&
-          ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey)!
-              .isNotEmpty;
+      ChewieHiveUtil.getString(CloudOTPHiveUtil.guesturePasswdKey)
+          .notNullOrEmpty;
+  late final int _totalSteps = _isEditMode ? 3 : 2;
+  int _currentStep = 1;
   late final bool _enableBiometric =
       ChewieHiveUtil.getBool(CloudOTPHiveUtil.enableBiometricKey);
+  final bool _hideGestureTrail = ChewieHiveUtil.getBool(
+      CloudOTPHiveUtil.hideGestureTrailKey,
+      defaultValue: false);
   late final GestureNotifier _notifier = _isEditMode
       ? GestureNotifier(
           status: GestureStatus.verify,
@@ -56,6 +66,45 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
   CanAuthenticateResponse? canAuthenticateResponse;
 
   bool get _biometricAvailable => canAuthenticateResponse?.isSuccess ?? false;
+
+  @override
+  void dispose() {
+    _verifyLockoutTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startVerifyLockout() {
+    _verifyLockedOut = true;
+    _verifyLockoutRemaining = _verifyLockoutSeconds;
+    _verifyLockoutTimer?.cancel();
+    _verifyLockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _verifyLockoutRemaining--;
+        if (_verifyLockoutRemaining <= 0) {
+          _verifyLockedOut = false;
+          _verifyFailedAttempts = 0;
+          timer.cancel();
+          _notifier.setStatus(
+            status: GestureStatus.verify,
+            gestureText: appLocalizations.drawOldGestureLock,
+          );
+        } else {
+          _notifier.setStatus(
+            status: GestureStatus.verifyFailedCountOverflow,
+            gestureText:
+                '${appLocalizations.gestureLockWrong} (${_verifyLockoutRemaining}s)',
+          );
+        }
+      });
+    });
+    setState(() {
+      _notifier.setStatus(
+        status: GestureStatus.verifyFailedCountOverflow,
+        gestureText:
+            '${appLocalizations.gestureLockWrong} (${_verifyLockoutRemaining}s)',
+      );
+    });
+  }
 
   @override
   void initState() {
@@ -81,14 +130,68 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
           gestureText: appLocalizations.drawNewGestureLock,
         );
         _isEditMode = false;
+        _currentStep = 2;
       });
       _gestureUnlockView.currentState?.updateStatus(UnlockStatus.normal);
     });
   }
 
+  Widget _buildStepIndicator() {
+    final primaryColor = ChewieTheme.primaryColor;
+    final inactiveColor = Colors.grey.withOpacity(0.3);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(_totalSteps * 2 - 1, (i) {
+        if (i.isOdd) {
+          final stepBefore = (i ~/ 2) + 1;
+          final isCompleted = _currentStep > stepBefore;
+          return Container(
+            width: 32,
+            height: 2,
+            color: isCompleted ? primaryColor : inactiveColor,
+          );
+        }
+        final step = (i ~/ 2) + 1;
+        final isActive = step == _currentStep;
+        final isCompleted = step < _currentStep;
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive || isCompleted ? primaryColor : inactiveColor,
+          ),
+          child: Center(
+            child: isCompleted
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : Text(
+                    '$step',
+                    style: TextStyle(
+                      color: isActive ? Colors.white : Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: ResponsiveAppBar(
+        showBack: true,
+        onTapBack: () => Navigator.pop(context),
+        titleWidget: _buildStepIndicator(),
+        centerTitle: true,
+        showBorder: false,
+        actions: const [
+          BlankIconButton(),
+          SizedBox(width: 5),
+        ],
+      ),
       body: SafeArea(
         right: false,
         child: Center(
@@ -97,7 +200,6 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 50),
               Text(
                 _notifier.gestureText,
                 style: ChewieTheme.titleMedium,
@@ -123,6 +225,7 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
                   solidRadiusRatio: 0.3,
                   lineWidth: 2,
                   touchRadiusRatio: 0.3,
+                  showLine: !_hideGestureTrail,
                   onCompleted: _gestureComplete,
                 ),
               ),
@@ -161,6 +264,7 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
               status: GestureStatus.verify,
               gestureText: appLocalizations.drawGestureLockAgain,
             );
+            _currentStep = _totalSteps;
           });
           _gesturePassword = GestureUnlockView.selectedToString(selected);
           _gestureUnlockView.currentState?.updateStatus(UnlockStatus.success);
@@ -180,7 +284,7 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
               );
               Navigator.pop(context);
             });
-            ChewieHiveUtil.put(CloudOTPHiveUtil.guesturePasswdKey,
+            CloudOTPHiveUtil.setGesturePassword(
                 GestureUnlockView.selectedToString(selected));
           } else {
             setState(() {
@@ -192,23 +296,33 @@ class PinChangeScreenState extends BaseDynamicState<PinChangeScreen> {
             _gestureUnlockView.currentState?.updateStatus(UnlockStatus.failed);
           }
         } else {
+          if (_verifyLockedOut) return;
           String password = GestureUnlockView.selectedToString(selected);
-          if (_oldPassword == password) {
+          if (CloudOTPHiveUtil.verifyGesturePassword(password)) {
+            _verifyFailedAttempts = 0;
             setState(() {
               _notifier.setStatus(
                 status: GestureStatus.create,
                 gestureText: appLocalizations.drawNewGestureLock,
               );
               _isEditMode = false;
+              _currentStep = 2;
             });
             _gestureUnlockView.currentState?.updateStatus(UnlockStatus.normal);
           } else {
-            setState(() {
-              _notifier.setStatus(
-                status: GestureStatus.verifyFailed,
-                gestureText: appLocalizations.gestureLockWrong,
-              );
-            });
+            _verifyFailedAttempts++;
+            if (_verifyFailedAttempts >= _maxVerifyAttempts) {
+              _startVerifyLockout();
+            } else {
+              final remaining = _maxVerifyAttempts - _verifyFailedAttempts;
+              setState(() {
+                _notifier.setStatus(
+                  status: GestureStatus.verifyFailed,
+                  gestureText:
+                      '${appLocalizations.gestureLockWrong} ($remaining)',
+                );
+              });
+            }
             _gestureUnlockView.currentState?.updateStatus(UnlockStatus.failed);
           }
         }

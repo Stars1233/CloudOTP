@@ -155,7 +155,12 @@ class Utils {
         await trayManager.setIcon('assets/logo-transparent.png');
       }
 
-      bool lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      bool lauchAtStartup = false;
+      try {
+        lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      } catch (e, t) {
+        ILogger.error("Failed to check LaunchAtStartup in tray", e, t);
+      }
       if (!ResponsiveUtil.isLinux()) {
         ILogger.debug(
             "Setting tray tooltip to app name ${ResponsiveUtil.appName}");
@@ -215,6 +220,9 @@ class Utils {
       );
       await trayManager.setContextMenu(menu);
       ILogger.debug("Tray initialized successfully.");
+      if (ResponsiveUtil.isMacOS()) {
+        mainScreenState?.loadMenuTokenData();
+      }
     } catch (e, t) {
       ILogger.error("Failed to initialize simple tray", e, t);
     }
@@ -241,7 +249,13 @@ class Utils {
         await trayManager.setIcon('assets/logo-transparent.png');
       }
 
-      bool lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      bool lauchAtStartup = false;
+      try {
+        lauchAtStartup = await LaunchAtStartup.instance.isEnabled();
+      } catch (e, t) {
+        ILogger.error(
+            "Failed to check LaunchAtStartup in initSimpleTray", e, t);
+      }
       if (!ResponsiveUtil.isLinux()) {
         await trayManager.setToolTip(ResponsiveUtil.appName);
       }
@@ -300,9 +314,10 @@ class Utils {
       ChewieUtils.displayApp();
       ShortcutsUtil.jumpToAbout(context);
     } else if (menuItem.key == TrayKey.officialWebsite.key) {
-      UriUtil.launchUrlUri(context, officialWebsite);
+      UriUtil.launchUrlUri(context, cloudotpOfficialWebsite);
     } else if (menuItem.key.notNullOrEmpty &&
-        menuItem.key!.startsWith(TrayKey.copyTokenCode.key)) {
+        menuItem.key!.startsWith(TrayKey.copyTokenCode.key) &&
+        !isSimple) {
       String uid = menuItem.key!.split('_').last;
       OtpToken? token = await TokenDao.getTokenByUid(uid);
       if (token != null) {
@@ -315,14 +330,16 @@ class Utils {
         if (ChewieHiveUtil.getBool(CloudOTPHiveUtil.autoCopyNextCodeKey) &&
             currentProgress < autoCopyNextCodeProgressThrehold) {
           ChewieUtils.copy(context, CodeGenerator.getNextCode(token),
-              toastText: appLocalizations.alreadyCopiedNextCode);
+              toastText: appLocalizations.alreadyCopiedNextCode,
+              autoClear: true);
           TokenDao.incTokenCopyTimes(token);
           IToast.showDesktopNotification(
             appLocalizations.alreadyCopiedNextCode,
             body: CodeGenerator.getNextCode(token),
           );
         } else {
-          ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token));
+          ChewieUtils.copy(context, CodeGenerator.getCurrentCode(token),
+              autoClear: true);
           TokenDao.incTokenCopyTimes(token);
           IToast.showDesktopNotification(
             appLocalizations.copySuccess,
@@ -344,7 +361,6 @@ class Utils {
     } else if (menuItem.key == TrayKey.launchAtStartup.key) {
       menuItem.checked = !(menuItem.checked == true);
       ChewieHiveUtil.put(ChewieHiveUtil.launchAtStartupKey, menuItem.checked);
-      generalSettingScreenState?.refreshLauchAtStartup();
       if (menuItem.checked == true) {
         await LaunchAtStartup.instance.enable();
       } else {
@@ -356,7 +372,7 @@ class Utils {
         Utils.initTray();
       }
     } else if (menuItem.key == TrayKey.exitApp.key) {
-      windowManager.close();
+      windowManager.destroy();
     }
   }
 }

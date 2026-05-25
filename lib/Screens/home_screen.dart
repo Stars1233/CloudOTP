@@ -14,20 +14,28 @@
  */
 
 import 'dart:async';
-import 'dart:ui';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:cloudotp/Database/database_manager.dart';
 import 'package:cloudotp/Database/category_dao.dart';
 import 'package:cloudotp/Database/token_category_binding_dao.dart';
 import 'package:cloudotp/Models/opt_token.dart';
 import 'package:cloudotp/Screens/Backup/cloud_service_screen.dart';
-import 'package:cloudotp/Screens/Setting/about_setting_screen.dart';
+import 'package:cloudotp/Screens/layout_select_screen.dart';
+import 'package:cloudotp/Screens/sort_select_screen.dart';
 import 'package:cloudotp/Screens/Setting/backup_log_screen.dart';
-import 'package:cloudotp/Screens/Setting/mobile_setting_navigation_screen.dart';
+import 'package:cloudotp/Screens/Token/category_screen.dart';
 import 'package:cloudotp/Screens/main_screen.dart';
 import 'package:cloudotp/Utils/hive_util.dart';
+import 'package:cloudotp/Utils/search_query_parser.dart';
 import 'package:cloudotp/Widgets/BottomSheet/add_bottom_sheet.dart';
+import 'package:cloudotp/Widgets/BottomSheet/more_bottom_sheet.dart';
 import 'package:cloudotp/Widgets/cloudotp/cloudotp_item_builder.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -35,12 +43,19 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:move_to_background/move_to_background.dart';
 import 'package:provider/provider.dart';
 
+import 'package:file_picker/file_picker.dart';
+
+import '../Database/config_dao.dart';
 import '../Database/token_dao.dart';
 import '../Models/token_category.dart';
+import '../TokenUtils/export_token_util.dart';
+import '../TokenUtils/otp_token_parser.dart';
 import '../Utils/app_provider.dart';
+import '../Widgets/BottomSheet/select_category_for_tokens_bottom_sheet.dart';
 import '../Widgets/BottomSheet/select_token_bottom_sheet.dart';
+import '../Widgets/CoachMark/coach_mark_manager.dart';
+import 'Token/add_token_screen.dart';
 import '../l10n/l10n.dart';
-import 'Token/category_screen.dart';
 import 'Token/token_layout.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -59,6 +74,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   LayoutType layoutType = CloudOTPHiveUtil.getLayoutType();
   OrderType orderType = CloudOTPHiveUtil.getOrderType();
   List<OtpToken> tokens = [];
+  int _allTokenCount = 0;
   List<TokenCategory> categories = [];
 
   List<Tab> tabList = [];
@@ -78,6 +94,22 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   GridItemsNotifier gridItemsNotifier = GridItemsNotifier();
   final ValueNotifier<bool> _shownSearchbarNotifier = ValueNotifier(false);
 
+  bool _multiSelectMode = false;
+  final Set<String> _selectedTokenUids = {};
+  final GlobalKey _cardStackKey = GlobalKey();
+  late AnimationController _pulseController;
+  final List<OverlayEntry> _flyOverlays = [];
+
+  final GlobalKey _appBarTitleKey = GlobalKey();
+  final GlobalKey _moreButtonKey = GlobalKey();
+  final GlobalKey _firstCategoryTabKey = GlobalKey();
+  final GlobalKey _sortButtonKey = GlobalKey();
+  final GlobalKey _layoutButtonKey = GlobalKey();
+  final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey _cloudBackupKey = GlobalKey();
+  final GlobalKey _backupLogKey = GlobalKey();
+  final GlobalKey desktopSearchBarKey = GlobalKey();
+
   bool get hasSearchFocus => appProvider.searchFocusNode.hasFocus;
 
   String get currentCategoryUid {
@@ -94,11 +126,732 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
 
   bool get shouldCloseSearchBar => _shownSearchbarNotifier.value;
 
+  List<OtpToken> get selectedTokens =>
+      tokens.where((t) => _selectedTokenUids.contains(t.uid)).toList();
+
+  bool get _allSelectedPinned =>
+      selectedTokens.isNotEmpty && selectedTokens.every((t) => t.pinned);
+
+  void enterMultiSelectMode(String tokenUid) {
+    Offset? sourcePos;
+    Size? sourceSize;
+    CapturedThemes? capturedThemes;
+    OtpToken? token;
+
+    final key = tokenKeyMap[tokenUid];
+    if (key?.currentContext != null) {
+      final box = key!.currentContext!.findRenderObject() as RenderBox;
+      sourcePos = box.localToGlobal(Offset.zero);
+      sourceSize = box.size;
+      final overlayState = Overlay.of(context);
+      capturedThemes = InheritedTheme.capture(
+        from: key.currentContext!,
+        to: overlayState.context,
+      );
+      token = tokens.firstWhere((t) => t.uid == tokenUid);
+    }
+
+    for (final key in tokenKeyMap.values) {
+      key.currentState?.closeSlidable();
+    }
+    setState(() {
+      _multiSelectMode = true;
+      _selectedTokenUids.clear();
+      _selectedTokenUids.add(tokenUid);
+    });
+
+    if (sourcePos != null && sourceSize != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _animateFlyToCardStack(
+          sourcePos: sourcePos!,
+          sourceSize: sourceSize!,
+          capturedThemes: capturedThemes,
+          token: token,
+        );
+      });
+    }
+  }
+
+  void exitMultiSelectMode() {
+    for (final entry in _flyOverlays) {
+      entry.remove();
+    }
+    _flyOverlays.clear();
+    setState(() {
+      _multiSelectMode = false;
+      _selectedTokenUids.clear();
+    });
+  }
+
+  void toggleTokenSelection(String tokenUid) {
+    final isAdding = !_selectedTokenUids.contains(tokenUid);
+
+    Offset? sourcePos;
+    Size? sourceSize;
+    CapturedThemes? capturedThemes;
+    OtpToken? token;
+
+    if (isAdding) {
+      final key = tokenKeyMap[tokenUid];
+      if (key?.currentContext != null) {
+        final box = key!.currentContext!.findRenderObject() as RenderBox;
+        sourcePos = box.localToGlobal(Offset.zero);
+        sourceSize = box.size;
+        final overlayState = Overlay.of(context);
+        capturedThemes = InheritedTheme.capture(
+          from: key.currentContext!,
+          to: overlayState.context,
+        );
+        token = tokens.firstWhere((t) => t.uid == tokenUid);
+      }
+    }
+
+    setState(() {
+      if (isAdding) {
+        _selectedTokenUids.add(tokenUid);
+      } else {
+        _selectedTokenUids.remove(tokenUid);
+        if (_selectedTokenUids.isEmpty) {
+          _multiSelectMode = false;
+        }
+      }
+    });
+
+    if (isAdding && sourcePos != null && sourceSize != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _animateFlyToCardStack(
+          sourcePos: sourcePos!,
+          sourceSize: sourceSize!,
+          capturedThemes: capturedThemes,
+          token: token,
+        );
+      });
+    }
+  }
+
+  void selectAllTokens() {
+    setState(() {
+      if (_selectedTokenUids.length == tokens.length) {
+        _selectedTokenUids.clear();
+      } else {
+        _selectedTokenUids.addAll(tokens.map((t) => t.uid));
+      }
+    });
+  }
+
+  void _processMultiDelete() {
+    List<OtpToken> selected = selectedTokens;
+    if (selected.isEmpty) return;
+    DialogBuilder.showConfirmDialog(
+      context,
+      title: appLocalizations.batchDeleteTitle,
+      message: appLocalizations.batchDeleteMessage(selected.length),
+      confirmButtonText: appLocalizations.confirm,
+      cancelButtonText: appLocalizations.cancel,
+      onTapConfirm: () async {
+        await TokenDao.deleteTokens(selected);
+        IToast.showTop(appLocalizations.batchDeleteSuccess(selected.length));
+        exitMultiSelectMode();
+        getTokens();
+      },
+      onTapCancel: () {},
+    );
+  }
+
+  void _processMultiMoveCategory() {
+    List<OtpToken> selected = selectedTokens;
+    if (selected.isEmpty) return;
+    BottomSheetBuilder.showBottomSheet(
+      context,
+      responsive: true,
+      (context) => SelectCategoryForTokensBottomSheet(
+        tokens: selected,
+        onCompleted: () {
+          exitMultiSelectMode();
+          getTokens();
+        },
+      ),
+    );
+  }
+
+  void _processMultiExport() {
+    List<OtpToken> selected = selectedTokens;
+    if (selected.isEmpty) return;
+    BottomSheetBuilder.showContextMenu(
+      context,
+      FlutterContextMenu(
+        entries: [
+          FlutterContextMenuItem(
+            appLocalizations.exportUriFile,
+            iconData: LucideIcons.fileOutput,
+            onPressed: () {
+              DialogBuilder.showConfirmDialog(
+                context,
+                title: appLocalizations.exportUriClearWarningTitle,
+                message: appLocalizations.exportUriClearWarningTip,
+                onTapConfirm: () async {
+                  if (ResponsiveUtil.isDesktop()) {
+                    String? result = await FileUtil.saveFile(
+                      dialogTitle: appLocalizations.exportUriFileTitle,
+                      fileName: ExportTokenUtil.getExportFileName("txt"),
+                      type: FileType.custom,
+                      allowedExtensions: ['txt'],
+                      lockParentWindow: true,
+                    );
+                    if (result != null) {
+                      _exportSelectedTokensUriToFile(selected, result);
+                    }
+                  } else {
+                    _exportSelectedTokensUriToMobile(selected);
+                  }
+                },
+                onTapCancel: () {},
+              );
+            },
+          ),
+          FlutterContextMenuItem(
+            appLocalizations.exportEncryptFile,
+            iconData: LucideIcons.fileLock2,
+            onPressed: () => _exportSelectedEncrypted(selected),
+          ),
+          FlutterContextMenuItem(
+            appLocalizations.exportQrcode,
+            iconData: LucideIcons.qrCode,
+            onPressed: () async {
+              List<String>? qrcodes = await ExportTokenUtil.exportToQrcodes(
+                selectedTokens: selected,
+              );
+              if (qrcodes != null && qrcodes.isNotEmpty && mounted) {
+                CloudOTPItemBuilder.showQrcodesDialog(
+                  context,
+                  title: appLocalizations.multiSelectCount(selected.length),
+                  qrcodes: qrcodes,
+                );
+              }
+            },
+          ),
+          FlutterContextMenuItem(
+            appLocalizations.exportGoogleAuthenticatorQrcode,
+            iconData: LucideIcons.qrCode,
+            onPressed: () async {
+              List<dynamic>? result =
+                  await ExportTokenUtil.exportToGoogleAuthentcatorQrcodes(
+                selectedTokens: selected,
+              );
+              if (result != null && mounted) {
+                List<String> qrcodes = result[0] as List<String>;
+                int passCount = result[1] as int;
+                if (qrcodes.isNotEmpty) {
+                  CloudOTPItemBuilder.showQrcodesDialog(
+                    context,
+                    title: appLocalizations.multiSelectCount(selected.length),
+                    qrcodes: qrcodes,
+                  );
+                }
+                if (passCount > 0) {
+                  IToast.showTop(appLocalizations
+                      .exportGoogleAuthenticatorNoCompatibleCount(passCount));
+                }
+              }
+            },
+          ),
+          FlutterContextMenuItem(
+            appLocalizations.shareTokenUri,
+            iconData: LucideIcons.share2,
+            onPressed: () {
+              ExportTokenUtil.shareSelectedTokensUri(selected);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportSelectedEncrypted(List<OtpToken> selected) async {
+    if (await CloudOTPHiveUtil.canImportOrExportUseBackupPassword()) {
+      _doExportSelectedEncrypted(selected, await ConfigDao.getBackupPassword());
+    } else {
+      BottomSheetBuilder.showBottomSheet(
+        context,
+        responsive: true,
+        (context) => InputBottomSheet(
+          title: appLocalizations.setExportPasswordTitle,
+          message: appLocalizations.setExportPasswordTip,
+          hint: appLocalizations.setExportPasswordHint,
+          tailingConfig: InputItemLeadingTailingConfig(
+            type: InputItemLeadingTailingType.password,
+          ),
+          inputFormatters: [
+            RegexInputFormatter.onlyNumberAndLetterAndSymbol,
+          ],
+          validator: (value) {
+            if (value.isEmpty) {
+              return appLocalizations.encryptDatabasePasswordCannotBeEmpty;
+            }
+            return null;
+          },
+          onValidConfirm: (password) async {
+            _doExportSelectedEncrypted(selected, password);
+            return null;
+          },
+        ),
+      );
+    }
+  }
+
+  Future<void> _doExportSelectedEncrypted(
+      List<OtpToken> selected, String password) async {
+    if (ResponsiveUtil.isDesktop()) {
+      String? result = await FileUtil.saveFile(
+        dialogTitle: appLocalizations.exportEncryptFileTitle,
+        fileName: ExportTokenUtil.getExportFileName("bin"),
+        type: FileType.custom,
+        allowedExtensions: ['bin'],
+        lockParentWindow: true,
+      );
+      if (result != null) {
+        final data = await ExportTokenUtil.getUint8ListForTokens(
+            tokens: selected, password: password);
+        if (data != null) {
+          ExportTokenUtil.exportEncryptFile(result, password,
+              encryptedData: data);
+        }
+      }
+    } else {
+      final data = await ExportTokenUtil.getUint8ListForTokens(
+          tokens: selected, password: password);
+      if (data != null) {
+        ExportTokenUtil.exportEncryptToMobileDirectory(
+            encryptedData: data, password: password);
+      }
+    }
+  }
+
+  Future<void> _exportSelectedTokensUriToFile(
+      List<OtpToken> tokens, String filePath) async {
+    CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
+    await compute((_) async {
+      List<String> uris =
+          tokens.map((e) => OtpTokenParser.toUri(e).toString()).toList();
+      String content = uris.join("\n");
+      File(filePath).writeAsStringSync(content);
+    }, null);
+    CustomLoadingDialog.dismissLoading();
+    IToast.showTop(appLocalizations.exportSuccess);
+  }
+
+  Future<void> _exportSelectedTokensUriToMobile(List<OtpToken> tokens) async {
+    CustomLoadingDialog.showLoading(title: appLocalizations.exporting);
+    Uint8List res = await compute((_) async {
+      List<String> uris =
+          tokens.map((e) => OtpTokenParser.toUri(e).toString()).toList();
+      String content = uris.join("\n");
+      return utf8.encode(content);
+    }, null);
+    String? filePath = await FileUtil.saveFile(
+      dialogTitle: appLocalizations.exportUriFileTitle,
+      fileName: ExportTokenUtil.getExportFileName("txt"),
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+      bytes: res,
+    );
+    CustomLoadingDialog.dismissLoading();
+    if (filePath != null) {
+      IToast.showTop(appLocalizations.exportSuccess);
+    }
+  }
+
+  Future<void> _processMultiPin() async {
+    List<OtpToken> selected = selectedTokens;
+    if (selected.isEmpty) return;
+    bool pinAll = !_allSelectedPinned;
+    for (OtpToken token in selected) {
+      await TokenDao.updateTokenPinned(token, pinAll);
+    }
+    IToast.showTop(pinAll
+        ? appLocalizations.alreadyPinnedSelectedTokens(selected.length)
+        : appLocalizations.alreadyUnPinnedSelectedTokens(selected.length));
+    exitMultiSelectMode();
+    getTokens();
+  }
+
+  Widget _buildMultiSelectDockContent() {
+    return Center(
+      key: const ValueKey('dock'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: ChewieTheme.appBarBackgroundColor.withAlpha(230),
+          borderRadius: BorderRadius.circular(12),
+          border: ChewieTheme.border,
+          boxShadow: ChewieTheme.defaultBoxShadow,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildCardStack(),
+            _buildDockDivider(),
+            _buildDockItem(
+              icon: LucideIcons.x,
+              label: appLocalizations.cancel,
+              onTap: exitMultiSelectMode,
+            ),
+            _buildDockDivider(),
+            _buildDockItem(
+              icon: _selectedTokenUids.length == tokens.length
+                  ? Icons.deselect
+                  : LucideIcons.checkCheck,
+              label: _selectedTokenUids.length == tokens.length
+                  ? appLocalizations.deselectAll
+                  : appLocalizations.selectAll,
+              onTap: selectAllTokens,
+            ),
+            _buildDockDivider(),
+            _buildDockItem(
+              icon: LucideIcons.shapes,
+              label: appLocalizations.category,
+              onTap:
+                  _selectedTokenUids.isEmpty ? null : _processMultiMoveCategory,
+            ),
+            _buildDockItem(
+              icon: _allSelectedPinned ? LucideIcons.pinOff : LucideIcons.pin,
+              label: _allSelectedPinned
+                  ? appLocalizations.unPinTokenShort
+                  : appLocalizations.pinTokenShort,
+              onTap: _selectedTokenUids.isEmpty ? null : _processMultiPin,
+            ),
+            _buildDockItem(
+              icon: LucideIcons.fileOutput,
+              label: appLocalizations.export,
+              onTap: _selectedTokenUids.isEmpty ? null : _processMultiExport,
+            ),
+            _buildDockItem(
+              icon: LucideIcons.trash2,
+              label: appLocalizations.delete,
+              onTap: _selectedTokenUids.isEmpty ? null : _processMultiDelete,
+              color: _selectedTokenUids.isEmpty ? Colors.grey : Colors.red,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedDock() {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: MediaQuery.of(context).padding.bottom + 16,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        transitionBuilder: (child, animation) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(animation),
+            child: FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+          );
+        },
+        child: _multiSelectMode
+            ? _buildMultiSelectDockContent()
+            : const SizedBox.shrink(key: ValueKey('empty')),
+      ),
+    );
+  }
+
+  Widget _buildDockItem({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+    Color? color,
+    int? badge,
+  }) {
+    final enabled = onTap != null;
+    Widget iconWidget = Icon(
+      icon,
+      color: enabled
+          ? (color ?? ChewieTheme.iconColor)
+          : Colors.grey.withAlpha(100),
+      size: 20,
+    );
+    if (badge != null && badge > 0) {
+      iconWidget = Badge(
+        label: Text(
+          '$badge',
+          style: const TextStyle(fontSize: 10, color: Colors.white),
+        ),
+        backgroundColor: ChewieTheme.primaryColor,
+        child: iconWidget,
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: ToolTipWrapper(
+        message: label,
+        position: TooltipPosition.top,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: iconWidget,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDockDivider() {
+    return Container(
+      width: 1,
+      height: 24,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: Colors.grey.withAlpha(60),
+    );
+  }
+
+  Widget _buildStackCard({
+    required double rotation,
+    required Offset offset,
+    required int alpha,
+    bool isFront = false,
+  }) {
+    final primary = ChewieTheme.primaryColor;
+    return Transform.translate(
+      offset: offset,
+      child: Transform.rotate(
+        angle: rotation,
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          width: 26,
+          height: 18,
+          decoration: BoxDecoration(
+            color: ChewieTheme.cardColor.withAlpha(alpha),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: isFront
+                  ? primary.withAlpha(120)
+                  : Colors.grey.withAlpha(60 + alpha ~/ 4),
+              width: isFront ? 1.0 : 0.5,
+            ),
+            boxShadow: isFront
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(20),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: isFront
+              ? Column(
+                  children: [
+                    Container(
+                      height: 4,
+                      margin: const EdgeInsets.fromLTRB(3, 3, 3, 0),
+                      decoration: BoxDecoration(
+                        color: primary.withAlpha(180),
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                    Container(
+                      height: 2,
+                      margin: const EdgeInsets.fromLTRB(3, 2, 8, 0),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withAlpha(60),
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardStack() {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.8, end: 1).animate(
+        CurvedAnimation(parent: _pulseController, curve: Curves.easeOut),
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        child: Badge(
+          label: Text(
+            '${_selectedTokenUids.length}',
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: ChewieTheme.primaryColor,
+          child: SizedBox(
+            key: _cardStackKey,
+            width: 38,
+            height: 30,
+            child: Center(
+              child: SizedBox(
+                width: 34,
+                height: 26,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: _buildStackCard(
+                        rotation: -0.15,
+                        offset: const Offset(-2, 0),
+                        alpha: 120,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: _buildStackCard(
+                        rotation: 0.08,
+                        offset: const Offset(2, -1),
+                        alpha: 180,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: _buildStackCard(
+                        rotation: 0,
+                        offset: const Offset(0, 0),
+                        alpha: 255,
+                        isFront: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _animateFlyToCardStack({
+    required Offset sourcePos,
+    required Size sourceSize,
+    CapturedThemes? capturedThemes,
+    OtpToken? token,
+  }) {
+    final stackContext = _cardStackKey.currentContext;
+    if (stackContext == null) return;
+
+    final targetBox = stackContext.findRenderObject() as RenderBox;
+    final targetPos = targetBox.localToGlobal(Offset.zero);
+    final targetSize = targetBox.size;
+
+    final controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    final curved = CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeInOut,
+    );
+
+    Widget flyChild;
+    if (token != null && capturedThemes != null) {
+      flyChild = capturedThemes.wrap(
+        TokenLayout(
+          token: token,
+          layoutType: layoutType,
+        ),
+      );
+    } else {
+      flyChild = Container(
+        decoration: BoxDecoration(
+          color: ChewieTheme.canvasColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+      );
+    }
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => AnimatedBuilder(
+        animation: curved,
+        builder: (context, child) {
+          final t = curved.value;
+          final left = ui.lerpDouble(sourcePos.dx, targetPos.dx, t)!;
+          final top = ui.lerpDouble(sourcePos.dy, targetPos.dy, t)!;
+          final width = ui.lerpDouble(sourceSize.width, targetSize.width, t)!;
+          final height =
+              ui.lerpDouble(sourceSize.height, targetSize.height, t)!;
+          final opacity = ui.lerpDouble(1.0, 0.3, t)!;
+
+          return Positioned(
+            left: left,
+            top: top,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: opacity,
+                child: SizedBox(
+                  width: width,
+                  height: height,
+                  child: FittedBox(
+                    fit: BoxFit.fill,
+                    child: SizedBox(
+                      width: sourceSize.width,
+                      height: sourceSize.height,
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        child: flyChild,
+      ),
+    );
+
+    Overlay.of(context).insert(entry);
+    _flyOverlays.add(entry);
+
+    controller.forward().then((_) {
+      entry.remove();
+      _flyOverlays.remove(entry);
+      controller.dispose();
+      if (mounted) {
+        _pulseController.forward(from: 0);
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    if (DatabaseManager.isNewDatabase) {
+      DatabaseManager.updateSampleCategoryTitle(
+          appLocalizations.sampleCategoryName);
+    }
     initTab(true);
-    refresh(true);
+    refresh(true).then((_) {
+      if (ResponsiveUtil.isMobile() &&
+          !ResponsiveUtil.isLandscapeTablet() &&
+          !ChewieHiveUtil.getBool(CloudOTPHiveUtil.haveShownCoachMarkKey,
+              defaultValue: false)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showCoachMarkInternal(force: true);
+        });
+      }
+    });
     _searchController.addListener(() {
       performSearch(_searchController.text);
     });
@@ -106,6 +859,10 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       vsync: this,
       value: 1,
       duration: const Duration(milliseconds: 300),
+    );
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
     );
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (!ResponsiveUtil.isLandscapeLayout() &&
@@ -116,10 +873,22 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
     });
   }
 
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _pulseController.dispose();
+    for (final entry in _flyOverlays) {
+      entry.remove();
+    }
+    _flyOverlays.clear();
+    super.dispose();
+  }
+
   insertToken(
     OtpToken token, {
     bool forceAll = false,
   }) async {
+    if (tokens.any((element) => element.uid == token.uid)) return;
     if (currentCategoryUid.isEmpty) {
       if (!forceAll) {
         return;
@@ -226,13 +995,63 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   getTokens() async {
+    final query = SearchQueryParser.parse(_searchKey);
+
+    Set<String>? categoryTokenUids;
+    if (query.categoryName != null) {
+      final catUids =
+          await CategoryDao.getCategoryUidsByName(query.categoryName!);
+      categoryTokenUids = await BindingDao.getTokenUidsByCategoryUids(catUids);
+    }
+
     await CategoryDao.getTokensByCategoryUid(
       currentCategoryUid,
-      searchKey: _searchKey,
+      searchKey: query.text,
+      tags: query.tags,
+      tokenType: query.tokenType,
     ).then((value) {
-      tokens = value;
+      final seen = <String>{};
+      tokens = value.where((t) {
+        if (!seen.add(t.uid)) return false;
+        if (categoryTokenUids != null && !categoryTokenUids.contains(t.uid))
+          return false;
+        return true;
+      }).toList();
+      final currentUids = seen;
+      tokenKeyMap.removeWhere((uid, _) => !currentUids.contains(uid));
       performSort();
     });
+
+    if (currentCategoryUid.isEmpty && _searchKey.isEmpty) {
+      _allTokenCount = tokens.length;
+    } else {
+      final allTokens = await TokenDao.listTokens();
+      _allTokenCount = allTokens.length;
+    }
+  }
+
+  void showCoachMark() {
+    _showCoachMarkInternal(force: true);
+  }
+
+  void _showCoachMarkInternal({required bool force}) {
+    final provider = context.read<AppProvider>();
+    CoachMarkManager(
+      context: context,
+      appBarTitleKey: _appBarTitleKey,
+      firstTokenKey: tokenKeyMap.isNotEmpty ? tokenKeyMap.values.first : null,
+      categoryTabKey: categories.isNotEmpty ? _firstCategoryTabKey : null,
+      moreButtonKey: _moreButtonKey,
+      sortButtonKey: provider.showSortButton ? _sortButtonKey : null,
+      layoutButtonKey: provider.showLayoutButton ? _layoutButtonKey : null,
+      fabKey: _fabKey,
+      cloudBackupKey: provider.showCloudBackupButton ? _cloudBackupKey : null,
+      backupLogKey: provider.showBackupLogButton ? _backupLogKey : null,
+      layoutType: layoutType,
+      tokenCount: tokens.length,
+      categoryCount: categories.length,
+      onDeleteSampleData: () => refresh(true),
+    ).show(force: force);
   }
 
   getCategories([bool isInit = false]) async {
@@ -277,52 +1096,69 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
     return MyScaffold(
       resizeToAvoidBottomInset: false,
       appBar: ResponsiveUtil.selectByOrientationNullable(
-        landscape: ResponsiveAppBar(
-          titleLeftMargin: 10,
-          titleWidget: Container(
-            constraints: const BoxConstraints(
-                maxWidth: 300, minWidth: 200, maxHeight: 36),
-            child: MySearchBar(
-              borderRadius: 8,
-              bottomMargin: 18,
-              focusNode: appProvider.searchFocusNode,
-              controller: _searchController,
-              background: ChewieTheme.scaffoldBackgroundColor,
-              hintText: appLocalizations.searchToken,
-              onSubmitted: (text) {
-                performSearch(text);
-              },
-            ),
-          ),
-        ),
+        landscape: ResponsiveUtil.isMacOS()
+            ? null
+            : ResponsiveAppBar(
+                titleLeftMargin: 10,
+                titleWidget: Container(
+                  key: desktopSearchBarKey,
+                  constraints: const BoxConstraints(
+                      maxWidth: 300, minWidth: 200, maxHeight: 36),
+                  child: MySearchBar(
+                    borderRadius: 8,
+                    bottomMargin: 18,
+                    focusNode: appProvider.searchFocusNode,
+                    controller: _searchController,
+                    background: ChewieTheme.scaffoldBackgroundColor,
+                    hintText: appLocalizations.searchToken,
+                    onSubmitted: (text) {
+                      performSearch(text);
+                    },
+                  ),
+                ),
+              ),
         portrait: null,
       ) as PreferredSizeWidget?,
       body: ResponsiveUtil.selectByOrientation(
-        landscape: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        landscape: Stack(
           children: [
-            _buildTabBar(),
-            Expanded(child: _buildMainContent()),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTabBar(),
+                Expanded(child: _buildMainContent()),
+              ],
+            ),
+            _buildAnimatedDock(),
           ],
         ),
         portrait: PopScope(
           canPop: false,
           onPopInvokedWithResult: (_, __) {
-            if (mounted && _shownSearchbarNotifier.value) {
+            if (_multiSelectMode) {
+              exitMultiSelectMode();
+            } else if (mounted && _shownSearchbarNotifier.value) {
               changeSearchBar(false);
             } else {
               MoveToBackground.moveTaskToBack();
             }
           },
-          child: _buildMobileBody(),
+          child: Stack(
+            children: [
+              _buildMobileBody(),
+              _buildAnimatedDock(),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: ResponsiveUtil.selectByPlatform(
         mobile: _buildMobileBottombar(),
       ),
-      floatingActionButton: ResponsiveUtil.selectByPlatform(
-        mobile: _buildFloatingActionButton(),
-      ),
+      floatingActionButton: _multiSelectMode
+          ? null
+          : ResponsiveUtil.selectByPlatform(
+              mobile: _buildFloatingActionButton(),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       extendBody: true,
     );
@@ -361,11 +1197,12 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
 
   _buildFloatingActionButton() {
     var button = MyFloatingActionButton(
+      key: _fabKey,
       heroTag: "Hero-${categories.length}",
       onPressed: () {
         BottomSheetBuilder.showBottomSheet(
           context,
-          enableDrag: false,
+          enableDrag: true,
           responsive: true,
           (context) => AddBottomSheet(
             onlyShowScanner: ResponsiveUtil.isLandscapeTablet(),
@@ -393,49 +1230,53 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
 
   getActions(AppProvider provider) {
     return [
-      if (provider.showBackupLogButton)
+      if (provider.showCloudBackupButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
-          child: CircleIconButton(
-            padding: EdgeInsets.zero,
-            icon: Selector<AppProvider, LoadingStatus>(
-              selector: (context, appProvider) =>
-                  appProvider.autoBackupLoadingStatus,
-              builder: (context, autoBackupLoadingStatus, child) => LoadingIcon(
-                status: autoBackupLoadingStatus,
-                normalIcon:
-                    Icon(Icons.history_rounded, color: ChewieTheme.iconColor),
-              ),
-            ),
-            onTap: () {
-              RouteUtil.pushCupertinoRoute(context, const BackupLogScreen());
+          child: ToolButton(
+            key: _cloudBackupKey,
+            context: context,
+            tooltip: appLocalizations.cloudBackupServiceSetting,
+            tooltipPosition: TooltipPosition.bottom,
+            icon: LucideIcons.cloud,
+            onPressed: () {
+              RouteUtil.pushCupertinoRoute(context, const CloudServiceScreen());
             },
           ),
         ),
-      if (provider.canShowCloudBackupButton && provider.showCloudBackupButton)
+      if (provider.showBackupLogButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
-          child: CircleIconButton(
-            icon: Icon(
-              LucideIcons.cloud,
-              color: ChewieTheme.iconColor,
+          child: Selector<AppProvider, LoadingStatus>(
+            selector: (context, appProvider) =>
+                appProvider.autoBackupLoadingStatus,
+            builder: (context, autoBackupLoadingStatus, child) => ToolButton(
+              key: _backupLogKey,
+              context: context,
+              tooltip: appLocalizations.backupLogs,
+              tooltipPosition: TooltipPosition.bottom,
+              iconBuilder: (buttonContext) => LoadingIcon(
+                status: autoBackupLoadingStatus,
+                normalIcon:
+                    Icon(Icons.history_rounded, color: buttonContext.iconColor),
+              ),
+              onPressed: () {
+                BackupLogScreen.show(context);
+              },
             ),
-            onTap: () {
-              RouteUtil.pushCupertinoRoute(context, const CloudServiceScreen());
-            },
           ),
         ),
       if (provider.showLayoutButton)
         Container(
           margin: const EdgeInsets.only(right: 5),
           child: ToolButton(
+            key: _layoutButtonKey,
             context: context,
+            tooltip: appLocalizations.layoutType,
+            tooltipPosition: TooltipPosition.bottom,
             icon: layoutType.icon,
             onPressed: () {
-              BottomSheetBuilder.showContextMenu(
-                context,
-                MainScreenState.buildLayoutContextMenuButtons(),
-              );
+              LayoutSelectScreen.show(context);
             },
           ),
         ),
@@ -443,49 +1284,29 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         Container(
           margin: const EdgeInsets.only(right: 5),
           child: ToolButton(
+            key: _sortButtonKey,
             context: context,
+            tooltip: appLocalizations.sortType,
+            tooltipPosition: TooltipPosition.bottom,
             icon: orderType.icon,
             onPressed: () {
-              BottomSheetBuilder.showContextMenu(
-                context,
-                MainScreenState.buildSortContextMenuButtons(),
-              );
+              SortSelectScreen.show(context);
             },
           ),
         ),
       ToolButton(
+        key: _moreButtonKey,
         context: context,
+        tooltip: appLocalizations.more,
+        tooltipPosition: TooltipPosition.bottom,
         icon: LucideIcons.ellipsisVertical,
         onPressed: () {
-          BottomSheetBuilder.showContextMenu(
+          BottomSheetBuilder.showBottomSheet(
             context,
-            FlutterContextMenu(
-              entries: [
-                FlutterContextMenuItem(
-                  appLocalizations.category,
-                  iconData: LucideIcons.shapes,
-                  onPressed: () {
-                    RouteUtil.pushCupertinoRoute(
-                        context, const CategoryScreen());
-                  },
-                ),
-                FlutterContextMenuItem(
-                  appLocalizations.setting,
-                  iconData: LucideIcons.bolt,
-                  onPressed: () {
-                    RouteUtil.pushCupertinoRoute(
-                        context, const MobileSettingNavigationScreen());
-                  },
-                ),
-                FlutterContextMenuItem(
-                  appLocalizations.about,
-                  iconData: LucideIcons.info,
-                  onPressed: () {
-                    RouteUtil.pushCupertinoRoute(
-                        context, const AboutSettingScreen());
-                  },
-                ),
-              ],
+            responsive: true,
+            (ctx) => MoreBottomSheet(
+              showSelect: tokens.length > 1,
+              onSelect: () => enterMultiSelectMode(tokens.first.uid),
             ),
           );
         },
@@ -495,6 +1316,24 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   _buildMobileAppbar() {
+    if (_multiSelectMode) {
+      return SliverAppBar(
+        floating: true,
+        pinned: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 0,
+        backgroundColor: ChewieTheme.scaffoldBackgroundColor,
+        leading: IconButton(
+          icon: Icon(LucideIcons.x, color: ChewieTheme.iconColor),
+          onPressed: exitMultiSelectMode,
+        ),
+        title: Text(
+          appLocalizations.multiSelectCount(_selectedTokenUids.length),
+          style: ChewieTheme.titleMedium.apply(fontWeightDelta: 2),
+        ),
+      );
+    }
     return Consumer<AppProvider>(
       builder: (context, provider, child) => ValueListenableBuilder(
         valueListenable: _shownSearchbarNotifier,
@@ -515,6 +1354,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                   return Align(
                     alignment: Alignment.centerLeft,
                     child: GestureDetector(
+                      key: _appBarTitleKey,
                       onTap: () {
                         if (!_shownSearchbarNotifier.value) {
                           changeSearchBar(true);
@@ -536,8 +1376,9 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           CircleIconButton(
+                            tooltip: appLocalizations.cancel,
                             icon: Icon(
-                              Icons.arrow_back_rounded,
+                              LucideIcons.arrowLeft,
                               color: ChewieTheme.iconColor,
                             ),
                             onTap: () {
@@ -581,8 +1422,13 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   _buildMobileBottombar({double verticalPadding = 10}) {
+    if (_multiSelectMode) {
+      return const SizedBox.shrink();
+    }
+    double bottomInset = MediaQuery.of(context).viewPadding.bottom;
     double height = kToolbarHeight +
         verticalPadding * 2 +
+        bottomInset +
         (ResponsiveUtil.isLandscapeTablet() ? 24 : 0);
     return Selector<AppProvider, bool>(
       selector: (context, provider) => provider.hideBottombarWhenScrolling,
@@ -606,7 +1452,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
               // border: ChewieTheme.topDivider,
             ),
             padding: EdgeInsets.symmetric(vertical: 5 + verticalPadding)
-                .copyWith(right: 70),
+                .copyWith(right: 70, bottom: 5 + verticalPadding + bottomInset),
             child: _buildTabBar(const EdgeInsets.only(left: 10, right: 10)),
           );
           return ScrollToHide(
@@ -626,7 +1472,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
                 : enableFrostedGlassEffect
                     ? ClipRRect(
                         child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: container,
                         ),
                       )
@@ -638,106 +1484,193 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   _buildMainContent() {
-    Widget gridView = Selector<AppProvider, bool>(
-      selector: (context, provider) => provider.dragToReorder,
-      builder: (context, dragToReorder, child) => Selector<AppProvider, bool>(
-        selector: (context, provider) => provider.hideBottombarWhenScrolling,
-        builder: (context, hideBottombarWhenScrolling, child) =>
-            Selector<AppProvider, bool>(
-          selector: (context, provider) => provider.hideProgressBar,
-          builder: (context, hideProgressBar, child) =>
-              ReorderableGridView.builder(
-            // controller: _scrollController,
-            gridItemsNotifier: gridItemsNotifier,
-            autoScroll: true,
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(
-                left: 10,
-                right: 10,
-                top: 10,
-                bottom:
-                    hideBottombarWhenScrolling || categories.isEmpty ? 10 : 85),
-            gridDelegate: SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: layoutType.maxCrossAxisExtent,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              preferredHeight: layoutType.getHeight(hideProgressBar),
-            ),
-            dragToReorder: dragToReorder,
-            cacheExtent: 9999,
-            // itemDragEnable: (index) {
-            //   if (tokens[index].pinnedInt == 1) {
-            //     return false;
-            //   }
-            //   return true;
-            // },
-            onReorderStart: (_) {
-              _fabScrollToHideController.hide();
-              _bottombarScrollToHideController.hide();
-            },
-            onReorderEnd: (_, __) {
-              _fabScrollToHideController.show();
-              _bottombarScrollToHideController.show();
-            },
-            onReorder: (int oldIndex, int newIndex) async {
-              final selectedToken = tokens[oldIndex];
-              int pinnedCount = tokens.where((e) => e.pinned).length;
-              if (selectedToken.pinned) {
-                if (newIndex >= pinnedCount) newIndex = pinnedCount - 1;
-              } else {
-                if (newIndex < pinnedCount) newIndex = pinnedCount;
-              }
-              final item = tokens.removeAt(oldIndex);
-              tokens.insert(newIndex, item);
-              for (int i = 0; i < tokens.length; i++) {
-                tokens[i].seq = tokens.length - i;
-              }
-              await TokenDao.updateTokens(tokens, autoBackup: false);
-              changeOrderType(type: OrderType.Default, doPerformSort: false);
-            },
-            proxyDecorator:
-                (Widget child, int index, Animation<double> animation) {
-              return Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ChewieTheme.shadowColor,
-                      offset: const Offset(0, 4),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ).scale(2)
-                  ],
-                ),
-                child: child,
-              );
-            },
-            itemCount: tokens.length,
-            itemBuilder: (context, index) {
-              return TokenLayout(
-                key: tokenKeyMap.putIfAbsent(
-                    tokens[index].uid, () => GlobalKey()),
-                token: tokens[index],
-                layoutType: layoutType,
-              );
-            },
+    Widget gridView = Selector<AppProvider,
+        ({bool dragToReorder, bool hideBottombar, bool hideProgress})>(
+      selector: (context, provider) => (
+        dragToReorder: provider.dragToReorder,
+        hideBottombar: provider.hideBottombarWhenScrolling,
+        hideProgress: provider.hideProgressBar,
+      ),
+      builder: (context, settings, child) {
+        double bottomPadding = MediaQuery.of(context).padding.bottom;
+        return ReorderableGridView.builder(
+          cacheExtent: 1000,
+          // controller: _scrollController,
+          gridItemsNotifier: gridItemsNotifier,
+          autoScroll: true,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.only(
+              left: 10,
+              right: 10,
+              top: 10,
+              bottom: _multiSelectMode
+                  ? 88 + bottomPadding
+                  : settings.hideBottombar || categories.isEmpty
+                      ? 10 + bottomPadding
+                      : 85 + bottomPadding),
+          gridDelegate: SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: layoutType.maxCrossAxisExtent,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            preferredHeight: layoutType.getHeight(settings.hideProgress),
           ),
+          dragToReorder: _multiSelectMode ? false : settings.dragToReorder,
+          onReorderStart: (_) {
+            _fabScrollToHideController.hide();
+            _bottombarScrollToHideController.hide();
+          },
+          onReorderEnd: (_, __) {
+            _fabScrollToHideController.show();
+            _bottombarScrollToHideController.show();
+          },
+          onReorder: (int oldIndex, int newIndex) async {
+            final selectedToken = tokens[oldIndex];
+            int pinnedCount = tokens.where((e) => e.pinned).length;
+            if (selectedToken.pinned) {
+              if (newIndex >= pinnedCount) newIndex = pinnedCount - 1;
+            } else {
+              if (newIndex < pinnedCount) newIndex = pinnedCount;
+            }
+            final item = tokens.removeAt(oldIndex);
+            tokens.insert(newIndex, item);
+            for (int i = 0; i < tokens.length; i++) {
+              tokens[i].seq = tokens.length - i;
+            }
+            await TokenDao.updateTokens(tokens, autoBackup: false);
+            changeOrderType(type: OrderType.Default, doPerformSort: false);
+          },
+          proxyDecorator:
+              (Widget child, int index, Animation<double> animation) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: ChewieTheme.shadowColor,
+                    offset: const Offset(0, 4),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ).scale(2)
+                ],
+              ),
+              child: child,
+            );
+          },
+          itemCount: tokens.length,
+          itemBuilder: (context, index) {
+            return TokenLayout(
+              key:
+                  tokenKeyMap.putIfAbsent(tokens[index].uid, () => GlobalKey()),
+              token: tokens[index],
+              layoutType: layoutType,
+              multiSelectMode: _multiSelectMode,
+              isSelected: _selectedTokenUids.contains(tokens[index].uid),
+              onToggleSelect: () => toggleTokenSelection(tokens[index].uid),
+              onEnterMultiSelect: () => enterMultiSelectMode(tokens[index].uid),
+            );
+          },
+        );
+      },
+    );
+    Widget body = tokens.isEmpty ? _buildEmptyPlaceholder() : gridView;
+    return SlidableAutoCloseBehavior(child: body);
+  }
+
+  Widget _buildEmptyPlaceholder() {
+    if (_searchKey.isNotEmpty) {
+      return ListView(
+        padding: const EdgeInsets.symmetric(vertical: 50),
+        children: [
+          EmptyPlaceholder(
+            text: appLocalizations.noTokenContainingSearchKey(_searchKey),
+          ),
+        ],
+      );
+    }
+
+    final inCategory = currentCategoryUid.isNotEmpty;
+    final hasGlobalTokens = _allTokenCount > 0;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: ChewieTheme.primaryColor.withAlpha(20),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                LucideIcons.inbox,
+                size: 26,
+                color: ChewieTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              inCategory
+                  ? appLocalizations.noTokenInCategory
+                  : appLocalizations.noToken,
+              style: ChewieTheme.bodyMedium.copyWith(
+                color: ChewieTheme.bodyMedium.color?.withAlpha(150),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (inCategory && hasGlobalTokens) ...[
+                  RoundIconButton(
+                    icon: Icon(
+                      LucideIcons.listPlus,
+                      size: 18,
+                      color: ChewieTheme.primaryColor,
+                    ),
+                    background: ChewieTheme.primaryColor.withAlpha(20),
+                    padding: const EdgeInsets.all(10),
+                    onPressed: () {
+                      final category = categories[_currentTabIndex - 1];
+                      BottomSheetBuilder.showBottomSheet(
+                        context,
+                        responsive: true,
+                        (context) => SelectTokenBottomSheet(category: category),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                RoundIconTextButton(
+                  height: 38,
+                  text: appLocalizations.addToken,
+                  background: ChewieTheme.primaryColor,
+                  onPressed: () {
+                    if (ResponsiveUtil.isMobile()) {
+                      BottomSheetBuilder.showBottomSheet(
+                        context,
+                        enableDrag: true,
+                        responsive: true,
+                        (context) => AddBottomSheet(
+                          onlyShowScanner: ResponsiveUtil.isLandscapeTablet(),
+                        ),
+                      );
+                    } else {
+                      DialogBuilder.showPageDialog(context,
+                          child: const AddTokenScreen());
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 100),
+          ],
         ),
       ),
     );
-    Widget body = tokens.isEmpty
-        ? ListView(
-            padding: const EdgeInsets.symmetric(vertical: 50),
-            children: [
-              EmptyPlaceholder(
-                text: _searchKey.isEmpty
-                    ? appLocalizations.noToken
-                    : appLocalizations.noTokenContainingSearchKey(_searchKey),
-              ),
-            ],
-          )
-        : gridView;
-    return SlidableAutoCloseBehavior(child: body);
   }
 
   _buildTabBar([EdgeInsetsGeometry? padding]) {
@@ -755,6 +1688,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       unselectedLabelStyle: ChewieTheme.titleMedium.apply(color: Colors.grey),
       indicator: UnderlinedTabIndicator(borderColor: ChewieTheme.primaryColor),
       onTap: (index) {
+        if (_multiSelectMode) exitMultiSelectMode();
         if (_nestScrollController.hasClients) {
           _nestScrollController.animateTo(0,
               duration: const Duration(milliseconds: 300),
@@ -763,6 +1697,11 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
         _currentTabIndex = index;
         getTokens();
         CloudOTPHiveUtil.setSelectedCategoryUid(currentCategoryUid);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          for (final key in tokenKeyMap.values) {
+            key.currentState?.replayEntrance();
+          }
+        });
       },
     );
   }
@@ -772,14 +1711,19 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
       child: ContextMenuRegion(
         contextMenu: _buildTabContextMenuButtons(category),
         child: GestureDetector(
+          key: (category != null && categories.indexOf(category) == 0)
+              ? _firstCategoryTabKey
+              : null,
           onLongPress: () {
+            HapticFeedback.lightImpact();
             if (category != null) {
-              HapticFeedback.lightImpact();
               BottomSheetBuilder.showBottomSheet(
                 context,
                 responsive: true,
                 (context) => SelectTokenBottomSheet(category: category),
               );
+            } else {
+              RouteUtil.pushDialogRoute(context, const CategoryScreen());
             }
           },
           child: Text(category?.title ?? (() => appLocalizations.allTokens)()),
@@ -946,6 +1890,7 @@ class HomeScreenState extends BasePanelScreenState<HomeScreen>
   }
 
   performSearch(String searchKey) {
+    if (_multiSelectMode) exitMultiSelectMode();
     _searchKey = searchKey;
     getTokens();
   }

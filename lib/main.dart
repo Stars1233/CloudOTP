@@ -15,6 +15,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:awesome_chewie/awesome_chewie.dart';
 import 'package:awesome_cloud/awesome_cloud.dart';
@@ -41,6 +42,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'Screens/main_screen.dart';
+import 'Screens/welcome_screen.dart';
 import 'TokenUtils/token_image_util.dart';
 import 'Utils/utils.dart';
 import 'Widgets/Shortcuts/app_shortcuts.dart';
@@ -78,6 +80,10 @@ Widget getRootPage([bool isMain = false]) {
               jumpToMain: true,
               showWindowTitle: true,
             );
+          } else if (!ChewieHiveUtil.getBool(
+              CloudOTPHiveUtil.haveShownWelcome4Key,
+              defaultValue: false)) {
+            home = const WelcomeScreen();
           } else {
             home = AppShortcuts(child: MainScreen(key: mainScreenKey));
           }
@@ -93,8 +99,11 @@ Future<void> initApp(WidgetsBinding widgetsBinding) async {
   await ResponsiveUtil.init();
   await FileUtil.migrationDataToSupportDirectory();
   FlutterError.onError = onError;
-  imageCache.maximumSizeBytes = 1024 * 1024 * 1024 * 2;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 1024 * 1024 * 1024 * 2;
+  final cacheSize = ResponsiveUtil.isMobile()
+      ? 256 * 1024 * 1024 // 256MB for mobile
+      : 1024 * 1024 * 1024; // 1GB for desktop
+  imageCache.maximumSizeBytes = cacheSize;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = cacheSize;
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await initHive();
   await initCryptoUtil();
@@ -120,9 +129,10 @@ Future<void> initHive() async {
   ChewieHiveUtil.put(CloudOTPHiveUtil.oldVersionKey, ResponsiveUtil.version);
   try {
     await DatabaseManager.initDataBase(
-        ChewieHiveUtil.getString(CloudOTPHiveUtil.defaultDatabasePasswordKey) ??
-            "");
-  } catch (e) {
+        await CloudOTPHiveUtil.getDatabasePassword());
+  } catch (e, t) {
+    ILogger.error("Failed to init database", e, t);
+    await DatabaseManager.resetDatabase();
     if (DatabaseManager.lib != null) {
       CloudOTPHiveUtil.setEncryptDatabaseStatus(
           EncryptDatabaseStatus.customPassword);
@@ -135,30 +145,53 @@ Future<void> initHive() async {
 
 Future<void> initAndroid() async {
   await initDisplayMode();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemUiOverlayStyle systemUiOverlayStyle = const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark);
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      systemNavigationBarIconBrightness: Brightness.dark);
   SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
 }
 
 Future<void> initDesktop() async {
   await initWindow();
-  LaunchAtStartup.instance.setup(
-    appName: ResponsiveUtil.appName,
-    appPath: Platform.resolvedExecutable,
-  );
-  await LocalNotifier.instance.setup(
-    appName: ResponsiveUtil.appName,
-    shortcutPolicy: ShortcutPolicy.requireCreate,
-  );
-  ILogger.debug(
-      "LaunchAtStartup: ${await LaunchAtStartup.instance.isEnabled()}");
-  ChewieHiveUtil.put(ChewieHiveUtil.launchAtStartupKey,
-      await LaunchAtStartup.instance.isEnabled());
-  for (String scheme in kWindowsSchemes) {
-    await protocolHandler.register(scheme);
+  try {
+    LaunchAtStartup.instance.setup(
+      appName: ResponsiveUtil.appName,
+      appPath: Platform.resolvedExecutable,
+    );
+  } catch (e, t) {
+    ILogger.error("Failed to setup LaunchAtStartup", e, t);
   }
-  await HotKeyManager.instance.unregisterAll();
+  try {
+    await LocalNotifier.instance.setup(
+      appName: ResponsiveUtil.appName,
+      shortcutPolicy: ShortcutPolicy.requireCreate,
+    );
+  } catch (e, t) {
+    ILogger.error("Failed to setup LocalNotifier", e, t);
+  }
+  try {
+    bool isEnabled = await LaunchAtStartup.instance.isEnabled();
+    ILogger.debug("LaunchAtStartup: $isEnabled");
+    ChewieHiveUtil.put(ChewieHiveUtil.launchAtStartupKey, isEnabled);
+  } catch (e, t) {
+    ILogger.error("Failed to check LaunchAtStartup status", e, t);
+  }
+  try {
+    for (String scheme in kWindowsSchemes) {
+      await protocolHandler.register(scheme);
+    }
+  } catch (e, t) {
+    ILogger.error("Failed to register protocol handler", e, t);
+  }
+  try {
+    await HotKeyManager.instance.unregisterAll();
+  } catch (e, t) {
+    ILogger.error("Failed to unregister hotkeys", e, t);
+  }
   ILogger.debug(
       "http proxy: ${Platform.environment['http_proxy']}, https proxy: ${Platform.environment['https_proxy']}");
 }
@@ -166,16 +199,20 @@ Future<void> initDesktop() async {
 Future<void> initWindow() async {
   await windowManager.ensureInitialized();
   Offset position = ChewieHiveUtil.getWindowPosition();
+  bool shouldCenter = position == Offset.zero;
   WindowOptions windowOptions = WindowOptions(
     size: ChewieHiveUtil.getWindowSize(),
     minimumSize: ChewieProvider.minimumWindowSize,
-    center: position == Offset.zero,
+    center: shouldCenter,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.setPosition(position);
+    await windowManager.setPreventClose(true);
+    if (!shouldCenter) {
+      await windowManager.setPosition(position);
+    }
     await windowManager.show();
     await windowManager.focus();
   });
@@ -243,6 +280,22 @@ class MyApp extends StatelessWidget {
     }
   }
 
+  static Locale _resolveSystemLocale(Iterable<Locale> supportedLocales) {
+    final systemLocale = ui.PlatformDispatcher.instance.locale;
+    for (final supported in supportedLocales) {
+      if (supported.languageCode == systemLocale.languageCode &&
+          supported.countryCode == systemLocale.countryCode) {
+        return supported;
+      }
+    }
+    for (final supported in supportedLocales) {
+      if (supported.languageCode == systemLocale.languageCode) {
+        return supported;
+      }
+    }
+    return supportedLocales.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     moveToCenter(context);
@@ -267,38 +320,46 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          locale: context.watch<AppProvider>().locale,
+          locale: context.watch<AppProvider>().locale ??
+              _resolveSystemLocale(AppLocalizations.supportedLocales),
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: (locale, supportedLocales) {
             ILogger.debug(
                 "Locale: $locale, Supported: $supportedLocales, appProvider.locale: ${appProvider.locale}");
             if (appProvider.locale != null) {
               return appProvider.locale;
-            } else if (locale != null && supportedLocales.contains(locale)) {
-              return locale;
-            } else {
-              try {
-                return Localizations.localeOf(context);
-              } catch (e, t) {
-                ILogger.error(
-                  "Failed to get locale by Localizations.localeOf(context)",
-                  e,
-                  t,
-                );
-                return const Locale("en", "US");
-              }
             }
+            return _resolveSystemLocale(supportedLocales);
           },
           home: home,
           builder: (context, widget) {
             chewieProvider.initRootContext(context);
+            if (ResponsiveUtil.isAndroid()) {
+              final brightness = Theme.of(context).brightness;
+              final overlayStyle = SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarContrastEnforced: false,
+                systemNavigationBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+              );
+              SystemChrome.setSystemUIOverlayStyle(overlayStyle);
+            }
             return Overlay(
               initialEntries: [
                 if (widget != null) ...[
                   OverlayEntry(
                     builder: (context) => MediaQuery(
-                      data: MediaQuery.of(context)
-                          .copyWith(textScaler: TextScaler.noScaling),
+                      data: ChewieHiveUtil.getBool(
+                              CloudOTPHiveUtil.followSystemTextScaleKey,
+                              defaultValue: false)
+                          ? MediaQuery.of(context)
+                          : MediaQuery.of(context)
+                              .copyWith(textScaler: TextScaler.noScaling),
                       child: Listener(
                         onPointerDown: (_) {
                           if (!ResponsiveUtil.isDesktop() &&

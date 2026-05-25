@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:awesome_chewie/awesome_chewie.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -15,7 +16,7 @@ class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double titleLeftMargin;
   final double rightSpacing;
   final List<Widget> actions;
-  final List<Widget> desktopActions;
+  final List<Widget> landscapeActions;
   final double height;
   final double? borderWidth;
 
@@ -32,7 +33,7 @@ class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.centerTitle = false,
     this.titleLeftMargin = 5,
     this.rightSpacing = 8,
-    this.desktopActions = const [],
+    this.landscapeActions = const [],
     this.actions = const [],
     this.height = 48,
     this.borderWidth,
@@ -73,15 +74,14 @@ class ResponsiveAppBar extends StatelessWidget implements PreferredSizeWidget {
                               onPressed: onTapBack ??
                                   () => chewieProvider.panelScreenState
                                       ?.popPage(),
-                              iconBuilder: (_) => const Icon(
-                                  Icons.arrow_back_rounded,
-                                  size: 22),
+                              buttonSize: const Size(32, 32),
+                              icon: LucideIcons.arrowLeft,
                             ),
                           ),
                         titleContent,
                         const Spacer(),
                         ...[
-                          ...desktopActions,
+                          ...landscapeActions,
                           const SizedBox(width: 44),
                         ],
                       ],

@@ -6,6 +6,8 @@ import 'controller.dart';
 // INTERNAL USE
 // ignore_for_file: public_member_api_docs
 
+const double _kDragDampingFactor = 0.8;
+
 class SlidableGestureDetector extends StatefulWidget {
   const SlidableGestureDetector({
     super.key,
@@ -84,7 +86,7 @@ class _SlidableGestureDetectorState extends State<SlidableGestureDetector> {
   }
 
   void handleDragUpdate(DragUpdateDetails details) {
-    final delta = details.primaryDelta!;
+    final delta = details.primaryDelta! * _kDragDampingFactor;
     dragExtent += delta;
     lastPosition = details.localPosition;
     widget.controller.ratio = dragExtent / overallDragAxisExtent;
@@ -97,7 +99,7 @@ class _SlidableGestureDetectorState extends State<SlidableGestureDetector> {
         primaryDelta >= 0 ? GestureDirection.opening : GestureDirection.closing;
 
     widget.controller.dispatchEndGesture(
-      details.primaryVelocity,
+      (details.primaryVelocity ?? 0) * _kDragDampingFactor,
       gestureDirection,
     );
   }

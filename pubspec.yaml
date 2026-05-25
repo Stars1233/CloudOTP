@@ -1,10 +1,10 @@
 name: cloudotp
-version: 3.1.3+313
+version: 4.0.0+400
 description: An awesome two-factor authenticator which supports cloud storage and multiple platforms.
 publish_to: none
 
 environment:
-  sdk: '>=3.1.4 <4.0.0'
+  sdk: ">=3.1.4 <4.0.0"
 
 dependencies:
   flutter:
@@ -15,21 +15,23 @@ dependencies:
   awesome_chewie:
     path: third-party/chewie
   animations: ^2.0.11 # 动画
-  fluttertoast: ^8.2.6 # 吐司
+  tutorial_coach_mark: ^1.2.11 # 引导教程
+  fluttertoast: ^9.0.0 # 吐司
   lottie: ^3.1.2 # Lottie动画
   modal_bottom_sheet: ^3.0.0 # 底部弹窗
   palette_generator: ^0.3.3+3 # 获取主色调
   vector_math: ^2.1.4 # 矢量数学
   path_drawing: ^1.0.1 # 路径绘制
   auto_size_text: ^3.0.0 # 自适应文本
+  flex_color_picker: ^3.6.0 # 颜色选择器
   flutter_inappwebview: ^6.0.0 # Webview
-  flutter_widget_from_html: ^0.15.2 # 将HTML渲染成组件
+  flutter_widget_from_html_core: ^0.15.2 # 将HTML渲染成组件
   lucide_icons:
     path: third-party/widget/lucide_icons
   # 二维码
   image: ^4.2.0 # 图片
   zxing2: ^0.2.3 # 二维码
-  mobile_scanner: ^5.2.2 # 扫码
+  mobile_scanner: ^7.2.0 # 扫码
   pretty_qr_code: ^3.3.0 # 二维码
   screen_capturer:
     path: third-party/tool/screen_capturer_lib/screen_capturer
@@ -40,7 +42,8 @@ dependencies:
   archive: ^4.0.0 # 压缩
   hive: ^4.0.0-dev.2 # 轻量存储
   isar_flutter_libs: ^4.0.0-dev.13
-  sqflite_sqlcipher: ^3.1.0+1 # SQLite加密
+  sqflite_sqlcipher: 3.1.0+1 # SQLite加密
+  sqlite3: 2.7.5 # SQLite
   # 网络
   http: ^1.2.1
   dio: ^5.4.3+1 # 网络请求
@@ -51,14 +54,14 @@ dependencies:
   awesome_cloud:
     path: third-party/awesome_cloud
   # 工具
-  intl: ^0.19.0
+  intl: ^0.20.2
   html: ^0.15.0
   uuid: ^4.4.2 # UUID
   logger: ^2.4.0 # 日志
   hashlib: 1.19.2 # Hash
   pointycastle: ^3.9.1 # 加密
   protobuf: ^3.1.0 # Protobuf
-  protoc_plugin: ^21.1.2  # Protobuf
+  protoc_plugin: ^21.1.2 # Protobuf
   flutter_native_splash: ^2.4.1 # Splash屏
   queue: ^3.1.0+2 # 队列
   logging: ^1.2.0
@@ -69,6 +72,7 @@ dependencies:
   local_auth: ^2.2.0 # 指纹验证
   local_auth_android: ^1.0.42 # 指纹验证
   share_plus: ^10.1.4 # 分享
+  flutter_secure_storage: ^8.1.0 # 安全存储
   protocol_handler: ^0.2.0 # 协议处理
   biometric_storage:
     path: third-party/tool/biometric_storage
@@ -82,7 +86,7 @@ dependencies:
   responsive_builder: ^0.7.1 # 响应式布局
   flutter_displaymode: ^0.6.0 # 设置刷新率
   flutter_resizable_container: ^2.0.0 # 可调整大小的容器
-  screen_protector: ^1.4.2+1
+  screen_protector: ^1.5.1
   flutter_windowmanager:
     path: third-party/tool/flutter_windowmanager
   move_to_background:
@@ -93,7 +97,8 @@ dependencies:
   window_manager: ^0.4.3
 
 dependency_overrides:
-  webview_flutter_android: 3.16.1
+  webview_flutter_android: 4.3.0
+  sqflite_android: 2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -167,4 +172,4 @@ flutter:
     - assets/logo-transparent.svg
     - assets/logo-transparent.png
     - assets/logo-transparent-small.png
-  generate: true  # ✅ 启用 l10n 支持
+  generate: true # ✅ 启用 l10n 支持

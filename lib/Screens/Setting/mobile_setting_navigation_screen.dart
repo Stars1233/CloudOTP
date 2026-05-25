@@ -22,7 +22,6 @@ import 'package:cloudotp/Screens/Setting/setting_safe_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../Utils/app_provider.dart';
 import '../../l10n/l10n.dart';
 
 class MobileSettingNavigationScreen extends StatefulWidget {
@@ -58,61 +57,69 @@ class _MobileSettingNavigationScreenState
             SizedBox(width: 5),
           ],
         ),
-        body: EasyRefresh(
-          child: ListView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            children: [
-              EntryItem(
-                title: appLocalizations.generalSetting,
-                leading: LucideIcons.settings2,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                    context,
-                    GeneralSettingScreen(key: generalSettingScreenKey),
-                  );
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.appearanceSetting,
-                leading: LucideIcons.paintbrushVertical,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const AppearanceSettingScreen());
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.operationSetting,
-                leading: LucideIcons.pointer,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const OperationSettingScreen());
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.backupSetting,
-                leading: LucideIcons.cloudUpload,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const BackupSettingScreen());
-                },
-              ),
-              EntryItem(
-                title: appLocalizations.safeSetting,
-                leading: LucideIcons.shieldCheck,
-                showLeading: true,
-                onTap: () {
-                  RouteUtil.pushCupertinoRoute(
-                      context, const SafeSettingScreen());
-                },
+        body: SafeArea(
+          top: false,
+          child: EasyRefresh(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              children: [
+              CaptionItem(
+                title: appLocalizations.setting,
+                children: [
+                  EntryItem(
+                    title: appLocalizations.generalSetting,
+                    leading: LucideIcons.settings2,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                        context,
+                        GeneralSettingScreen(),
+                      );
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.appearanceSetting,
+                    leading: LucideIcons.paintbrushVertical,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const AppearanceSettingScreen());
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.operationSetting,
+                    leading: LucideIcons.pointer,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const OperationSettingScreen());
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.backupSetting,
+                    leading: LucideIcons.cloudUpload,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const BackupSettingScreen());
+                    },
+                  ),
+                  EntryItem(
+                    title: appLocalizations.safeSetting,
+                    leading: LucideIcons.shieldCheck,
+                    showLeading: true,
+                    onTap: () {
+                      RouteUtil.pushCupertinoRoute(
+                          context, const SafeSettingScreen());
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
             ],
           ),
+        ),
         ),
       ),
     );
