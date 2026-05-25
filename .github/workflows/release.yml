@@ -261,16 +261,16 @@ jobs:
       - name: List and move all Artifacts
         run: |
           mkdir -p /tmp/artifacts/final
-          mv /tmp/artifacts/release-Android/*.apk /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Android/*.aab /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Windows/*.zip /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Windows/*.exe /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Linux/*.deb /tmp/artifacts/final/
-          mv /tmp/artifacts/release-Linux/*.tar.gz /tmp/artifacts/final/
-          # mv /tmp/artifacts/release-Linux-arm/*.deb /tmp/artifacts/final/
-          # mv /tmp/artifacts/release-Linux-arm/*.tar.gz /tmp/artifacts/final/
-          mv /tmp/artifacts/release-iOS/*.ipa /tmp/artifacts/final/ 2>/dev/null || true
-          mv /tmp/artifacts/release-macOS/*.dmg /tmp/artifacts/final/ 2>/dev/null || true
+          find /tmp/artifacts/release-Android -name '*.apk' -exec mv {} /tmp/artifacts/final/ \;
+          find /tmp/artifacts/release-Android -name '*.aab' -exec mv {} /tmp/artifacts/final/ \;
+          find /tmp/artifacts/release-Windows -name '*.zip' -exec mv {} /tmp/artifacts/final/ \;
+          find /tmp/artifacts/release-Windows -name '*.exe' -exec mv {} /tmp/artifacts/final/ \;
+          find /tmp/artifacts/release-Linux -name '*.deb' -exec mv {} /tmp/artifacts/final/ \;
+          find /tmp/artifacts/release-Linux -name '*.tar.gz' -exec mv {} /tmp/artifacts/final/ \;
+          # find /tmp/artifacts/release-Linux-arm -name '*.deb' -exec mv {} /tmp/artifacts/final/ \;
+          # find /tmp/artifacts/release-Linux-arm -name '*.tar.gz' -exec mv {} /tmp/artifacts/final/ \;
+          find /tmp/artifacts/release-iOS -name '*.ipa' -exec mv {} /tmp/artifacts/final/ \; 2>/dev/null || true
+          find /tmp/artifacts/release-macOS -name '*.dmg' -exec mv {} /tmp/artifacts/final/ \; 2>/dev/null || true
 
           cd /tmp/artifacts/final
           for file in *; do
